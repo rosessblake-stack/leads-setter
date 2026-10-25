@@ -1,0 +1,48 @@
+:root {
+  --fondo: #faf8f5;
+  --texto: #1f1b16;
+  --suave: #6b6258;
+  --borde: #d9d2c8;
+  --acento: #3b2f2f;
+  --error: #b3261e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #181512;
+    --texto: #f2ede6;
+    --suave: #a89f94;
+    --borde: #3a342d;
+    --acento: #e8dccb;
+    --error: #ff8a80;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.envoltorio { max-width: 560px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 1.75rem; margin: 0 0 8px; }
+.intro { color: var(--suave); margin: 0 0 24px; }
+.formulario { display: grid; gap: 16px; }
+label { display: grid; gap: 6px; font-weight: 500; }
+input, select, textarea {
+  font: inherit; color: inherit; background: transparent;
+  border: 1px solid var(--borde); border-radius: 8px; padding: 10px 12px; width: 100%;
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--acento); outline-offset: 2px;
+}
+.consentimiento { grid-template-columns: auto 1fr; align-items: start; font-weight: 400; font-size: 0.9rem; gap: 10px; }
+.consentimiento input { width: 20px; height: 20px; margin-top: 2px; }
+.trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+button, .boton {
+  display: inline-block; text-align: center; text-decoration: none; cursor: pointer;
+  font: inherit; font-weight: 600; background: var(--acento); color: var(--fondo);
+  border: 0; border-radius: 8px; padding: 12px 20px;
+}
+button:disabled { opacity: 0.6; cursor: wait; }
+.error { color: var(--error); margin: 0; }
+.gracias h2 { margin-top: 0; }
