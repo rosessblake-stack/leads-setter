@@ -8,6 +8,7 @@ import {
   NOMBRE_FASE,
   NOMBRE_RUTA,
   agruparRespuestas,
+  enlaceChatInstagram,
   enlaceInstagram,
   enlaceWhatsApp,
   fechaCorta,
@@ -48,8 +49,8 @@ export default async function Ficha({ params }: { params: Promise<{ id: string }
   const signals = (r.signals ?? {}) as Record<string, unknown>;
   const whatsapp = enlaceWhatsApp(r.telefono);
   const instagram = enlaceInstagram(r.ig_username);
+  const chatInstagram = enlaceChatInstagram(r.ig_username);
   const web = urlSegura(typeof respuestas.C04?.valor === "string" ? respuestas.C04.valor : null);
-  const contacto = respuestas.C03;
   const fase = r.fase as Fase;
   const ruta = r.ruta as Ruta | null;
 
@@ -93,19 +94,16 @@ export default async function Ficha({ params }: { params: Promise<{ id: string }
           {r.ig_username && (
             <div>
               <dt>Instagram</dt>
-              <dd>{instagram ? <a href={instagram} target="_blank" rel="noopener noreferrer">@{r.ig_username}</a> : `@${r.ig_username}`}</dd>
+              <dd>
+                {instagram ? <a href={instagram} target="_blank" rel="noopener noreferrer">@{r.ig_username}</a> : `@${r.ig_username}`}
+                {chatInstagram && <> · <a href={chatInstagram} target="_blank" rel="noopener noreferrer">Abrir chat</a></>}
+              </dd>
             </div>
           )}
           {web && (
             <div>
               <dt>Su trabajo</dt>
               <dd><a href={web} target="_blank" rel="noopener noreferrer">{web}</a></dd>
-            </div>
-          )}
-          {contacto && (
-            <div>
-              <dt>Prefiere que le escribas por</dt>
-              <dd>{String(contacto.valor)}{contacto.extra ? ` (${contacto.extra})` : ""}</dd>
             </div>
           )}
           {r.pais && <div><dt>Ubicación</dt><dd>{r.pais}</dd></div>}

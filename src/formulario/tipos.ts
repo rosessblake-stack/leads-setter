@@ -4,6 +4,7 @@ export type TipoPregunta =
   | "texto"
   | "email"
   | "telefono"
+  | "instagram"
   | "texto_largo"
   | "eleccion"
   | "multi"
@@ -50,7 +51,7 @@ export type Pregunta = {
 export type Definicion = {
   version: string;
   bienvenida: { titulo: string; texto: string };
-  // Texto de la pantalla final. Admite {nombre} (", Ana") y {canal} (WhatsApp o Instagram).
+  // Texto de la pantalla final. Admite {nombre} (", Ana").
   final: { texto: string; rutas?: Partial<Record<Ruta, string>> };
   pregunta_de_ruta: string;
   rutas: Record<string, Ruta>;

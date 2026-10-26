@@ -19,17 +19,17 @@ const ASES = "Asesoría 1:1 virtual";
 const NOCLARO = "No lo tengo claro, quiero que me orientes";
 
 describe("rutas y totales (con todas las condicionales visibles)", () => {
-  it("presencial = 46 (45 de tu documento + teléfono)", () => {
-    expect(visibles(def, base(PRES, { V03: "Casi no" })).length).toBe(46);
+  it("presencial = 45", () => {
+    expect(visibles(def, base(PRES, { V03: "Casi no" })).length).toBe(45);
   });
-  it("online = 41", () => {
-    expect(visibles(def, base(ONLINE, { V03: "Casi no" })).length).toBe(41);
+  it("online = 40", () => {
+    expect(visibles(def, base(ONLINE, { V03: "Casi no" })).length).toBe(40);
   });
-  it("asesoría = 50", () => {
-    expect(visibles(def, base(ASES)).length).toBe(50);
+  it("asesoría = 49", () => {
+    expect(visibles(def, base(ASES)).length).toBe(49);
   });
-  it("no lo tengo claro = 32", () => {
-    expect(visibles(def, base(NOCLARO)).length).toBe(32);
+  it("no lo tengo claro = 31", () => {
+    expect(visibles(def, base(NOCLARO)).length).toBe(31);
   });
 
   it("cada ruta muestra solo sus módulos", () => {
@@ -97,15 +97,17 @@ describe("validación de respuestas", () => {
     expect(validarRespuesta(q("C01"), {})).not.toBeNull();
     expect(validarRespuesta(q("C01"), { C01: "Ana Pérez" })).toBeNull();
   });
-  it("email y teléfono", () => {
+  it("email e Instagram", () => {
     expect(validarRespuesta(q("C02"), { C02: "no-es-email" })).not.toBeNull();
     expect(validarRespuesta(q("C02"), { C02: "ana@x.com" })).toBeNull();
-    expect(validarRespuesta(q("C03B"), { C03B: "600" })).not.toBeNull();
-    expect(validarRespuesta(q("C03B"), { C03B: "+34 600 000 000" })).toBeNull();
+    expect(validarRespuesta(q("C03"), {})).not.toBeNull();
+    expect(validarRespuesta(q("C03"), { C03: "@ana.trenzas" })).toBeNull();
+    expect(validarRespuesta(q("C03"), { C03: "https://instagram.com/ana.trenzas" })).toBeNull();
+    expect(validarRespuesta(q("C03"), { C03: "hola mundo!" })).not.toBeNull();
   });
-  it("C03 exige el número o @", () => {
-    expect(validarRespuesta(q("C03"), { C03: "WhatsApp" })).not.toBeNull();
-    expect(validarRespuesta(q("C03"), { C03: "WhatsApp", [claveExtra("C03")]: "+34600000000" })).toBeNull();
+  it("ya no se pide el teléfono ni el canal de contacto", () => {
+    expect(def.preguntas.some((p) => p.id === "C03B")).toBe(false);
+    expect(def.preguntas.find((p) => p.id === "C03")?.tipo).toBe("instagram");
   });
   it("límites de selección y opciones excluyentes", () => {
     expect(validarRespuesta(q("T02"), { T02: ["Particiones", "Extensiones", "Tiempo"] })).not.toBeNull();
@@ -132,8 +134,7 @@ describe("validación de respuestas", () => {
 });
 
 const completoNoClaro: Respuestas = {
-  C01: "Ana Pérez", C02: "Ana@Ejemplo.com", C03: "Instagram", [claveExtra("C03")]: "@ana.trenzas",
-  C03B: "+34 600 000 000", C04: "https://instagram.com/ana.trenzas", C05: "Madrid, España",
+  C01: "Ana Pérez", C02: "Ana@Ejemplo.com", C03: "@Ana.Trenzas", C04: "https://instagram.com/ana.trenzas", C05: "Madrid, España",
   C06: NOCLARO, C07: "TikTok", C08: "1–3 años", C10: "1–5", C11: "Trenzo y estudio",
   C12: "500–1.000 €", C13: ["Nunca"], C15: 7, C16: "La decido yo",
   N01: "Cobrar mejor", N05: "Mejorar mi técnica", N06: "En persona con corrección directa",
@@ -148,7 +149,7 @@ describe("envío completo", () => {
     const s = construirSolicitud(def, reglasOferta, v, { zona_horaria: "Europe/Madrid", v: "reel-1" });
     expect(s.nombre).toBe("Ana Pérez");
     expect(s.email).toBe("ana@ejemplo.com");
-    expect(s.telefono).toBe("+34600000000");
+    expect(s.telefono).toBeNull();
     expect(s.ig_username).toBe("ana.trenzas");
     expect(s.interes).toBe("no_se");
     expect(s.respuestas.C12.pregunta).toBe("Aproximadamente, ¿cuánto ganas al mes trenzando, después de gastos?");
@@ -201,15 +202,14 @@ describe("extraerInstagram", () => {
 });
 
 describe("texto de la pantalla final", () => {
-  const r = (ruta: string, extra: Respuestas = {}): Respuestas => ({ C01: "Ana Pérez", C03: "WhatsApp", C06: ruta, ...extra });
-  it("cambia según la ruta y usa el nombre y el canal elegido", () => {
+  const r = (ruta: string, extra: Respuestas = {}): Respuestas => ({ C01: "Ana Pérez", C06: ruta, ...extra });
+  it("cambia según la ruta y usa el nombre", () => {
     const p = textoFinal(def, r(PRES));
     expect(p).toContain("Gracias, Ana.");
     expect(p).toContain("formación presencial");
-    expect(p).toContain("por WhatsApp");
+    expect(p).toContain("por Instagram");
     expect(textoFinal(def, r(ONLINE))).toContain("curso online");
-    expect(textoFinal(def, r(ASES, { C03: "Instagram" }))).toContain("asesoría 1:1");
-    expect(textoFinal(def, r(ASES, { C03: "Instagram" }))).toContain("por Instagram");
+    expect(textoFinal(def, r(ASES))).toContain("asesoría 1:1");
     expect(textoFinal(def, r(NOCLARO))).toContain("qué opción te encaja mejor");
   });
   it("no deja huecos sin rellenar", () => {
@@ -217,14 +217,12 @@ describe("texto de la pantalla final", () => {
       const t = textoFinal(def, { C06: ruta });
       expect(t).not.toMatch(/[{}]/);
       expect(t).not.toContain("Gracias,.");
-      expect(t).toContain("el canal que has elegido");
     }
     expect(textoFinal(def, {})).not.toMatch(/[{}]/);
   });
   it("no promete precios ni plazos", () => {
     for (const ruta of [PRES, ONLINE, ASES, NOCLARO]) {
-      const t = textoFinal(def, r(ruta));
-      expect(t).not.toMatch(/€|\d+ (horas|días)|mañana|hoy mismo/i);
+      expect(textoFinal(def, r(ruta))).not.toMatch(/€|\d+ (horas|días)|mañana|hoy mismo/i);
     }
   });
 });

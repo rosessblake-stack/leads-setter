@@ -71,7 +71,7 @@ describe("reconstruirLead", () => {
     como_nos_conociste: null,
     ruta: "online" as const,
     signals: { urgencia: 8, quien_decide: "La decido yo" },
-    respuestas: { C03: { valor: "WhatsApp", extra: "+34600000000" } },
+    respuestas: {},
     video_codigo: "reel-1",
     estado: "analizado",
     nivel: "intermedio" as const,
@@ -86,7 +86,6 @@ describe("reconstruirLead", () => {
   it("reconstruye el resumen y la ficha", () => {
     const { resumen, ficha } = reconstruirLead(base);
     expect(resumen.nombre).toBe("Ana");
-    expect(resumen.contacto).toBe("WhatsApp (+34600000000)");
     expect(resumen.v).toBe("reel-1");
     expect(resumen.signals?.urgencia).toBe(8);
     expect(ficha?.puntuacion).toBe(60);

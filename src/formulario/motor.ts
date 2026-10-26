@@ -53,6 +53,13 @@ const esNumero = (v: unknown): boolean => {
 };
 export const aNumero = (v: unknown): number => Number(String(v).replace(",", "."));
 
+// Acepta "@usuario", "usuario" o un enlace de instagram.com/usuario y devuelve solo el usuario.
+export function normalizarInstagram(v: string): string | null {
+  const t = v.trim();
+  const m = /^(?:https?:\/\/)?(?:www\.)?instagram\.com\/@?([A-Za-z0-9._]{1,30})\/?(?:[?#].*)?$/i.exec(t) ?? /^@?([A-Za-z0-9._]{1,30})$/.exec(t);
+  return m ? m[1].toLowerCase() : null; // en Instagram los usuarios son siempre en minúsculas
+}
+
 export function limpiarTelefono(v: string): string {
   return v.replace(/[\s().-]/g, "");
 }
@@ -92,6 +99,8 @@ export function validarRespuesta(q: Pregunta, r: Respuestas): string | null {
       return typeof v === "string" && /^\+?\d{7,15}$/.test(limpiarTelefono(v))
         ? null
         : "Escribe un teléfono válido, con prefijo (por ejemplo, +34 600 000 000).";
+    case "instagram":
+      return typeof v === "string" && normalizarInstagram(v) ? null : "Escribe tu usuario de Instagram (por ejemplo, @blakebraider).";
     case "eleccion": {
       if (typeof v !== "string") return "Respuesta no válida.";
       if (q.opciones === PENDIENTE) {
@@ -191,6 +200,9 @@ export function almacenar(def: Definicion, limpias: Respuestas): Record<string, 
       case "telefono":
         valor = limpiarTelefono(String(v));
         break;
+      case "instagram":
+        valor = normalizarInstagram(String(v)) ?? String(v).trim();
+        break;
       case "casilla":
         valor = v === true;
         break;
@@ -210,11 +222,10 @@ export function almacenar(def: Definicion, limpias: Respuestas): Record<string, 
   return salida;
 }
 
-// Texto de la pantalla final según la ruta, con el nombre y el canal que eligió la persona.
+// Texto de la pantalla final según la ruta, con el nombre que dio la persona.
 export function textoFinal(def: Definicion, r: Respuestas): string {
   const ruta = rutaDe(def, r);
   const plantilla = (ruta && def.final.rutas?.[ruta]) || def.final.texto;
   const primero = typeof r["C01"] === "string" ? r["C01"].trim().split(/\s+/)[0].slice(0, 30) : "";
-  const canal = r["C03"] === "WhatsApp" || r["C03"] === "Instagram" ? (r["C03"] as string) : "el canal que has elegido";
-  return plantilla.replace("{nombre}", primero ? `, ${primero}` : "").replace("{canal}", canal);
+  return plantilla.replace("{nombre}", primero ? `, ${primero}` : "");
 }

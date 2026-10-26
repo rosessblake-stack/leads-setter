@@ -68,6 +68,11 @@ export function enlaceInstagram(usuario: string | null | undefined): string | nu
   return usuario && /^[A-Za-z0-9._]{1,30}$/.test(usuario) ? `https://instagram.com/${usuario}` : null;
 }
 
+// Abre directamente el chat con esa persona en Instagram.
+export function enlaceChatInstagram(usuario: string | null | undefined): string | null {
+  return usuario && /^[A-Za-z0-9._]{1,30}$/.test(usuario) ? `https://ig.me/m/${usuario}` : null;
+}
+
 // Solo http(s). Lo que escribe una persona nunca se convierte en un enlace de otro tipo.
 export function urlSegura(texto: string | null | undefined): string | null {
   const t = (texto ?? "").trim();

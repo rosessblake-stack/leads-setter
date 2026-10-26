@@ -1,14 +1,12 @@
 import { definicion, reglasOferta } from "@/formulario/datos";
-import { claveExtra, validarTodo } from "@/formulario/motor";
+import { validarTodo } from "@/formulario/motor";
 import { construirSolicitud } from "@/formulario/solicitud";
 import type { Respuestas } from "@/formulario/tipos";
 
 export const respuestasNoClaro: Respuestas = {
   C01: "Ana Pérez",
   C02: "Ana@Ejemplo.com",
-  C03: "Instagram",
-  [claveExtra("C03")]: "@ana.trenzas",
-  C03B: "+34 600 000 000",
+  C03: "@ana.trenzas",
   C04: "https://instagram.com/ana.trenzas",
   C05: "Madrid, España",
   C06: "No lo tengo claro, quiero que me orientes",

@@ -20,9 +20,8 @@ describe("telegram", () => {
   it("construye el aviso con contacto, ruta, señales y ficha", () => {
     const m = construirMensaje(resumenDe(solicitudDePrueba({ C01: "<b>Ana</b>" }, { v: "reel-1" })), ficha);
     expect(m).toContain("&lt;b&gt;Ana&lt;/b&gt;");
-    expect(m).toContain("+34600000000");
     expect(m).toContain("@ana.trenzas");
-    expect(m).toContain("Prefiere que le escribas por: Instagram (@ana.trenzas)");
+    expect(m).toContain("Escríbele por Instagram: https://ig.me/m/ana.trenzas");
     expect(m).toContain("Ruta: No lo tiene claro");
     expect(m).toContain("Vídeo: reel-1");
     expect(m).toContain("urgencia 7/10");

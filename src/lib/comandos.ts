@@ -156,14 +156,12 @@ type FilaLead = {
 
 // Reconstruye lo necesario para volver a generar la ficha tal como se avisó.
 export function reconstruirLead(r: FilaLead): { resumen: ResumenLead; ficha: FichaAnalizada | null } {
-  const c = r.respuestas?.["C03"];
   const resumen: ResumenLead = {
     nombre: r.nombre,
     email: r.email,
     telefono: r.telefono,
     ig_username: r.ig_username,
     ubicacion: r.pais,
-    contacto: c?.valor ? `${c.valor}${c.extra ? " (" + c.extra + ")" : ""}` : null,
     ruta: r.ruta,
     v: r.video_codigo,
     como_nos_conociste: r.como_nos_conociste,

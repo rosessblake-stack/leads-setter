@@ -336,12 +336,17 @@ function Campo({ q, respuestas, error, poner, ponerExtra }: CampoProps) {
     case "texto":
     case "email":
     case "telefono":
+    case "instagram":
       return (
         <label className="pregunta">
           <span className="titulo">{titulo}</span>
           <input
             type={q.tipo === "email" ? "email" : q.tipo === "telefono" ? "tel" : "text"}
-            autoComplete={q.id === "C01" ? "name" : q.id === "C02" ? "email" : q.id === "C03B" ? "tel" : "off"}
+            autoComplete={q.id === "C01" ? "name" : q.id === "C02" ? "email" : "off"}
+            autoCapitalize={q.tipo === "instagram" ? "none" : undefined}
+            autoCorrect={q.tipo === "instagram" ? "off" : undefined}
+            spellCheck={q.tipo === "instagram" ? false : undefined}
+            placeholder={q.tipo === "instagram" ? "@tuusuario" : undefined}
             maxLength={q.maxCaracteres ?? 300}
             value={texto}
             onChange={(e) => poner(q.id, e.target.value)}

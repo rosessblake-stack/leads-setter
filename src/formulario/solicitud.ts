@@ -46,14 +46,12 @@ export function construirSolicitud(
 ): Solicitud {
   const ruta = validacion.ruta as Ruta;
   const m = almacenar(def, validacion.limpias);
-  const contacto = m["C03"];
-  const arroba = contacto?.valor === "Instagram" && typeof contacto.extra === "string" ? contacto.extra : null;
   return {
     nombre: str(m["C01"]) ?? "",
     email: (str(m["C02"]) ?? "").toLowerCase(),
-    telefono: m["C03B"] ? limpiarTelefono(String(m["C03B"].valor)) : null,
+    telefono: m["C03B"] ? limpiarTelefono(String(m["C03B"].valor)) : null, // ya no se pide; queda por si más adelante se recoge
     pais: str(m["C05"]),
-    ig_username: extraerInstagram(str(m["C04"])) ?? extraerInstagram(arroba),
+    ig_username: str(m["C03"]) ?? extraerInstagram(str(m["C04"])),
     zona_horaria: extra.zona_horaria ?? null,
     ruta,
     interes: INTERES[ruta],

@@ -19,7 +19,6 @@ export type ResumenLead = {
   telefono: string | null;
   ig_username: string | null;
   ubicacion: string | null;
-  contacto: string | null;
   ruta: Ruta | null;
   v: string | null;
   como_nos_conociste: string | null;
@@ -34,14 +33,12 @@ const RUTA: Record<Ruta, string> = {
 };
 
 export function resumenDe(s: Solicitud): ResumenLead {
-  const c = s.respuestas["C03"];
   return {
     nombre: s.nombre,
     email: s.email,
     telefono: s.telefono,
     ig_username: s.ig_username,
     ubicacion: s.pais,
-    contacto: c ? `${c.valor}${c.extra ? " (" + c.extra + ")" : ""}` : null,
     ruta: s.ruta,
     v: s.v,
     como_nos_conociste: s.como_nos_conociste,
@@ -70,7 +67,7 @@ export function construirMensaje(r: ResumenLead, ficha: FichaAnalizada | null, n
   const contacto = [r.email, r.telefono, r.ig_username ? "@" + r.ig_username : null].filter(Boolean).join(" · ");
   l.push(escaparHtml(contacto));
   if (r.ubicacion) l.push(escaparHtml(r.ubicacion));
-  if (r.contacto) l.push(`Prefiere que le escribas por: ${escaparHtml(r.contacto)}`);
+  if (r.ig_username) l.push(`Escríbele por Instagram: https://ig.me/m/${escaparHtml(r.ig_username)}`);
   l.push("");
   l.push(`Ruta: ${escaparHtml(r.ruta ? RUTA[r.ruta] : "formulario antiguo")}`);
   if (r.v) l.push(`Vídeo: ${escaparHtml(r.v)}`);

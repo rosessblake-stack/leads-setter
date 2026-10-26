@@ -5,12 +5,12 @@
   "texto": "Completa este formulario para entender tu nivel, tu momento de negocio y si esta formación es adecuada para ti. Si encajas, la llamada será directa, honesta y muy práctica."
  },
  "final": {
-  "texto": "Gracias{nombre}. Ya tengo tu solicitud. La reviso con calma y, si encajas, te escribo por {canal}.",
+  "texto": "Gracias{nombre}. Ya tengo tu solicitud. La reviso con calma y, si encajas, te escribo por Instagram.",
   "rutas": {
-   "presencial": "Gracias{nombre}. Ya tengo tu solicitud para la formación presencial. Voy a revisar tus respuestas con calma y, si encajas, te escribiré por {canal} para contarte los siguientes pasos.",
-   "online": "Gracias{nombre}. Ya tengo tu solicitud para el curso online. Voy a revisar tus respuestas con calma y, si encajas, te escribiré por {canal} para contarte los siguientes pasos.",
-   "asesoria": "Gracias{nombre}. Ya tengo tu solicitud de asesoría 1:1. Voy a revisar tus respuestas con calma y, si encajas, te escribiré por {canal} para explicarte cómo reservar tu hora.",
-   "no_claro": "Gracias{nombre}. Con lo que me has contado voy a mirar qué opción te encaja mejor: formación presencial, curso online o asesoría 1:1. Te escribiré por {canal} para orientarte."
+   "presencial": "Gracias{nombre}. Ya tengo tu solicitud para la formación presencial. Voy a revisar tus respuestas con calma y, si encajas, te escribiré por Instagram para contarte los siguientes pasos.",
+   "online": "Gracias{nombre}. Ya tengo tu solicitud para el curso online. Voy a revisar tus respuestas con calma y, si encajas, te escribiré por Instagram para contarte los siguientes pasos.",
+   "asesoria": "Gracias{nombre}. Ya tengo tu solicitud de asesoría 1:1. Voy a revisar tus respuestas con calma y, si encajas, te escribiré por Instagram para explicarte cómo reservar tu hora.",
+   "no_claro": "Gracias{nombre}. Con lo que me has contado voy a mirar qué opción te encaja mejor: formación presencial, curso online o asesoría 1:1. Te escribiré por Instagram para orientarte."
   }
  },
  "pregunta_de_ruta": "C06",
@@ -35,23 +35,8 @@
   },
   {
    "id": "C03",
-   "texto": "¿Prefieres que te escriba por WhatsApp o por Instagram?",
-   "tipo": "eleccion",
-   "obligatoria": true,
-   "opciones": [
-    "WhatsApp",
-    "Instagram"
-   ],
-   "extra": {
-    "etiqueta": "tu número o tu @",
-    "tipo": "texto",
-    "obligatoria": true
-   }
-  },
-  {
-   "id": "C03B",
-   "texto": "Tu número de teléfono, con el prefijo de tu país (por ejemplo, +34)",
-   "tipo": "telefono",
+   "texto": "Tu usuario de Instagram, para escribirte por ahí",
+   "tipo": "instagram",
    "obligatoria": true
   },
   {
