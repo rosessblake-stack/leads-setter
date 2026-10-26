@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { avisarAdmin } from "@/lib/telegram";
+import { cerrarTodo, crearEnlace } from "@/lib/panel";
 import {
   comandoEstado,
   comandoLead,
@@ -45,7 +46,22 @@ export async function POST(req: Request) {
   console.log("Comando de Telegram recibido:", comando ?? "ninguno");
   if (comando === "estado") await avisarAdmin(await comandoEstado());
   else if (comando === "leads") await avisarAdmin(await comandoLeads());
-  else if (comando === "lead") {
+  else if (comando === "panel") {
+    try {
+      const url = await crearEnlace();
+      await avisarAdmin(`Tu enlace para entrar al panel (caduca en 10 minutos y solo funciona una vez):\n${url}`);
+    } catch (e) {
+      console.error("Panel: error al crear el enlace", e instanceof Error ? e.message : "desconocido");
+      await avisarAdmin("No pude crear el enlace del panel: error de base de datos.");
+    }
+  } else if (comando === "cerrar_panel") {
+    try {
+      await cerrarTodo();
+      await avisarAdmin("Listo: todas las sesiones del panel están cerradas y los enlaces pendientes anulados.");
+    } catch {
+      await avisarAdmin("No pude cerrar las sesiones: error de base de datos.");
+    }
+  } else if (comando === "lead") {
     const n = numeroDeLead(mensaje.text);
     await avisarAdmin(n ? await comandoLead(n) : "Usa /lead seguido de un número del 1 al 5, por ejemplo /lead 1.");
   }

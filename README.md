@@ -25,7 +25,13 @@ Reel → comentario → ManyChat → /guia?v=CODIGO_VIDEO&mc=ID_CONTACTO
 - `/estado`: comprueba base de datos, clave de Claude, regalo y fichas sin avisar.
 - `/leads`: los últimos 5 leads.
 - `/lead N`: la ficha completa del lead número N (1 a 5) de esa lista.
+- `/panel`: enlace de un solo uso (10 minutos) para entrar al panel privado.
+- `/cerrar_panel`: cierra todas las sesiones del panel y anula los enlaces pendientes.
 - `/ayuda`: lista de comandos.
+
+## Panel privado
+
+`/panel` (lista de leads con filtros) y `/panel/lead/<id>` (ficha). Acceso: el enlace de `/panel` no gasta el acceso al abrirse, solo al pulsar el botón (así las vistas previas de Telegram no lo consumen); crea una sesión de 7 días en una cookie httpOnly limitada a `/panel`. En la base de datos solo se guardan huellas (hash) de enlaces y sesiones. Cada acceso avisa por Telegram.
 
 El webhook (`/api/telegram`) exige la cabecera secreta `TELEGRAM_WEBHOOK_SECRET` y se registra una vez con `setWebhook` de Telegram.
 

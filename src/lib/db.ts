@@ -8,7 +8,9 @@ export function sql() {
   if (!conexion) {
     const url = process.env.SETTER_DATABASE_URL;
     if (!url) throw new Error("Falta SETTER_DATABASE_URL");
-    conexion = postgres(url, { prepare: false, max: 1, ssl: "require", idle_timeout: 20 });
+    // SETTER_DB_SSL=off solo se usa para pruebas con una base de datos local.
+    const ssl = process.env.SETTER_DB_SSL === "off" ? false : "require";
+    conexion = postgres(url, { prepare: false, max: 1, ssl, idle_timeout: 20 });
   }
   return conexion;
 }

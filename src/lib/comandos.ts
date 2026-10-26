@@ -4,7 +4,7 @@ import type { FichaAnalizada } from "./analysis";
 import type { Signals } from "@/formulario/signals";
 import type { Ruta } from "@/formulario/tipos";
 
-export type Comando = "estado" | "leads" | "lead" | "ayuda" | null;
+export type Comando = "estado" | "leads" | "lead" | "panel" | "cerrar_panel" | "ayuda" | null;
 
 // Acepta "/estado" y "/estado@nombre_del_bot". Todo lo demás se ignora.
 export function parsearComando(texto: string | undefined): Comando {
@@ -18,6 +18,10 @@ export function parsearComando(texto: string | undefined): Comando {
       return "leads";
     case "lead":
       return "lead";
+    case "panel":
+      return "panel";
+    case "cerrar_panel":
+      return "cerrar_panel";
     case "start":
     case "ayuda":
     case "help":
@@ -46,6 +50,8 @@ export const TEXTO_AYUDA = [
   "/estado — comprueba que todo funciona",
   "/leads — los últimos 5 leads",
   "/lead 1 — la ficha completa del lead nº 1 de esa lista (hasta el 5)",
+  "/panel — enlace para entrar al panel privado",
+  "/cerrar_panel — cierra todas las sesiones del panel",
   "/ayuda — esta lista",
 ].join("\n");
 
