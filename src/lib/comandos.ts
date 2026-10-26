@@ -1,7 +1,8 @@
 import { sql } from "./db";
-import { construirMensaje, escaparHtml } from "./telegram";
+import { construirMensaje, escaparHtml, type ResumenLead } from "./telegram";
 import type { FichaAnalizada } from "./analysis";
-import type { Formulario } from "./validation";
+import type { Signals } from "@/formulario/signals";
+import type { Ruta } from "@/formulario/tipos";
 
 export type Comando = "estado" | "leads" | "lead" | "ayuda" | null;
 
@@ -105,7 +106,7 @@ const OFERTA: Record<string, string> = { online: "online", presencial: "presenci
 export async function comandoLeads(): Promise<string> {
   try {
     const filas = await sql()`
-      select p.nombre, f.interes, fi.oferta_recomendada, fi.puntuacion, fi.estado, f.creado_at
+      select p.nombre, coalesce(f.ruta, f.interes) as interes, fi.oferta_recomendada, fi.puntuacion, fi.estado, f.creado_at
       from setter.fichas fi
       join setter.formularios f on f.id = fi.formulario_id
       join setter.personas p on p.id = fi.persona_id
@@ -129,11 +130,13 @@ export async function comandoLeads(): Promise<string> {
 type FilaLead = {
   nombre: string;
   email: string;
+  telefono: string | null;
   ig_username: string | null;
   pais: string | null;
-  interes: "online" | "presencial" | "asesoria" | "no_se" | null;
   como_nos_conociste: string | null;
-  respuestas: { ciudad?: string | null; nivel?: string; dificultad?: string; objetivo?: string } | null;
+  ruta: Ruta | null;
+  signals: Partial<Signals> | null;
+  respuestas: Record<string, { valor?: unknown; extra?: unknown }> | null;
   video_codigo: string | null;
   estado: string;
   nivel: FichaAnalizada["nivel"] | null;
@@ -146,22 +149,20 @@ type FilaLead = {
 };
 
 // Reconstruye lo necesario para volver a generar la ficha tal como se avisó.
-export function reconstruirLead(r: FilaLead): { f: Formulario; ficha: FichaAnalizada | null } {
-  const resp = r.respuestas ?? {};
-  const f = {
+export function reconstruirLead(r: FilaLead): { resumen: ResumenLead; ficha: FichaAnalizada | null } {
+  const c = r.respuestas?.["C03"];
+  const resumen: ResumenLead = {
     nombre: r.nombre,
     email: r.email,
-    ig_username: r.ig_username ?? undefined,
-    pais: r.pais ?? "",
-    ciudad: resp.ciudad ?? undefined,
-    interes: r.interes ?? "no_se",
-    nivel: (resp.nivel ?? "principiante") as Formulario["nivel"],
-    dificultad: resp.dificultad ?? "",
-    objetivo: resp.objetivo ?? "",
-    como_nos_conociste: r.como_nos_conociste ?? undefined,
-    consentimiento: true,
-    v: r.video_codigo ?? undefined,
-  } as Formulario;
+    telefono: r.telefono,
+    ig_username: r.ig_username,
+    ubicacion: r.pais,
+    contacto: c?.valor ? `${c.valor}${c.extra ? " (" + c.extra + ")" : ""}` : null,
+    ruta: r.ruta,
+    v: r.video_codigo,
+    como_nos_conociste: r.como_nos_conociste,
+    signals: r.ruta ? r.signals : null,
+  };
   const ficha: FichaAnalizada | null =
     r.resumen && r.nivel && r.puntuacion !== null
       ? {
@@ -174,14 +175,14 @@ export function reconstruirLead(r: FilaLead): { f: Formulario; ficha: FichaAnali
           resumen: r.resumen,
         }
       : null;
-  return { f, ficha };
+  return { resumen, ficha };
 }
 
 export async function comandoLead(n: number): Promise<string> {
   try {
     const filas = await sql()`
-      select p.nombre, p.email, p.ig_username, p.pais,
-        f.interes, f.como_nos_conociste, f.respuestas, v.codigo as video_codigo,
+      select p.nombre, p.email, p.telefono, p.ig_username, p.pais,
+        f.como_nos_conociste, f.ruta, f.signals, f.respuestas, v.codigo as video_codigo,
         fi.estado, fi.nivel, fi.dolores, fi.oferta_recomendada, fi.encaje, fi.puntuacion, fi.resumen,
         (select (e.datos->>'sospechoso')::boolean from setter.eventos e
           where e.persona_id = p.id and e.tipo = 'ficha_analizada' order by e.id desc limit 1) as sospechoso
@@ -192,8 +193,8 @@ export async function comandoLead(n: number): Promise<string> {
       order by f.creado_at desc
       offset ${n - 1} limit 1`;
     if (filas.length === 0) return "No hay un lead con ese número.";
-    const { f, ficha } = reconstruirLead(filas[0] as unknown as FilaLead);
-    return construirMensaje(f, ficha, `Estado de la ficha: ${filas[0].estado}`);
+    const { resumen, ficha } = reconstruirLead(filas[0] as unknown as FilaLead);
+    return construirMensaje(resumen, ficha, `Estado de la ficha: ${filas[0].estado}`);
   } catch (e) {
     console.error("Lead: error", e instanceof Error ? e.message : "desconocido");
     return "No pude leer ese lead: error de base de datos.";

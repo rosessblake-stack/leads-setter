@@ -1,0 +1,13 @@
+{
+  "comentario": "Reglas para sugerir oferta en la ruta 'No lo tengo claro'. Se pueden editar sin tocar código.",
+  "reglas": [
+    { "pregunta": "N06", "respuesta": "En persona con corrección directa", "sugiere": ["Formación presencial"] },
+    { "pregunta": "N06", "respuesta": "A mi ritmo con vídeos y clases grabadas", "sugiere": ["Formación online"] },
+    { "pregunta": "N06", "respuesta": "Hablando 1 a 1 de mi caso concreto", "sugiere": ["Asesoría 1:1"] },
+    { "pregunta": "N05", "respuesta": "Cobrar mejor y ordenar mi negocio", "sugiere": ["Asesoría 1:1"] },
+    { "pregunta": "N05", "respuesta": "Mejorar mi técnica", "sugiere": ["Formación presencial", "Formación online"] },
+    { "pregunta": "N05", "respuesta": "Conseguir más clientes", "sugiere": ["Formación online", "Asesoría 1:1"] },
+    { "pregunta": "N05", "respuesta": "Mejorar mi contenido y mi marca", "sugiere": ["Formación online", "Asesoría 1:1"] }
+  ],
+  "contradiccion": { "entre": ["N05", "N06"], "mensaje": "Revisar N03 y N10 a mano" }
+}

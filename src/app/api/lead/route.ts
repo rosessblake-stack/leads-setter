@@ -1,12 +1,16 @@
 import { after } from "next/server";
-import { FormularioSchema } from "@/lib/validation";
+import { PayloadSchema } from "@/lib/validation";
 import { guardarLead } from "@/lib/lead";
 import { procesarLead } from "@/lib/proceso";
 import { permitido } from "@/lib/ratelimit";
+import { definicion, reglasOferta } from "@/formulario/datos";
+import { validarTodo } from "@/formulario/motor";
+import { construirSolicitud } from "@/formulario/solicitud";
+import type { Respuestas } from "@/formulario/tipos";
 
 export const maxDuration = 60;
 
-const MAX_BYTES = 20_000;
+const MAX_BYTES = 80_000;
 
 function json(cuerpo: unknown, status = 200) {
   return Response.json(cuerpo, { status, headers: { "cache-control": "no-store" } });
@@ -34,21 +38,27 @@ export async function POST(req: Request) {
   }
 
   // Campo trampa relleno: respondemos como si fuera bien, sin guardar nada.
-  if (typeof cuerpo === "object" && cuerpo && typeof (cuerpo as { web?: unknown }).web === "string" && (cuerpo as { web: string }).web.length > 0) {
-    return json({ ok: true, regalo: null });
-  }
+  const trampa = (cuerpo as { web?: unknown } | null)?.web;
+  if (typeof trampa === "string" && trampa.length > 0) return json({ ok: true });
 
-  const parsed = FormularioSchema.safeParse(cuerpo);
-  if (!parsed.success) {
-    const campos = [...new Set(parsed.error.issues.map((i) => String(i.path[0] ?? "")))];
-    return json({ ok: false, error: "validacion", campos }, 400);
-  }
+  const parsed = PayloadSchema.safeParse(cuerpo);
+  if (!parsed.success) return json({ ok: false, error: "formato" }, 400);
+
+  const validacion = validarTodo(definicion, parsed.data.respuestas as Respuestas);
+  if (!validacion.ok) return json({ ok: false, error: "validacion", errores: validacion.errores }, 400);
+
+  const solicitud = construirSolicitud(definicion, reglasOferta, validacion, {
+    zona_horaria: parsed.data.zona_horaria,
+    v: parsed.data.v,
+    mc: parsed.data.mc,
+    iniciado_at: parsed.data.iniciado_at,
+  });
 
   try {
-    const guardado = await guardarLead(parsed.data);
+    const guardado = await guardarLead(solicitud);
     // El análisis y el aviso se hacen después de responder a la persona.
-    after(() => procesarLead(parsed.data, guardado));
-    return json({ ok: true, regalo: process.env.GIFT_URL ?? null });
+    after(() => procesarLead(solicitud, guardado));
+    return json({ ok: true });
   } catch (e) {
     console.error("Error guardando lead", e instanceof Error ? e.message : "desconocido");
     return json({ ok: false, error: "servidor" }, 500);

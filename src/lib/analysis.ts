@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
-import type { Formulario } from "./validation";
+import type { Solicitud } from "@/formulario/solicitud";
 
 export const NIVELES_FICHA = ["principiante", "intermedio", "avanzado", "no_claro"] as const;
 export const DOLORES = [
@@ -53,7 +53,7 @@ export function normalizarFicha(bruta: z.infer<typeof RespuestaModelo>): FichaAn
   };
 }
 
-const SISTEMA = `Eres el analista de leads de Blake Braider, trenzador profesional y educador internacional. Lees las respuestas de un formulario y rellenas una ficha con el esquema indicado.
+const SISTEMA = `Eres el analista de leads de Blake Braider, trenzador profesional y educador internacional. Lees las respuestas de un formulario de solicitud (cada persona elige una ruta: presencial, online, asesoría o "no lo tengo claro" y ve preguntas distintas) y rellenas una ficha con el esquema indicado. Cada línea lleva el ID de la pregunta, su texto y la respuesta. El bloque <resumen_calculado> son datos ya calculados por código: úsalos, no los recalcules.
 
 Productos de Blake:
 - online: curso online en suscripción anual. Se cierra por llamada.
@@ -80,26 +80,43 @@ function limpiar(texto: string): string {
   return texto.replace(/</g, "‹").replace(/>/g, "›");
 }
 
-export function construirEntrada(f: Formulario): string {
+// Datos de contacto: no hacen falta para valorar el lead, no se envían a Claude.
+const SIN_ENVIAR = new Set(["C01", "C02", "C03", "C03B", "C04"]);
+
+function valorATexto(v: unknown): string {
+  if (Array.isArray(v)) return v.join("; ");
+  if (v && typeof v === "object") {
+    return Object.entries(v as Record<string, unknown>)
+      .map(([k, x]) => `${k}=${x}`)
+      .join(", ");
+  }
+  return String(v);
+}
+
+export function construirEntrada(s: Solicitud): string {
+  const lineas = Object.entries(s.respuestas)
+    .filter(([id]) => !SIN_ENVIAR.has(id))
+    .map(([id, r]) => {
+      const extra = r.extra !== undefined ? ` (${r.extra})` : "";
+      return `[${id}] ${limpiar(r.pregunta)}: ${limpiar(valorATexto(r.valor))}${limpiar(extra)}`;
+    });
   return `<respuestas_formulario>
-interes_declarado: ${limpiar(f.interes)}
-nivel_declarado: ${limpiar(f.nivel)}
-pais: ${limpiar(f.pais)}
-ciudad: ${limpiar(f.ciudad ?? "")}
-mayor_dificultad: ${limpiar(f.dificultad)}
-objetivo: ${limpiar(f.objetivo)}
-como_nos_conocio: ${limpiar(f.como_nos_conociste ?? "")}
-</respuestas_formulario>`;
+ruta_elegida: ${s.ruta}
+${lineas.join("\n")}
+</respuestas_formulario>
+<resumen_calculado>
+${limpiar(JSON.stringify(s.signals))}
+</resumen_calculado>`;
 }
 
 // Devuelve null si Claude se niega, no devuelve un resultado válido o falla la llamada.
-export async function analizarFormulario(f: Formulario): Promise<FichaAnalizada | null> {
+export async function analizarFormulario(s: Solicitud): Promise<FichaAnalizada | null> {
   const client = new Anthropic();
   const respuesta = await client.messages.parse({
     model: process.env.ANALYSIS_MODEL ?? "claude-opus-5-5",
     max_tokens: 2000,
     system: SISTEMA,
-    messages: [{ role: "user", content: construirEntrada(f) }],
+    messages: [{ role: "user", content: construirEntrada(s) }],
     output_config: { effort: "low", format: zodOutputFormat(RespuestaModelo) },
   });
   if (respuesta.stop_reason === "refusal" || !respuesta.parsed_output) return null;

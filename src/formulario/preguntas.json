@@ -1,0 +1,1054 @@
+{
+ "version": "2026-10-26",
+ "bienvenida": {
+  "titulo": "No es lo mismo trenzar que ser profesional. Demuéstralo.",
+  "texto": "Completa este formulario para entender tu nivel, tu momento de negocio y si esta formación es adecuada para ti. Si encajas, la llamada será directa, honesta y muy práctica."
+ },
+ "final": {
+  "texto": "[PENDIENTE: texto final]"
+ },
+ "pregunta_de_ruta": "C06",
+ "rutas": {
+  "Formación presencial conmigo": "presencial",
+  "Formación online (curso)": "online",
+  "Asesoría 1:1 virtual": "asesoria",
+  "No lo tengo claro, quiero que me orientes": "no_claro"
+ },
+ "preguntas": [
+  {
+   "id": "C01",
+   "texto": "Nombre y apellido",
+   "tipo": "texto",
+   "obligatoria": true
+  },
+  {
+   "id": "C02",
+   "texto": "Email",
+   "tipo": "email",
+   "obligatoria": true
+  },
+  {
+   "id": "C03",
+   "texto": "¿Prefieres que te escriba por WhatsApp o por Instagram?",
+   "tipo": "eleccion",
+   "obligatoria": true,
+   "opciones": [
+    "WhatsApp",
+    "Instagram"
+   ],
+   "extra": {
+    "etiqueta": "tu número o tu @",
+    "tipo": "texto",
+    "obligatoria": true
+   }
+  },
+  {
+   "id": "C03B",
+   "texto": "Tu número de teléfono, con el prefijo de tu país (por ejemplo, +34)",
+   "tipo": "telefono",
+   "obligatoria": true
+  },
+  {
+   "id": "C04",
+   "texto": "Enlace a tu Instagram o al sitio donde muestras tu trabajo",
+   "tipo": "texto",
+   "obligatoria": true
+  },
+  {
+   "id": "C05",
+   "texto": "Ciudad y país",
+   "tipo": "texto",
+   "obligatoria": true
+  },
+  {
+   "id": "C06",
+   "texto": "¿Qué te interesa?",
+   "tipo": "eleccion",
+   "obligatoria": true,
+   "opciones": [
+    "Formación presencial conmigo",
+    "Formación online (curso)",
+    "Asesoría 1:1 virtual",
+    "No lo tengo claro, quiero que me orientes"
+   ]
+  },
+  {
+   "id": "C07",
+   "texto": "¿Cómo me conociste?",
+   "tipo": "eleccion",
+   "opciones": [
+    "TikTok",
+    "Instagram",
+    "YouTube",
+    "Un directo",
+    "Recomendación",
+    "Otro"
+   ]
+  },
+  {
+   "id": "C08",
+   "texto": "¿Cuánto tiempo llevas trenzando?",
+   "tipo": "eleccion",
+   "obligatoria": true,
+   "opciones": [
+    "Menos de 1 año",
+    "1–3 años",
+    "3–5 años",
+    "Más de 5 años"
+   ]
+  },
+  {
+   "id": "C09",
+   "texto": "¿Qué servicios haces más?",
+   "tipo": "multi",
+   "opciones": [
+    "Pegadas",
+    "Sueltas",
+    "Fulani",
+    "Boxeadoras",
+    "Twists",
+    "Otro"
+   ]
+  },
+  {
+   "id": "C10",
+   "texto": "¿Cuántos clientes atiendes al mes?",
+   "tipo": "eleccion",
+   "obligatoria": true,
+   "opciones": [
+    "0",
+    "1–5",
+    "6–15",
+    "16–30",
+    "Más de 30"
+   ]
+  },
+  {
+   "id": "C11",
+   "texto": "¿Te dedicas solo a trenzar?",
+   "tipo": "eleccion",
+   "obligatoria": true,
+   "opciones": [
+    "Sí, solo trenzo a tiempo completo",
+    "Trenzo y tengo otro trabajo",
+    "Trenzo y estudio",
+    "Trenzo solo de forma ocasional"
+   ]
+  },
+  {
+   "id": "C12",
+   "texto": "Aproximadamente, ¿cuánto ganas al mes trenzando, después de gastos?",
+   "tipo": "eleccion",
+   "obligatoria": true,
+   "opciones": [
+    "Todavía nada",
+    "Menos de 500 €",
+    "500–1.000 €",
+    "1.000–2.000 €",
+    "2.000–3.500 €",
+    "Más de 3.500 €"
+   ]
+  },
+  {
+   "id": "C13",
+   "texto": "¿Has invertido antes en formación, cursos o mentoría?",
+   "tipo": "multi",
+   "obligatoria": true,
+   "opciones": [
+    "Nunca",
+    "Curso online",
+    "Formación presencial",
+    "Mentoría o asesoría 1:1",
+    "Varias de las anteriores"
+   ],
+   "excluyentes": [
+    "Nunca"
+   ]
+  },
+  {
+   "id": "C14",
+   "texto": "Si respondiste que sí, ¿qué formación fue, cuánto pagaste aproximadamente y qué resultado te dio?",
+   "tipo": "texto_largo",
+   "si": {
+    "pregunta": "C13",
+    "noIncluye": "Nunca"
+   }
+  },
+  {
+   "id": "C15",
+   "texto": "Del 1 al 10, ¿qué urgencia tienes por empezar?",
+   "tipo": "escala",
+   "obligatoria": true,
+   "escala": {
+    "min": 1,
+    "max": 10
+   }
+  },
+  {
+   "id": "C16",
+   "texto": "Esta inversión, ¿la decides tú sola/o o la consultas con alguien?",
+   "tipo": "eleccion",
+   "obligatoria": true,
+   "opciones": [
+    "La decido yo",
+    "La consulto con mi pareja",
+    "La consulto con mi familia",
+    "La consulto con mi socia/o"
+   ]
+  },
+  {
+   "id": "F01",
+   "texto": "¿Cuántos días de formación te interesan?",
+   "tipo": "eleccion",
+   "obligatoria": true,
+   "rutas": [
+    "presencial"
+   ],
+   "opciones": [
+    "1 día",
+    "2 días",
+    "3 días",
+    "Aún no lo sé"
+   ]
+  },
+  {
+   "id": "F02",
+   "texto": "¿Cuándo te gustaría hacerla?",
+   "tipo": "eleccion",
+   "rutas": [
+    "presencial"
+   ],
+   "opciones": [
+    "Lo antes posible",
+    "En los próximos 3 meses",
+    "Más adelante",
+    "Soy flexible"
+   ]
+  },
+  {
+   "id": "F03",
+   "texto": "¿Puedes viajar para hacerla?",
+   "tipo": "eleccion",
+   "rutas": [
+    "presencial"
+   ],
+   "opciones": [
+    "Sí",
+    "Necesito que sea en mi ciudad",
+    "Depende del sitio"
+   ],
+   "extra": {
+    "cuando": "Necesito que sea en mi ciudad",
+    "etiqueta": "¿Qué ciudad?",
+    "tipo": "texto"
+   }
+  },
+  {
+   "id": "T01",
+   "texto": "Cuando un cliente te trae una foto de referencia, ¿qué haces?",
+   "tipo": "eleccion",
+   "obligatoria": true,
+   "rutas": [
+    "presencial",
+    "online"
+   ],
+   "opciones": [
+    "La replico tal cual",
+    "Aconsejo solo si hay un complejo evidente",
+    "Analizo su rostro y le propongo lo que más le favorece"
+   ]
+  },
+  {
+   "id": "T02",
+   "texto": "Marca tus 2 mayores dificultades técnicas",
+   "tipo": "multi",
+   "rutas": [
+    "presencial",
+    "online"
+   ],
+   "maxSelecciones": 2,
+   "opciones": [
+    "Particiones",
+    "Líneas rectas",
+    "Extensiones",
+    "Acabado y pulido",
+    "Tiempo",
+    "Cabello fino o liso",
+    "Diseños complejos",
+    "Otra"
+   ]
+  },
+  {
+   "id": "T03",
+   "texto": "Cuéntame cuál es la principal y qué te pasa exactamente",
+   "tipo": "texto_largo",
+   "rutas": [
+    "presencial",
+    "online"
+   ]
+  },
+  {
+   "id": "T04",
+   "texto": "Con extensiones, ¿qué es lo que más te falla?",
+   "tipo": "eleccion",
+   "rutas": [
+    "presencial",
+    "online"
+   ],
+   "opciones": [
+    "El grosor",
+    "Ocultar la punta",
+    "Pulir en trenzas finas",
+    "Elegir el tipo adecuado",
+    "Nada, me siento seguro/a"
+   ]
+  },
+  {
+   "id": "T05",
+   "texto": "¿Qué peine, producto o cera y tipo de extensión usas hoy? ¿Por qué elegiste esos?",
+   "tipo": "texto_largo",
+   "rutas": [
+    "presencial",
+    "online"
+   ]
+  },
+  {
+   "id": "T06",
+   "texto": "¿Sientes molestias al trabajar?",
+   "tipo": "multi",
+   "rutas": [
+    "presencial"
+   ],
+   "opciones": [
+    "Espalda",
+    "Manos",
+    "Cuello",
+    "Ninguna"
+   ],
+   "excluyentes": [
+    "Ninguna"
+   ]
+  },
+  {
+   "id": "T07",
+   "texto": "¿Alguien te ha corregido alguna vez la postura de trabajo?",
+   "tipo": "sino",
+   "rutas": [
+    "presencial"
+   ]
+  },
+  {
+   "id": "S01",
+   "texto": "¿Qué quieres aprender o mejorar con esta formación?",
+   "tipo": "multi",
+   "obligatoria": true,
+   "rutas": [
+    "presencial",
+    "online"
+   ],
+   "maxSelecciones": 3,
+   "opciones": [
+    "Líneas y particiones",
+    "Extensiones",
+    "Diseños complejos",
+    "Visajismo (qué trenzado favorece a cada rostro)",
+    "Tiempo (hacerlo más rápido)",
+    "Duración de las trenzas",
+    "Productos y herramientas",
+    "Cobrar y justificar mis precios",
+    "Conseguir mejores clientes",
+    "Grabar y editar contenido",
+    "Organizar mi negocio"
+   ]
+  },
+  {
+   "id": "S02",
+   "texto": "Con tus palabras, ¿qué es lo que más necesitas aprender o corregir ahora mismo?",
+   "tipo": "texto_largo",
+   "obligatoria": true,
+   "rutas": [
+    "presencial",
+    "online"
+   ]
+  },
+  {
+   "id": "S03",
+   "texto": "¿Qué te está costando más en tu día a día trenzando?",
+   "tipo": "multi",
+   "obligatoria": true,
+   "rutas": [
+    "presencial",
+    "online"
+   ],
+   "maxSelecciones": 3,
+   "opciones": [
+    "Lo técnico",
+    "El tiempo que me lleva cada servicio",
+    "Cobrar lo que vale",
+    "Conseguir clientes",
+    "Que valoren mi trabajo (regateos)",
+    "Grabar y publicar",
+    "Organizar agenda y citas",
+    "Cuidar mi cuerpo",
+    "Tener seguridad al decir mi precio"
+   ]
+  },
+  {
+   "id": "S04",
+   "texto": "Cuéntame un caso reciente en el que algo te salió mal o te frustró",
+   "tipo": "texto_largo",
+   "rutas": [
+    "presencial",
+    "online"
+   ],
+   "maxCaracteres": 400
+  },
+  {
+   "id": "S05",
+   "texto": "¿Qué has probado ya para mejorarlo?",
+   "tipo": "multi",
+   "rutas": [
+    "presencial",
+    "online"
+   ],
+   "opciones": [
+    "Vídeos de YouTube",
+    "Cursos o formaciones",
+    "Practicar con modelos",
+    "Preguntar a otros trenzadores",
+    "Nada todavía"
+   ]
+  },
+  {
+   "id": "S06",
+   "texto": "¿Cómo te está afectando hoy?",
+   "tipo": "multi",
+   "rutas": [
+    "presencial",
+    "online"
+   ],
+   "opciones": [
+    "Gano menos de lo que merezco",
+    "Trabajo muchas horas",
+    "Me frustro",
+    "Pierdo clientes",
+    "Me siento estancado/a",
+    "No me afecta mucho"
+   ]
+  },
+  {
+   "id": "V01",
+   "texto": "Explícame brevemente cómo agendas, atiendes y cierras un servicio de principio a fin",
+   "tipo": "texto_largo",
+   "rutas": [
+    "presencial",
+    "online"
+   ],
+   "maxCaracteres": 600
+  },
+  {
+   "id": "V02",
+   "texto": "¿Qué haces hoy con tus clientes?",
+   "tipo": "multi",
+   "rutas": [
+    "presencial",
+    "online"
+   ],
+   "opciones": [
+    "Hago una ficha de diagnóstico antes de la cita",
+    "Pregunto por alergias o por el cuidado del cabello",
+    "Explico el servicio antes de empezar",
+    "Explico el mantenimiento al terminar",
+    "Hago seguimiento después",
+    "Ninguna de las anteriores"
+   ],
+   "excluyentes": [
+    "Ninguna de las anteriores"
+   ]
+  },
+  {
+   "id": "V03",
+   "texto": "¿Grabas y publicas tu trabajo?",
+   "tipo": "eleccion",
+   "rutas": [
+    "presencial",
+    "online"
+   ],
+   "opciones": [
+    "Sí, y me siento cómodo/a",
+    "Lo hago, pero me cuesta",
+    "Casi no",
+    "Nunca"
+   ]
+  },
+  {
+   "id": "V04",
+   "texto": "Cuando lo haces, ¿lo llevas tú o te ayuda alguien?",
+   "tipo": "eleccion",
+   "rutas": [
+    "presencial",
+    "online"
+   ],
+   "opciones": [
+    "Lo hago yo",
+    "Lo hago con ayuda"
+   ],
+   "si": {
+    "pregunta": "V03",
+    "noEs": "Nunca"
+   }
+  },
+  {
+   "id": "N01",
+   "texto": "Con tus palabras, ¿qué te gustaría mejorar o conseguir?",
+   "tipo": "texto_largo",
+   "obligatoria": true,
+   "rutas": [
+    "no_claro"
+   ]
+  },
+  {
+   "id": "N02",
+   "texto": "¿Qué es lo que más te frustra hoy de tu trabajo?",
+   "tipo": "texto_largo",
+   "rutas": [
+    "no_claro"
+   ]
+  },
+  {
+   "id": "N03",
+   "texto": "Si pudieras cambiar una sola cosa en tu negocio en los próximos 3 meses, ¿cuál sería?",
+   "tipo": "texto_largo",
+   "rutas": [
+    "no_claro"
+   ]
+  },
+  {
+   "id": "N04",
+   "texto": "¿Qué has probado ya y qué resultado tuvo?",
+   "tipo": "texto_largo",
+   "rutas": [
+    "no_claro"
+   ]
+  },
+  {
+   "id": "N05",
+   "texto": "¿Qué es más urgente para ti ahora?",
+   "tipo": "eleccion",
+   "rutas": [
+    "no_claro"
+   ],
+   "opciones": [
+    "Mejorar mi técnica",
+    "Cobrar mejor y ordenar mi negocio",
+    "Conseguir más clientes",
+    "Mejorar mi contenido y mi marca",
+    "No lo sé"
+   ]
+  },
+  {
+   "id": "N06",
+   "texto": "¿Cómo prefieres aprender?",
+   "tipo": "eleccion",
+   "rutas": [
+    "no_claro"
+   ],
+   "opciones": [
+    "En persona con corrección directa",
+    "A mi ritmo con vídeos y clases grabadas",
+    "Hablando 1 a 1 de mi caso concreto",
+    "No lo sé"
+   ]
+  },
+  {
+   "id": "N07",
+   "texto": "¿Qué te frena para decidirte?",
+   "tipo": "multi",
+   "rutas": [
+    "no_claro"
+   ],
+   "opciones": [
+    "No sé cuál me conviene",
+    "Dinero",
+    "Tiempo",
+    "Miedo a que no funcione",
+    "Tengo que consultarlo",
+    "Otra"
+   ]
+  },
+  {
+   "id": "N08",
+   "texto": "¿Puedes viajar?",
+   "tipo": "eleccion",
+   "rutas": [
+    "no_claro"
+   ],
+   "opciones": [
+    "Sí",
+    "Necesito que sea en mi ciudad",
+    "Depende del sitio"
+   ]
+  },
+  {
+   "id": "N09",
+   "texto": "¿Cuánto tiempo a la semana puedes dedicar a formarte?",
+   "tipo": "eleccion",
+   "rutas": [
+    "no_claro"
+   ],
+   "opciones": [
+    "Menos de 2 horas",
+    "2–4 horas",
+    "4–8 horas",
+    "Más de 8 horas"
+   ]
+  },
+  {
+   "id": "N10",
+   "texto": "¿Qué duda tienes sobre cuál elegir?",
+   "tipo": "texto_largo",
+   "rutas": [
+    "no_claro"
+   ]
+  },
+  {
+   "id": "B01",
+   "texto": "¿Cómo trabajas hoy?",
+   "tipo": "eleccion",
+   "rutas": [
+    "presencial",
+    "online",
+    "no_claro"
+   ],
+   "opciones": [
+    "Sola/o en casa",
+    "En local propio",
+    "En el salón de otra persona",
+    "Con equipo"
+   ],
+   "extra": {
+    "cuando": "Con equipo",
+    "etiqueta": "¿Cuántas personas?",
+    "tipo": "numero"
+   }
+  },
+  {
+   "id": "B02",
+   "texto": "¿Cómo te gustaría que fuera tu negocio dentro de un año?",
+   "tipo": "texto_largo",
+   "rutas": [
+    "presencial",
+    "online",
+    "no_claro"
+   ]
+  },
+  {
+   "id": "B03",
+   "texto": "¿Cuánto cobras por tu servicio más habitual y cuántas horas te lleva?",
+   "tipo": "dos_numeros",
+   "rutas": [
+    "presencial",
+    "online",
+    "no_claro"
+   ],
+   "campos": [
+    {
+     "id": "precio",
+     "etiqueta": "Precio en €"
+    },
+    {
+     "id": "horas",
+     "etiqueta": "Horas"
+    }
+   ],
+   "si": {
+    "pregunta": "C10",
+    "noEs": "0"
+   }
+  },
+  {
+   "id": "B04",
+   "texto": "¿Cómo decides tus precios?",
+   "tipo": "eleccion",
+   "rutas": [
+    "presencial",
+    "online",
+    "no_claro"
+   ],
+   "opciones": [
+    "Miro lo que cobran otros trenzadores",
+    "Lo comparo con peluquería y estética",
+    "Calculo mis costes y mi hora",
+    "Por intuición"
+   ],
+   "si": {
+    "pregunta": "C10",
+    "noEs": "0"
+   }
+  },
+  {
+   "id": "B05",
+   "texto": "Cuando dices tu precio, ¿qué haces normalmente?",
+   "tipo": "eleccion",
+   "rutas": [
+    "presencial",
+    "online",
+    "no_claro"
+   ],
+   "opciones": [
+    "Lo digo con seguridad",
+    "Dudo",
+    "Lo bajo si insisten",
+    "Me pongo a justificarlo"
+   ],
+   "si": {
+    "pregunta": "C10",
+    "noEs": "0"
+   }
+  },
+  {
+   "id": "E01",
+   "texto": "¿Qué tendría que pasar al terminar la formación para que sientas que valió la pena?",
+   "tipo": "texto_largo",
+   "obligatoria": true,
+   "rutas": [
+    "presencial",
+    "online"
+   ]
+  },
+  {
+   "id": "E02",
+   "texto": "¿Qué dudas tienes ahora mismo sobre la formación o sobre cómo trabajo?",
+   "tipo": "texto_largo",
+   "rutas": [
+    "presencial",
+    "online"
+   ]
+  },
+  {
+   "id": "E03",
+   "texto": "Si después de la llamada decides entrar, ¿podrías hacer el primer pago ese mismo día?",
+   "tipo": "eleccion",
+   "obligatoria": true,
+   "rutas": [
+    "presencial",
+    "online"
+   ],
+   "opciones": [
+    "Sí",
+    "No, necesitaría unos días",
+    "Depende"
+   ]
+  },
+  {
+   "id": "E04",
+   "texto": "Entiendo que en la llamada tendré la cámara encendida y recibiré correcciones directas y honestas.",
+   "tipo": "casilla",
+   "obligatoria": true,
+   "rutas": [
+    "presencial",
+    "online"
+   ]
+  },
+  {
+   "id": "A01",
+   "texto": "¿Qué sientes que necesitas ahora mismo?",
+   "tipo": "eleccion",
+   "rutas": [
+    "asesoria"
+   ],
+   "opciones": "__pendiente__"
+  },
+  {
+   "id": "A02",
+   "texto": "¿Cómo te calificarías hoy?",
+   "tipo": "eleccion",
+   "rutas": [
+    "asesoria"
+   ],
+   "opciones": "__pendiente__"
+  },
+  {
+   "id": "A03",
+   "texto": "¿Por qué crees que estás en ese nivel? ¿Qué lo justifica?",
+   "tipo": "texto_largo",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A04",
+   "texto": "¿Te interesa en algún momento formar o liderar un equipo, enseñar a otros profesionales, o prefieres mantenerte enfocada/o en tu propio trabajo y tu clientela?",
+   "tipo": "eleccion",
+   "rutas": [
+    "asesoria"
+   ],
+   "opciones": "__pendiente__"
+  },
+  {
+   "id": "A05",
+   "texto": "¿Trabajas en solitario o tienes equipo? Si tienes equipo, ¿cuántas personas, y también hacen trenzas o son de otras especialidades?",
+   "tipo": "texto_largo",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A06",
+   "texto": "Si mañana no pudieras seguir, ¿tu negocio seguiría funcionando?",
+   "tipo": "sino",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A07",
+   "texto": "¿Tus clientes te siguen a ti como persona, o siguen a tu negocio/marca?",
+   "tipo": "eleccion",
+   "rutas": [
+    "asesoria"
+   ],
+   "opciones": "__pendiente__"
+  },
+  {
+   "id": "A08",
+   "texto": "Si tienes equipo, ¿podrían mantener el mismo nivel de calidad y trato sin que tú estés encima de cada detalle?",
+   "tipo": "sino",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A09",
+   "texto": "¿Tienes tus precios, tu forma de trabajar y tu trato con clientes documentado?",
+   "tipo": "sino",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A10",
+   "texto": "Si tuvieras que ausentarte 3 meses mañana mismo, ¿qué pasaría con tu negocio hoy?",
+   "tipo": "texto_largo",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A11",
+   "texto": "Tus 3 servicios más pedidos y lo que cobras hoy por cada uno",
+   "tipo": "texto_largo",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A12",
+   "texto": "¿Ese precio incluye materiales o los cobras aparte?",
+   "tipo": "eleccion",
+   "rutas": [
+    "asesoria"
+   ],
+   "opciones": "__pendiente__"
+  },
+  {
+   "id": "A13",
+   "texto": "Horas reales que te toma cada uno de esos 3 servicios",
+   "tipo": "texto_largo",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A14",
+   "texto": "¿Tienes tamaños y número de líneas estandarizados (Jumbo, L, M, S, XS)?",
+   "tipo": "sino",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A15",
+   "texto": "Del 1 al 5, ¿sientes que tu precio actual cubre tu tiempo y desgaste?",
+   "tipo": "escala",
+   "rutas": [
+    "asesoria"
+   ],
+   "escala": {
+    "min": 1,
+    "max": 5
+   }
+  },
+  {
+   "id": "A16",
+   "texto": "Salario mínimo o piso técnico de tu mercado local, si lo sabes",
+   "tipo": "numero",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A17",
+   "texto": "¿Aplicas recargos por tipo de cliente, largo de cabello natural o de extensión?",
+   "tipo": "sino",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A18",
+   "texto": "Clientes nuevos al mes y clientes recurrentes al mes",
+   "tipo": "dos_numeros",
+   "rutas": [
+    "asesoria"
+   ],
+   "campos": [
+    {
+     "id": "nuevos",
+     "etiqueta": "Clientes nuevos al mes"
+    },
+    {
+     "id": "recurrentes",
+     "etiqueta": "Clientes recurrentes al mes"
+    }
+   ]
+  },
+  {
+   "id": "A19",
+   "texto": "¿Tu tipo de clientela ha cambiado con el tiempo? Cuéntanos brevemente cómo empezaste y dónde estás ahora.",
+   "tipo": "texto_largo",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A20",
+   "texto": "¿De dónde viene la mayoría de tus clientes hoy?",
+   "tipo": "texto",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A21",
+   "texto": "¿Llevas registro de datos de tus clientes (edad, profesión, procedencia)?",
+   "tipo": "sino",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A22",
+   "texto": "¿Tienes temporadas muertas identificadas en el año?",
+   "tipo": "sino",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A23",
+   "texto": "Seguidores actuales en tu red principal",
+   "tipo": "numero",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A24",
+   "texto": "¿Tu contenido hoy es mayormente tutoriales para trenzadores, contenido para el cliente final, o mezcla de ambos?",
+   "tipo": "eleccion",
+   "rutas": [
+    "asesoria"
+   ],
+   "opciones": [
+    "Tutoriales para trenzadores",
+    "Contenido para el cliente final",
+    "Mezcla de ambos"
+   ]
+  },
+  {
+   "id": "A25",
+   "texto": "Del 1 al 5, ¿qué tan cómodo/a te sientes hablando en cámara o en voz en off?",
+   "tipo": "escala",
+   "rutas": [
+    "asesoria"
+   ],
+   "escala": {
+    "min": 1,
+    "max": 5
+   }
+  },
+  {
+   "id": "A26",
+   "texto": "¿Con qué grabas y qué iluminación usas hoy?",
+   "tipo": "texto_largo",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A27",
+   "texto": "¿Con qué frecuencia publicas por semana?",
+   "tipo": "numero",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A28",
+   "texto": "¿Cómo gestionas hoy las consultas?",
+   "tipo": "texto_largo",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A29",
+   "texto": "¿Cuántas horas por semana calculas que pierdes respondiendo mensajes que no cierran venta?",
+   "tipo": "numero",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A30",
+   "texto": "¿Haces seguimiento post-servicio (2-3 semanas después) para pedir testimonio?",
+   "tipo": "sino",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A31",
+   "texto": "Del 1 al 5, ¿sientes que tu perfil (estética, comunicación) ya está listo para ese salto?",
+   "tipo": "escala",
+   "rutas": [
+    "asesoria"
+   ],
+   "escala": {
+    "min": 1,
+    "max": 5
+   }
+  },
+  {
+   "id": "A32",
+   "texto": "¿Te interesa a futuro el mercado VIP?",
+   "tipo": "sino",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A33",
+   "texto": "Del 1 al 5, ¿qué tan cómodo/a te sientes con la idea de ser una cara reconocida o un referente del sector, más allá de simplemente hacer buen trabajo?",
+   "tipo": "escala",
+   "rutas": [
+    "asesoria"
+   ],
+   "escala": {
+    "min": 1,
+    "max": 5
+   }
+  }
+ ]
+}

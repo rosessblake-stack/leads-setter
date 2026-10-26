@@ -10,9 +10,10 @@ Reel → comentario → ManyChat → /guia?v=CODIGO_VIDEO&mc=ID_CONTACTO
 
 ## Qué hace hoy
 
-- `/guia`: formulario con consentimiento, campo trampa anti-bots y los identificadores del enlace de ManyChat (`v` = código del vídeo, `mc` = ID del contacto).
-- `POST /api/lead`: valida, guarda persona + formulario + ficha + evento en una transacción y responde. Después (sin hacer esperar a la persona) Claude rellena la ficha y se avisa por Telegram.
-- Claude solo clasifica con un esquema cerrado; el código valida y recorta todo lo que devuelve. El texto de la persona se trata como dato, nunca como instrucción.
+- `/guia`: formulario por pasos (una pregunta por pantalla, barra de progreso, volver, Enter avanza) con cuatro rutas: presencial, online, asesoría 1:1 y "No lo tengo claro". Pensado primero para móvil. Guarda lo respondido en el navegador por si la persona vuelve, y lleva el vídeo de origen (`?v=`) y el contacto de ManyChat (`?mc=`).
+- **Las preguntas viven en `src/formulario/preguntas.json`** (textos, opciones, rutas, condiciones, límites). Se editan ahí, sin tocar componentes. Las reglas de sugerencia de oferta de "No lo tengo claro" están en `src/formulario/reglas-oferta.json`. Las opciones marcadas `"__pendiente__"` se muestran como texto libre hasta confirmarlas.
+- `POST /api/lead`: valida cada respuesta con ese mismo archivo, guarda persona + formulario + ficha + evento en una transacción y responde. Después Claude rellena la ficha y se avisa por Telegram. Claude solo clasifica con un esquema cerrado; el código valida todo lo que devuelve y los datos de contacto no se le envían.
+- El resumen `signals` (urgencia, quién decide, primer pago, ingresos, inversión previa, experiencia, clientes al mes, sugerencia de oferta) lo calcula el código.
 - Tope diario de análisis (`MAX_ANALISIS_DIA`).
 
 ## Comandos del bot (solo el chat del admin)

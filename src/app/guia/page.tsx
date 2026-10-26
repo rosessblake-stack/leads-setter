@@ -1,5 +1,6 @@
 import { Formulario } from "./formulario";
 import { CONSENT_TEXT } from "@/lib/consent";
+import { definicion } from "@/formulario/datos";
 
 type Params = { v?: string | string[]; mc?: string | string[] };
 
@@ -9,11 +10,8 @@ export default async function Guia({ searchParams }: { searchParams: Promise<Par
   const p = await searchParams;
   return (
     <main className="envoltorio">
-      <h1>Tu guía gratuita</h1>
-      <p className="intro">
-        Cuéntame un poco sobre ti para enviarte la guía y orientarte mejor. Tarda un par de minutos.
-      </p>
       <Formulario
+        definicion={definicion}
         video={uno(p.v) ?? ""}
         manychat={uno(p.mc) ?? ""}
         textoConsentimiento={CONSENT_TEXT}

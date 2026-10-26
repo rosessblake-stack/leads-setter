@@ -1,12 +1,12 @@
 import { sql } from "./db";
 import { analizarFormulario, type FichaAnalizada } from "./analysis";
-import { avisarAdmin, construirMensaje } from "./telegram";
+import { avisarAdmin, construirMensaje, resumenDe } from "./telegram";
 import type { LeadGuardado } from "./lead";
-import type { Formulario } from "./validation";
+import type { Solicitud } from "@/formulario/solicitud";
 
 // Lee el formulario con Claude, actualiza la ficha y avisa por Telegram.
 // Nunca escribe a la persona. Si algo falla, el aviso sale igualmente.
-export async function procesarLead(f: Formulario, g: LeadGuardado): Promise<void> {
+export async function procesarLead(s: Solicitud, g: LeadGuardado): Promise<void> {
   let ficha: FichaAnalizada | null = null;
   let nota: string | undefined;
 
@@ -18,7 +18,7 @@ export async function procesarLead(f: Formulario, g: LeadGuardado): Promise<void
     if (n >= tope) {
       nota = "Tope diario de análisis alcanzado: ficha sin analizar.";
     } else {
-      ficha = await analizarFormulario(f);
+      ficha = await analizarFormulario(s);
       if (!ficha) nota = "Claude no devolvió un análisis válido.";
     }
   } catch (e) {
@@ -47,7 +47,7 @@ export async function procesarLead(f: Formulario, g: LeadGuardado): Promise<void
       });
     }
 
-    const enviado = await avisarAdmin(construirMensaje(f, ficha, nota));
+    const enviado = await avisarAdmin(construirMensaje(resumenDe(s), ficha, nota));
     if (enviado) {
       await sql()`
         update setter.fichas set estado = 'notificado', notificado_at = now()

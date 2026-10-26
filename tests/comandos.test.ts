@@ -65,11 +65,13 @@ describe("reconstruirLead", () => {
   const base = {
     nombre: "Ana",
     email: "ana@x.com",
+    telefono: "+34600000000",
     ig_username: null,
     pais: "España",
-    interes: "online" as const,
     como_nos_conociste: null,
-    respuestas: { ciudad: "Madrid", nivel: "intermedio", dificultad: "d", objetivo: "o" },
+    ruta: "online" as const,
+    signals: { urgencia: 8, quien_decide: "La decido yo" },
+    respuestas: { C03: { valor: "WhatsApp", extra: "+34600000000" } },
     video_codigo: "reel-1",
     estado: "analizado",
     nivel: "intermedio" as const,
@@ -81,11 +83,12 @@ describe("reconstruirLead", () => {
     sospechoso: null,
   };
 
-  it("reconstruye formulario y ficha", () => {
-    const { f, ficha } = reconstruirLead(base);
-    expect(f.nombre).toBe("Ana");
-    expect(f.ciudad).toBe("Madrid");
-    expect(f.v).toBe("reel-1");
+  it("reconstruye el resumen y la ficha", () => {
+    const { resumen, ficha } = reconstruirLead(base);
+    expect(resumen.nombre).toBe("Ana");
+    expect(resumen.contacto).toBe("WhatsApp (+34600000000)");
+    expect(resumen.v).toBe("reel-1");
+    expect(resumen.signals?.urgencia).toBe(8);
     expect(ficha?.puntuacion).toBe(60);
     expect(ficha?.sospechoso).toBe(false);
   });
@@ -93,5 +96,11 @@ describe("reconstruirLead", () => {
   it("devuelve ficha nula si el lead no llegó a analizarse", () => {
     const { ficha } = reconstruirLead({ ...base, resumen: null, nivel: null, puntuacion: null });
     expect(ficha).toBeNull();
+  });
+
+  it("un formulario antiguo (sin ruta) no rompe", () => {
+    const { resumen } = reconstruirLead({ ...base, ruta: null, signals: null, respuestas: null });
+    expect(resumen.ruta).toBeNull();
+    expect(resumen.signals).toBeNull();
   });
 });
