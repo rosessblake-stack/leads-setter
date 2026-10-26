@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { definicion as def, reglasOferta } from "@/formulario/datos";
-import { claveExtra, limpiar, rutaDe, validarRespuesta, validarTodo, visibles } from "@/formulario/motor";
+import { claveExtra, limpiar, rutaDe, textoFinal, validarRespuesta, validarTodo, visibles } from "@/formulario/motor";
 import { calcularSignals } from "@/formulario/signals";
 import { construirSolicitud, extraerInstagram } from "@/formulario/solicitud";
 import type { Respuestas } from "@/formulario/tipos";
@@ -197,5 +197,34 @@ describe("extraerInstagram", () => {
     expect(extraerInstagram("@blake.braider")).toBe("blake.braider");
     expect(extraerInstagram("https://instagram.com/reel/abc")).toBeNull();
     expect(extraerInstagram("https://miweb.com")).toBeNull();
+  });
+});
+
+describe("texto de la pantalla final", () => {
+  const r = (ruta: string, extra: Respuestas = {}): Respuestas => ({ C01: "Ana Pérez", C03: "WhatsApp", C06: ruta, ...extra });
+  it("cambia según la ruta y usa el nombre y el canal elegido", () => {
+    const p = textoFinal(def, r(PRES));
+    expect(p).toContain("Gracias, Ana.");
+    expect(p).toContain("formación presencial");
+    expect(p).toContain("por WhatsApp");
+    expect(textoFinal(def, r(ONLINE))).toContain("curso online");
+    expect(textoFinal(def, r(ASES, { C03: "Instagram" }))).toContain("asesoría 1:1");
+    expect(textoFinal(def, r(ASES, { C03: "Instagram" }))).toContain("por Instagram");
+    expect(textoFinal(def, r(NOCLARO))).toContain("qué opción te encaja mejor");
+  });
+  it("no deja huecos sin rellenar", () => {
+    for (const ruta of [PRES, ONLINE, ASES, NOCLARO]) {
+      const t = textoFinal(def, { C06: ruta });
+      expect(t).not.toMatch(/[{}]/);
+      expect(t).not.toContain("Gracias,.");
+      expect(t).toContain("el canal que has elegido");
+    }
+    expect(textoFinal(def, {})).not.toMatch(/[{}]/);
+  });
+  it("no promete precios ni plazos", () => {
+    for (const ruta of [PRES, ONLINE, ASES, NOCLARO]) {
+      const t = textoFinal(def, r(ruta));
+      expect(t).not.toMatch(/€|\d+ (horas|días)|mañana|hoy mismo/i);
+    }
   });
 });

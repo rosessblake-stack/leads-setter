@@ -50,7 +50,8 @@ export type Pregunta = {
 export type Definicion = {
   version: string;
   bienvenida: { titulo: string; texto: string };
-  final: { texto: string };
+  // Texto de la pantalla final. Admite {nombre} (", Ana") y {canal} (WhatsApp o Instagram).
+  final: { texto: string; rutas?: Partial<Record<Ruta, string>> };
   pregunta_de_ruta: string;
   rutas: Record<string, Ruta>;
   preguntas: Pregunta[];

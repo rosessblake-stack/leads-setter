@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Definicion, Pregunta, Respuestas } from "@/formulario/tipos";
-import { PENDIENTE, claveExtra, extraAplica, limpiar, validarRespuesta, visibles } from "@/formulario/motor";
+import { PENDIENTE, claveExtra, extraAplica, limpiar, textoFinal, validarRespuesta, visibles } from "@/formulario/motor";
 
 type Props = {
   definicion: Definicion;
@@ -177,7 +177,7 @@ export function Formulario({ definicion, video, manychat, textoConsentimiento, p
     return (
       <div className="pantalla">
         <section className="gracias centro" role="status">
-          <h2>{definicion.final.texto}</h2>
+          <h2>{textoFinal(definicion, respuestas)}</h2>
         </section>
       </div>
     );

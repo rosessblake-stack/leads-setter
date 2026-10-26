@@ -12,7 +12,7 @@ Orden acordado:
 
 Pendiente de Blake antes de abrir el formulario al público:
 - Datos de la política de privacidad (empresa y número fiscal, dirección, email de contacto, plazo de conservación) y revisión por un gestor o abogado.
-- Texto final de la pantalla de gracias y regalo (posiblemente distintos según la ruta).
+- Regalo al terminar el formulario (posiblemente distinto según la ruta). Los textos finales por ruta ya están escritos en `src/formulario/preguntas.json` (`final.rutas`); revisarlos.
 - Opciones de las preguntas de asesoría A01, A02, A04, A07 y A12 (por ahora son texto libre).
 
 ## Más adelante: ficha de clientes del salón (no es para ahora)

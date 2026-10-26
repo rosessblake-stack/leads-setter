@@ -209,3 +209,12 @@ export function almacenar(def: Definicion, limpias: Respuestas): Record<string, 
   }
   return salida;
 }
+
+// Texto de la pantalla final según la ruta, con el nombre y el canal que eligió la persona.
+export function textoFinal(def: Definicion, r: Respuestas): string {
+  const ruta = rutaDe(def, r);
+  const plantilla = (ruta && def.final.rutas?.[ruta]) || def.final.texto;
+  const primero = typeof r["C01"] === "string" ? r["C01"].trim().split(/\s+/)[0].slice(0, 30) : "";
+  const canal = r["C03"] === "WhatsApp" || r["C03"] === "Instagram" ? (r["C03"] as string) : "el canal que has elegido";
+  return plantilla.replace("{nombre}", primero ? `, ${primero}` : "").replace("{canal}", canal);
+}
