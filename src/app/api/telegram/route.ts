@@ -35,7 +35,11 @@ export async function POST(req: Request) {
 
   const mensaje = update.message;
   if (!mensaje || !esAdmin(mensaje.chat?.id, process.env.TELEGRAM_ADMIN_CHAT_ID)) {
-    console.warn("Webhook de Telegram ignorado: el mensaje no viene del chat del admin");
+    // Temporal: anota el ID para poder configurarlo bien. El ID de chat no es un secreto.
+    console.warn(
+      "Webhook de Telegram ignorado: el mensaje no viene del chat del admin. chat_id recibido =",
+      String(mensaje?.chat?.id ?? "ninguno"),
+    );
     return new Response("ok");
   }
 
