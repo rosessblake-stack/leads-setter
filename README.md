@@ -15,6 +15,14 @@ Reel → comentario → ManyChat → /guia?v=CODIGO_VIDEO&mc=ID_CONTACTO
 - Claude solo clasifica con un esquema cerrado; el código valida y recorta todo lo que devuelve. El texto de la persona se trata como dato, nunca como instrucción.
 - Tope diario de análisis (`MAX_ANALISIS_DIA`).
 
+## Comandos del bot (solo el chat del admin)
+
+- `/estado`: comprueba base de datos, clave de Claude, regalo y fichas sin avisar.
+- `/leads`: los últimos 5 leads.
+- `/ayuda`: lista de comandos.
+
+El webhook (`/api/telegram`) exige la cabecera secreta `TELEGRAM_WEBHOOK_SECRET` y se registra una vez con `setWebhook` de Telegram.
+
 ## Base de datos
 
 Schema `setter` en el proyecto Supabase `Legacy-Data`. No está expuesto en la API pública: el servidor entra con el rol `setter_app` por conexión directa (`SETTER_DATABASE_URL`). Los eventos solo se añaden.
