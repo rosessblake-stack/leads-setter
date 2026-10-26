@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { sql } from "./db";
+import { intentar, sql } from "./db";
 import { urlPanel } from "./config";
 
 export const COOKIE_PANEL = "panel_sesion";
@@ -38,11 +38,14 @@ export async function canjear(t: string): Promise<string | null> {
 
 export async function sesionValida(valor: string | undefined): Promise<boolean> {
   if (!valor || !FORMATO_SECRETO.test(valor)) return false;
-  const [fila] = await sql()`
-    update setter.panel_sesiones set ultimo_uso_at = now()
-    where sesion_hash = ${huella(valor)} and expira_at > now()
-    returning sesion_hash`;
-  return Boolean(fila);
+  // Se puede repetir sin efectos, así que, si la conexión se cuelga, se reintenta con otra.
+  return intentar(async () => {
+    const [fila] = await sql()`
+      update setter.panel_sesiones set ultimo_uso_at = now()
+      where sesion_hash = ${huella(valor)} and expira_at > now()
+      returning sesion_hash`;
+    return Boolean(fila);
+  });
 }
 
 export async function cerrarSesion(valor: string | undefined): Promise<void> {

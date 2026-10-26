@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { sql } from "@/lib/db";
+import { intentar, sql } from "@/lib/db";
 import { exigirSesion } from "@/lib/panel";
 import {
   ETIQUETA_EVENTO,
@@ -20,6 +20,7 @@ import { Seguimiento, type DatosSeguimiento } from "./seguimiento";
 import type { Almacenada, Ruta } from "@/formulario/tipos";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 export const metadata = { title: "Lead" };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -36,27 +37,32 @@ export default async function Ficha({
   const { id } = await params;
   if (!UUID.test(id)) notFound();
 
-  const [r] = await sql()`
-    select fi.id as ficha_id, fi.nivel, fi.dolores, fi.oferta_recomendada, fi.encaje, fi.resumen, fi.puntuacion,
-           fi.estado, fi.fase, fi.propuesta_estado, fi.propuesta_at,
-           to_char(fi.reserva_at at time zone 'Europe/Madrid', 'YYYY-MM-DD"T"HH24:MI') as reserva_input,
-           p.id as persona_id, p.nombre, p.email, p.telefono, p.ig_username, p.pais,
-           f.ruta, f.interes, f.como_nos_conociste, f.respuestas, f.signals, f.creado_at, f.iniciado_at,
-           v.codigo as video_codigo
-    from setter.fichas fi
-    join setter.formularios f on f.id = fi.formulario_id
-    join setter.personas p on p.id = fi.persona_id
-    left join setter.videos v on v.id = f.video_id
-    where fi.id = ${id}`;
-  if (!r) notFound();
+  const datos = await intentar(async () => {
+    const [r] = await sql()`
+      select fi.id as ficha_id, fi.nivel, fi.dolores, fi.oferta_recomendada, fi.encaje, fi.resumen, fi.puntuacion,
+             fi.estado, fi.fase, fi.propuesta_estado, fi.propuesta_at,
+             to_char(fi.reserva_at at time zone 'Europe/Madrid', 'YYYY-MM-DD"T"HH24:MI') as reserva_input,
+             p.id as persona_id, p.nombre, p.email, p.telefono, p.ig_username, p.pais,
+             f.ruta, f.interes, f.como_nos_conociste, f.respuestas, f.signals, f.creado_at, f.iniciado_at,
+             v.codigo as video_codigo
+      from setter.fichas fi
+      join setter.formularios f on f.id = fi.formulario_id
+      join setter.personas p on p.id = fi.persona_id
+      left join setter.videos v on v.id = f.video_id
+      where fi.id = ${id}`;
+    if (!r) return null;
 
-  const eventos = await sql()`
-    select tipo, datos, creado_at from setter.eventos where persona_id = ${r.persona_id} order by id desc limit 50`;
+    const eventos = await sql()`
+      select tipo, datos, creado_at from setter.eventos where persona_id = ${r.persona_id} order by id desc limit 50`;
 
-  const [resultado] = await sql()`
-    select resultado, producto, importe_cents, forma_pago, edicion, motivo, nota
-    from setter.resultados where ficha_id = ${id}`;
-  const notas = await sql()`select texto, creado_at from setter.notas where ficha_id = ${id} order by id desc limit 100`;
+    const [resultado] = await sql()`
+      select resultado, producto, importe_cents, forma_pago, edicion, motivo, nota
+      from setter.resultados where ficha_id = ${id}`;
+    const notas = await sql()`select texto, creado_at from setter.notas where ficha_id = ${id} order by id desc limit 100`;
+    return { r, eventos, resultado, notas };
+  });
+  if (!datos) notFound();
+  const { r, eventos, resultado, notas } = datos;
   const q = await searchParams;
   const aviso = q.error
     ? { tipo: "error" as const, texto: q.error.slice(0, 200) }

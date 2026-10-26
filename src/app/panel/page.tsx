@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { sql } from "@/lib/db";
+import { intentar, sql } from "@/lib/db";
 import { exigirSesion } from "@/lib/panel";
 import {
   FASES,
@@ -19,6 +19,7 @@ import { NOMBRE_PROPUESTA, type Propuesta } from "@/lib/seguimiento-util";
 import type { Ruta } from "@/formulario/tipos";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 export const metadata = { title: "Leads" };
 
 type Params = Record<string, string | string[] | undefined>;
@@ -75,8 +76,9 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
     and (${f.ruta}::text is null or f.ruta = ${f.ruta})
     and (${patron}::text is null or p.nombre ilike ${patron} or p.email ilike ${patron} or p.ig_username ilike ${patron})`;
 
-  const [filas, [total], [porVista], porFase] = await Promise.all([
-    sql()`
+  // Una consulta detrás de otra (no a la vez) y con límite de tiempo por si la conexión se cuelga.
+  const { filas, total, porVista, porFase } = await intentar(async () => {
+    const filas = await sql()`
       select fi.id as ficha_id, p.nombre, f.ruta, fi.encaje, fi.puntuacion, fi.oferta_recomendada, fi.fase,
              fi.propuesta_estado, fi.reserva_at, v.codigo as video_codigo, f.creado_at
       from setter.fichas fi
@@ -85,14 +87,14 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
       left join setter.videos v on v.id = f.video_id
       where ${filtrosSql}
       order by (case when ${f.vista}::text = 'agendadas' then fi.reserva_at end) asc nulls last, f.creado_at desc
-      limit ${POR_PAGINA} offset ${(f.pagina - 1) * POR_PAGINA}`,
-    sql()`
+      limit ${POR_PAGINA} offset ${(f.pagina - 1) * POR_PAGINA}`;
+    const [total] = await sql()`
       select count(*)::int as n
       from setter.fichas fi
       join setter.formularios f on f.id = fi.formulario_id
       join setter.personas p on p.id = fi.persona_id
-      where ${filtrosSql}`,
-    sql()`
+      where ${filtrosSql}`;
+    const [porVista] = await sql()`
       select
         count(*) filter (where fi.propuesta_estado in ('pendiente', 'no_enviada') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as por_enviar,
         count(*) filter (where fi.reserva_at is null and f.ruta is distinct from 'asesoria' and fi.propuesta_estado in ('enviada', 'manual')
@@ -100,9 +102,10 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
         count(*) filter (where fi.reserva_at is not null and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as agendadas,
         count(*) filter (where fi.fase = 'vendido')::int as vendidos,
         count(*) filter (where fi.fase = 'no_vendido')::int as no_vendidos
-      from setter.fichas fi join setter.formularios f on f.id = fi.formulario_id`,
-    sql()`select fase, count(*)::int as n from setter.fichas group by fase`,
-  ]);
+      from setter.fichas fi join setter.formularios f on f.id = fi.formulario_id`;
+    const porFase = await sql()`select fase, count(*)::int as n from setter.fichas group by fase`;
+    return { filas, total, porVista, porFase };
+  });
 
   const cuentasFase = new Map<string, number>(porFase.map((r) => [r.fase as string, r.n as number]));
   const paginas = Math.max(1, Math.ceil((total?.n ?? 0) / POR_PAGINA));
