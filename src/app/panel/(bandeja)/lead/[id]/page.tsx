@@ -52,14 +52,18 @@ export default async function Ficha({
       where fi.id = ${id}`;
     if (!r) return null;
 
-    const eventos = await sql()`
-      select tipo, datos, creado_at from setter.eventos where persona_id = ${r.persona_id} order by id desc limit 50`;
-
-    const [resultado] = await sql()`
-      select resultado, producto, importe_cents, forma_pago, edicion, motivo, nota
-      from setter.resultados where ficha_id = ${id}`;
-    const notas = await sql()`select texto, creado_at from setter.notas where ficha_id = ${id} order by id desc limit 100`;
-    return { r, eventos, resultado, notas };
+    // Eventos, resultado y notas en la misma consulta: un solo viaje a la base de datos.
+    const [extra] = await sql()`
+      select
+        coalesce((select jsonb_agg(e order by e.id desc) from (
+          select id, tipo, datos, creado_at from setter.eventos where persona_id = ${r.persona_id} order by id desc limit 50) e), '[]'::jsonb) as eventos,
+        (select to_jsonb(x) from (
+          select resultado, producto, importe_cents, forma_pago, edicion, motivo, nota from setter.resultados where ficha_id = ${id}) x) as resultado,
+        coalesce((select jsonb_agg(n order by n.id desc) from (
+          select id, texto, creado_at from setter.notas where ficha_id = ${id} order by id desc limit 100) n), '[]'::jsonb) as notas`;
+    const eventos = (extra.eventos as { tipo: string; creado_at: string }[]).map((e) => ({ ...e, creado_at: new Date(e.creado_at) }));
+    const notas = (extra.notas as { texto: string; creado_at: string }[]).map((n) => ({ texto: n.texto, creado_at: new Date(n.creado_at) }));
+    return { r, eventos, resultado: extra.resultado, notas };
   });
   if (!datos) notFound();
   const { r, eventos, resultado, notas } = datos;
@@ -76,7 +80,7 @@ export default async function Ficha({
     propuesta_at: r.propuesta_at,
     reserva_input: r.reserva_input,
     resultado: resultado ?? null,
-    notas: notas.map((n) => ({ texto: n.texto as string, creado_at: n.creado_at as Date })),
+    notas,
   } as DatosSeguimiento;
 
   const respuestas = (r.respuestas ?? {}) as Record<string, Almacenada>;
@@ -155,7 +159,7 @@ export default async function Ficha({
             <p className="chips">
               {r.oferta_recomendada && <span className="chip">Recomendado: {OFERTA[r.oferta_recomendada]}</span>}
               {r.encaje && <span className={`chip encaje-${r.encaje}`}>Encaje {r.encaje}</span>}
-              {r.puntuacion !== null && <span className="chip">Probabilidad de compra {r.puntuacion}/100</span>}
+              {r.puntuacion !== null && <span className="chip">Probabilidad de compra {r.puntuacion}%</span>}
               {r.nivel && <span className="chip">Nivel {r.nivel}</span>}
             </p>
             {Array.isArray(r.dolores) && r.dolores.length > 0 && <p className="ayuda">Dolores: {r.dolores.join(", ")}</p>}

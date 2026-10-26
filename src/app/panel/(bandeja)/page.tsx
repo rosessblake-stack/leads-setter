@@ -77,10 +77,11 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
     and (${patron}::text is null or p.nombre ilike ${patron} or p.email ilike ${patron} or p.ig_username ilike ${patron})`;
 
   // Una consulta detrás de otra (no a la vez) y con límite de tiempo por si la conexión se cuelga.
-  const { filas, total, porVista, porFase } = await intentar(async () => {
+  const { filas, porVista } = await intentar(async () => {
     const filas = await sql()`
       select fi.id as ficha_id, p.nombre, f.ruta, fi.encaje, fi.puntuacion, fi.oferta_recomendada, fi.fase,
-             fi.propuesta_estado, fi.reserva_at, v.codigo as video_codigo, f.creado_at
+             fi.propuesta_estado, fi.reserva_at, v.codigo as video_codigo, f.creado_at,
+             count(*) over()::int as total
       from setter.fichas fi
       join setter.formularios f on f.id = fi.formulario_id
       join setter.personas p on p.id = fi.persona_id
@@ -88,12 +89,6 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
       where ${filtrosSql}
       order by (case when ${f.vista}::text = 'agendadas' then fi.reserva_at end) asc nulls last, f.creado_at desc
       limit ${POR_PAGINA} offset ${(f.pagina - 1) * POR_PAGINA}`;
-    const [total] = await sql()`
-      select count(*)::int as n
-      from setter.fichas fi
-      join setter.formularios f on f.id = fi.formulario_id
-      join setter.personas p on p.id = fi.persona_id
-      where ${filtrosSql}`;
     const [porVista] = await sql()`
       select
         count(*) filter (where fi.propuesta_estado in ('pendiente', 'no_enviada') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as por_enviar,
@@ -101,15 +96,16 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
                            and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as sin_agendar,
         count(*) filter (where fi.reserva_at is not null and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as agendadas,
         count(*) filter (where fi.fase = 'vendido')::int as vendidos,
-        count(*) filter (where fi.fase = 'no_vendido')::int as no_vendidos
+        count(*) filter (where fi.fase = 'no_vendido')::int as no_vendidos,
+        (select coalesce(jsonb_object_agg(t.fase, t.n), '{}'::jsonb) from (select fase, count(*)::int as n from setter.fichas group by fase) t) as por_fase
       from setter.fichas fi join setter.formularios f on f.id = fi.formulario_id`;
-    const porFase = await sql()`select fase, count(*)::int as n from setter.fichas group by fase`;
-    return { filas, total, porVista, porFase };
+    return { filas, porVista };
   });
 
-  const cuentasFase = new Map<string, number>(porFase.map((r) => [r.fase as string, r.n as number]));
-  const paginas = Math.max(1, Math.ceil((total?.n ?? 0) / POR_PAGINA));
+  const cuentasFase = (porVista?.por_fase ?? {}) as Record<string, number>;
   const lista = filas as unknown as Fila[];
+  const total = (filas[0]?.total as number | undefined) ?? 0;
+  const paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
 
   return (
     <main className="pantalla panel">
@@ -139,7 +135,7 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
         </Link>
         {FASES.map((fase) => (
           <Link key={fase} href={enlace(f, { fase })} className={`ficha-chip${f.fase === fase ? " activa" : ""}`}>
-            {NOMBRE_FASE[fase]} <span>{cuentasFase.get(fase) ?? 0}</span>
+            {NOMBRE_FASE[fase]} <span>{cuentasFase[fase] ?? 0}</span>
           </Link>
         ))}
       </nav>
@@ -168,7 +164,7 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
       </form>
 
       <p className="ayuda">
-        {total?.n ?? 0} {(total?.n ?? 0) === 1 ? "lead" : "leads"}
+        {total} {total === 1 ? "lead" : "leads"}
       </p>
 
       {lista.length === 0 ? (
@@ -188,7 +184,7 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
                   <span className={`chip propuesta-${l.propuesta_estado}`}>Propuesta: {NOMBRE_PROPUESTA[l.propuesta_estado]}</span>
                   {l.reserva_at && <span className="chip reserva">Llamada {fechaCorta(l.reserva_at)}</span>}
                   {l.encaje && <span className={`chip encaje-${l.encaje}`}>Encaje {l.encaje}</span>}
-                  {l.puntuacion !== null && <span className="chip">{l.puntuacion}/100</span>}
+                  {l.puntuacion !== null && <span className="chip">{l.puntuacion}%</span>}
                   {l.oferta_recomendada && <span className="chip">Recomendado: {OFERTA[l.oferta_recomendada]}</span>}
                   {l.video_codigo && <span className="chip">Vídeo {l.video_codigo}</span>}
                 </span>

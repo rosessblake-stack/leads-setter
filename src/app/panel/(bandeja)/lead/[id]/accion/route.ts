@@ -14,12 +14,13 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Todas las acciones de seguimiento de un lead entran por aquí (formularios POST del panel).
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const fluido = req.headers.get("x-fluido") === "1"; // petición del panel sin recarga: responde JSON
   const origen = req.headers.get("origin");
   const host = req.headers.get("host");
   if (!origen || !host || new URL(origen).host !== host) return new Response("Origen no permitido", { status: 403 });
 
   if (!(await sesionValida((await cookies()).get(COOKIE_PANEL)?.value))) {
-    return ir("/panel/entrar");
+    return fluido ? Response.json({ ok: false }, { status: 401 }) : ir("/panel/entrar");
   }
 
   const { id } = await ctx.params;
@@ -30,7 +31,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const accion = String(get("accion") ?? "");
 
   const volver = (q: string) => ir(`/panel/lead/${id}?${q}#seguimiento`);
-  const fallo = (e: string) => volver("error=" + encodeURIComponent(e));
+  const fallo = (e: string) => (fluido ? Response.json({ ok: false, error: e }, { status: 400 }) : volver("error=" + encodeURIComponent(e)));
 
   try {
     let existe = false;
@@ -69,7 +70,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         return fallo("Acción no válida.");
     }
     if (!existe) return new Response("No encontrado", { status: 404 });
-    return volver("guardado=" + accion);
+    return fluido ? Response.json({ ok: true }) : volver("guardado=" + accion);
   } catch (e) {
     console.error("Seguimiento: error", accion, e instanceof Error ? e.message : "desconocido");
     return fallo("No se pudo guardar. Inténtalo de nuevo.");

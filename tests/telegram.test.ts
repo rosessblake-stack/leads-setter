@@ -26,7 +26,7 @@ describe("telegram", () => {
     expect(m).toContain("Vídeo: reel-1");
     expect(m).toContain("urgencia 7/10");
     expect(m).toContain("Sugerencia por sus respuestas: Formación presencial");
-    expect(m).toContain("80/100");
+    expect(m).toContain("80%");
     expect(m).toContain("Encaje con tu cliente ideal: alto");
     expect(m).toContain("Quiere crecer &lt;rápido&gt;");
   });

@@ -1,3 +1,4 @@
+import { FormularioAjax, Pildoras } from "../../ajax";
 import {
   FASES_MANUALES,
   FORMAS_PAGO,
@@ -48,14 +49,7 @@ export function Seguimiento({ d, aviso }: { d: DatosSeguimiento; aviso: { tipo: 
 
       <div className="subbloque">
         <h3>Fase</h3>
-        <form method="post" action={accion} className="botonera">
-          <input type="hidden" name="accion" value="fase" />
-          {FASES_MANUALES.map((f) => (
-            <button key={f} type="submit" name="fase" value={f} className={`pildora${d.fase === f ? " activa" : ""}`} aria-pressed={d.fase === f}>
-              {NOMBRE_FASE[f]}
-            </button>
-          ))}
-        </form>
+        <Pildoras action={accion} accion="fase" campo="fase" activo={d.fase} opciones={FASES_MANUALES.map((f) => ({ valor: f, etiqueta: NOMBRE_FASE[f] }))} />
         {(d.fase === "vendido" || d.fase === "no_vendido") && (
           <p className="ayuda">Ahora mismo: {NOMBRE_FASE[d.fase]}. Si eliges otra fase, el resultado registrado se quita.</p>
         )}
@@ -67,26 +61,19 @@ export function Seguimiento({ d, aviso }: { d: DatosSeguimiento; aviso: { tipo: 
           {NOMBRE_PROPUESTA[d.propuesta_estado]}
           {d.propuesta_at && d.propuesta_estado !== "pendiente" ? ` · ${fechaCorta(d.propuesta_at)}` : ""}
         </p>
-        <form method="post" action={accion} className="botonera">
-          <input type="hidden" name="accion" value="propuesta" />
-          {PROPUESTAS.map((p) => (
-            <button key={p} type="submit" name="estado" value={p} className={`pildora${d.propuesta_estado === p ? " activa" : ""}`} aria-pressed={d.propuesta_estado === p}>
-              {NOMBRE_PROPUESTA[p]}
-            </button>
-          ))}
-        </form>
+        <Pildoras action={accion} accion="propuesta" campo="estado" activo={d.propuesta_estado} opciones={PROPUESTAS.map((p) => ({ valor: p, etiqueta: NOMBRE_PROPUESTA[p] }))} />
       </div>
 
       <div className="subbloque">
         <h3>Reserva de la llamada</h3>
-        <form method="post" action={accion} className="reserva">
+        <FormularioAjax action={accion} className="reserva">
           <input type="hidden" name="accion" value="reserva" />
           <label>
             <span className="solo-lectores">Fecha y hora (hora de España)</span>
             <input type="datetime-local" name="reserva" defaultValue={d.reserva_input ?? ""} />
           </label>
           <button type="submit" className="secundario">Guardar</button>
-        </form>
+        </FormularioAjax>
         <p className="ayuda">Hora de España. Para quitar la reserva, borra la fecha y guarda.</p>
       </div>
 
@@ -102,7 +89,7 @@ export function Seguimiento({ d, aviso }: { d: DatosSeguimiento; aviso: { tipo: 
         )}
         <details open={!r}>
           <summary>{r ? "Corregir el resultado" : "Registrar el resultado"}</summary>
-          <form method="post" action={accion} className="formulario-seg">
+          <FormularioAjax action={accion} className="formulario-seg">
             <input type="hidden" name="accion" value="resultado" />
             <fieldset>
               <legend>Si ha comprado</legend>
@@ -141,20 +128,20 @@ export function Seguimiento({ d, aviso }: { d: DatosSeguimiento; aviso: { tipo: 
               <button type="submit" name="resultado" value="vendido" className="principal">Registrar como vendido</button>
               <button type="submit" name="resultado" value="no_vendido" className="secundario">Registrar como no vendido</button>
             </div>
-          </form>
+          </FormularioAjax>
         </details>
       </div>
 
       <div className="subbloque">
         <h3>Notas</h3>
-        <form method="post" action={accion} className="nota-form">
+        <FormularioAjax action={accion} className="nota-form" limpiar>
           <input type="hidden" name="accion" value="nota" />
           <label>
             <span className="solo-lectores">Nueva nota</span>
             <textarea name="texto" rows={3} maxLength={2000} placeholder="Lo que quieras recordar de esta persona" required />
           </label>
           <button type="submit" className="secundario">Guardar nota</button>
-        </form>
+        </FormularioAjax>
         {d.notas.length > 0 && (
           <ul className="notas">
             {d.notas.map((n, i) => (

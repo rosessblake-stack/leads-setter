@@ -124,7 +124,7 @@ export async function comandoLeads(): Promise<string> {
         (r, i) =>
           `${i + 1}. ${escaparHtml(r.nombre)} — ${escaparHtml(fecha(r.creado_at))}\n  interés: ${escaparHtml(r.interes ?? "?")}, ` +
           `recomendado: ${escaparHtml(OFERTA[r.oferta_recomendada] ?? "—")}, ` +
-          `${r.puntuacion ?? "—"}/100, estado: ${escaparHtml(r.estado)}`,
+          `${r.puntuacion === null ? "—" : r.puntuacion + "%"}, estado: ${escaparHtml(r.estado)}`,
       ),
     ].join("\n");
   } catch (e) {

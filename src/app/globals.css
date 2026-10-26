@@ -225,3 +225,14 @@ details > summary { cursor: pointer; color: var(--accent-ink); font-family: var(
 .botonera > button, .botonera .pildora { max-width: 100%; }
 @media (max-width: 480px) { .botonera .principal, .botonera .secundario { flex: 1 1 100%; } }
 @media (max-width: 480px) { .reserva { grid-template-columns: minmax(0, 1fr); } .reserva button { width: 100%; } }
+
+/* Fluidez del panel: envío sin recarga, esperas con esqueleto y transiciones suaves */
+form fieldset.sin-marco { display: contents; border: 0; padding: 0; margin: 0; min-width: 0; }
+form[aria-busy="true"] button { opacity: 0.6; cursor: progress; }
+.pildora, .ficha-chip, a.lead { transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease; }
+a.lead:active, .ficha-chip:active, .pildora:active, button:active { transform: scale(0.98); }
+.esqueleto { display: grid; gap: 12px; }
+.esqueleto > span { display: block; height: 72px; border-radius: 12px; background: linear-gradient(90deg, var(--bg-2) 25%, rgba(255, 255, 255, 0.08) 50%, var(--bg-2) 75%); background-size: 200% 100%; animation: brillo 1.2s linear infinite; }
+.esqueleto > span.corto { height: 18px; width: 40%; }
+@keyframes brillo { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .esqueleto > span { animation: none; } a.lead:active, .ficha-chip:active, .pildora:active, button:active { transform: none; } }
