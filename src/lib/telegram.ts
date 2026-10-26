@@ -31,6 +31,7 @@ export function construirMensaje(
     l.push(
       `Oferta recomendada: <b>${escaparHtml(ficha.oferta_recomendada ? OFERTA[ficha.oferta_recomendada] : "ninguna clara")}</b>`,
     );
+    l.push(`Encaje con tu cliente ideal: ${escaparHtml(ficha.encaje)}`);
     l.push(`Probabilidad de compra: ${ficha.puntuacion}/100`);
     if (ficha.dolores.length) l.push(`Dolores: ${escaparHtml(ficha.dolores.join(", "))}`);
     l.push("");

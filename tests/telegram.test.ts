@@ -24,6 +24,7 @@ describe("telegram", () => {
       nivel: "avanzado",
       dolores: ["clientes"],
       oferta_recomendada: "presencial",
+      encaje: "alto",
       puntuacion: 80,
       sospechoso: false,
       resumen: "Quiere crecer <rápido>",
@@ -31,6 +32,7 @@ describe("telegram", () => {
     expect(m).toContain("&lt;b&gt;Ana&lt;/b&gt;");
     expect(m).toContain("Vídeo: reel-1");
     expect(m).toContain("80/100");
+    expect(m).toContain("Encaje con tu cliente ideal: alto");
     expect(m).toContain("Quiere crecer &lt;rápido&gt;");
   });
 

@@ -139,6 +139,7 @@ type FilaLead = {
   nivel: FichaAnalizada["nivel"] | null;
   dolores: FichaAnalizada["dolores"] | null;
   oferta_recomendada: "online" | "presencial" | "asesoria" | null;
+  encaje: FichaAnalizada["encaje"] | null;
   puntuacion: number | null;
   resumen: string | null;
   sospechoso: boolean | null;
@@ -167,6 +168,7 @@ export function reconstruirLead(r: FilaLead): { f: Formulario; ficha: FichaAnali
           nivel: r.nivel,
           dolores: r.dolores ?? [],
           oferta_recomendada: r.oferta_recomendada,
+          encaje: r.encaje ?? "medio",
           puntuacion: r.puntuacion,
           sospechoso: r.sospechoso ?? false,
           resumen: r.resumen,
@@ -180,7 +182,7 @@ export async function comandoLead(n: number): Promise<string> {
     const filas = await sql()`
       select p.nombre, p.email, p.ig_username, p.pais,
         f.interes, f.como_nos_conociste, f.respuestas, v.codigo as video_codigo,
-        fi.estado, fi.nivel, fi.dolores, fi.oferta_recomendada, fi.puntuacion, fi.resumen,
+        fi.estado, fi.nivel, fi.dolores, fi.oferta_recomendada, fi.encaje, fi.puntuacion, fi.resumen,
         (select (e.datos->>'sospechoso')::boolean from setter.eventos e
           where e.persona_id = p.id and e.tipo = 'ficha_analizada' order by e.id desc limit 1) as sospechoso
       from setter.fichas fi

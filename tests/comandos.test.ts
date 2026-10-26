@@ -75,6 +75,7 @@ describe("reconstruirLead", () => {
     nivel: "intermedio" as const,
     dolores: ["clientes" as const],
     oferta_recomendada: "online" as const,
+    encaje: "alto" as const,
     puntuacion: 60,
     resumen: "Resumen",
     sospechoso: null,

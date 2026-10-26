@@ -34,6 +34,7 @@ export async function procesarLead(f: Formulario, g: LeadGuardado): Promise<void
             nivel = ${ficha.nivel},
             dolores = ${tx.json(ficha.dolores)},
             oferta_recomendada = ${ficha.oferta_recomendada},
+            encaje = ${ficha.encaje},
             resumen = ${ficha.resumen},
             puntuacion = ${ficha.puntuacion},
             modelo = ${process.env.ANALYSIS_MODEL ?? "claude-opus-5-5"},
@@ -42,7 +43,7 @@ export async function procesarLead(f: Formulario, g: LeadGuardado): Promise<void
         await tx`
           insert into setter.eventos (persona_id, tipo, datos)
           values (${g.personaId}, 'ficha_analizada',
-            ${tx.json({ oferta: ficha.oferta_recomendada, puntuacion: ficha.puntuacion, sospechoso: ficha.sospechoso })})`;
+            ${tx.json({ oferta: ficha.oferta_recomendada, encaje: ficha.encaje, puntuacion: ficha.puntuacion, sospechoso: ficha.sospechoso })})`;
       });
     }
 
