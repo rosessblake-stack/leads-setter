@@ -38,17 +38,29 @@ export const POR_PAGINA = 30;
 type Params = Record<string, string | string[] | undefined>;
 const uno = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
-export type Filtros = { fase: Fase | null; ruta: Ruta | null; q: string | null; pagina: number };
+export const VISTAS = ["por_enviar", "sin_agendar", "agendadas", "vendidos", "no_vendidos"] as const;
+export type Vista = (typeof VISTAS)[number];
+export const NOMBRE_VISTA: Record<Vista, string> = {
+  por_enviar: "Por enviar",
+  sin_agendar: "Sin agendar",
+  agendadas: "Agendadas",
+  vendidos: "Vendidos",
+  no_vendidos: "No vendidos",
+};
+
+export type Filtros = { fase: Fase | null; ruta: Ruta | null; vista: Vista | null; q: string | null; pagina: number };
 
 // Solo se aceptan valores conocidos: lo demás se ignora.
 export function leerFiltros(sp: Params): Filtros {
   const fase = uno(sp.fase);
   const ruta = uno(sp.ruta);
+  const vista = uno(sp.vista);
   const q = (uno(sp.q) ?? "").trim().slice(0, 60);
   const pagina = Number.parseInt(uno(sp.pagina) ?? "1", 10);
   return {
     fase: (FASES as readonly string[]).includes(fase ?? "") ? (fase as Fase) : null,
     ruta: (RUTAS as string[]).includes(ruta ?? "") ? (ruta as Ruta) : null,
+    vista: (VISTAS as readonly string[]).includes(vista ?? "") ? (vista as Vista) : null,
     q: q === "" ? null : q,
     pagina: Number.isFinite(pagina) && pagina >= 1 && pagina <= 1000 ? pagina : 1,
   };
@@ -136,6 +148,11 @@ export function fechaCorta(d: Date | string | null | undefined): string {
 export const ETIQUETA_EVENTO: Record<string, string> = {
   formulario_enviado: "Rellenó el formulario",
   ficha_analizada: "Claude analizó la ficha",
+  fase_cambiada: "Cambió la fase",
+  propuesta_cambiada: "Cambió el estado de la propuesta",
+  reserva_cambiada: "Cambió la reserva",
+  nota_anadida: "Añadiste una nota",
+  resultado_registrado: "Registraste el resultado",
 };
 
 export const ETIQUETA_SIGNAL: Record<string, string> = {

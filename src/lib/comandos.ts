@@ -134,6 +134,7 @@ export async function comandoLeads(): Promise<string> {
 }
 
 type FilaLead = {
+  ficha_id?: string;
   nombre: string;
   email: string;
   telefono: string | null;
@@ -166,6 +167,7 @@ export function reconstruirLead(r: FilaLead): { resumen: ResumenLead; ficha: Fic
     v: r.video_codigo,
     como_nos_conociste: r.como_nos_conociste,
     signals: r.ruta ? r.signals : null,
+    fichaId: r.ficha_id ?? null,
   };
   const ficha: FichaAnalizada | null =
     r.resumen && r.nivel && r.puntuacion !== null
@@ -185,7 +187,7 @@ export function reconstruirLead(r: FilaLead): { resumen: ResumenLead; ficha: Fic
 export async function comandoLead(n: number): Promise<string> {
   try {
     const filas = await sql()`
-      select p.nombre, p.email, p.telefono, p.ig_username, p.pais,
+      select fi.id as ficha_id, p.nombre, p.email, p.telefono, p.ig_username, p.pais,
         f.como_nos_conociste, f.ruta, f.signals, f.respuestas, v.codigo as video_codigo,
         fi.estado, fi.nivel, fi.dolores, fi.oferta_recomendada, fi.encaje, fi.puntuacion, fi.resumen,
         (select (e.datos->>'sospechoso')::boolean from setter.eventos e

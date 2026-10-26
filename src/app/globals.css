@@ -191,3 +191,37 @@ dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
   .filtros { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
   .ficha-chip { flex: none; }
 }
+
+/* Seguimiento dentro de la ficha */
+.filtros.secundarios { margin-top: -6px; }
+.filtros.secundarios .ficha-chip { font-size: 0.72rem; min-height: 34px; padding: 6px 12px; }
+.chip.propuesta-no_enviada { color: var(--accent-ink); border-color: var(--accent); }
+.chip.propuesta-enviada, .chip.propuesta-manual { color: var(--good); border-color: var(--good); }
+.chip.reserva { color: var(--ink); border-color: var(--accent-ink); }
+.seguimiento { display: grid; gap: 4px; }
+.subbloque { margin: 0 0 22px; }
+.subbloque h3 { font-family: var(--grotesk); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-ink); margin: 0 0 8px; font-weight: 600; }
+.botonera { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.pildora { background: transparent; color: var(--ink-dim); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; min-height: 44px; font-size: 0.85rem; }
+.pildora:hover { border-color: var(--accent-ink); color: var(--ink); }
+.pildora.activa { color: var(--ink); border-color: var(--accent); background: rgba(214, 72, 59, 0.12); }
+.reserva { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+.formulario-seg { display: grid; gap: 14px; margin-top: 12px; }
+.formulario-seg fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px 14px; display: grid; gap: 12px; margin: 0; min-width: 0; }
+.formulario-seg legend { font-family: var(--grotesk); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-dim); padding: 0 6px; }
+.formulario-seg label { gap: 6px; font-size: 0.9rem; color: var(--ink-dim); }
+details > summary { cursor: pointer; color: var(--accent-ink); font-family: var(--grotesk); font-size: 0.85rem; padding: 6px 0; }
+.nota-form { display: grid; gap: 10px; }
+.notas { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 12px; }
+.notas li { display: grid; gap: 2px; border-left: 2px solid var(--line); padding-left: 12px; }
+.nota-texto { color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.aviso { color: var(--good); margin: 0 0 12px; border-left: 2px solid var(--good); padding-left: 0.8rem; }
+
+/* Las rejillas del panel se encogen con la pantalla: nada se sale por la derecha */
+.seguimiento, .formulario-seg, .formulario-seg fieldset, .nota-form, .datos, .respuestas { grid-template-columns: minmax(0, 1fr); }
+.reserva { grid-template-columns: minmax(0, 1fr) auto; }
+.seguimiento > *, .subbloque, .formulario-seg > *, .reserva > * { min-width: 0; }
+.formulario-seg input, .formulario-seg select, .reserva input, .nota-form textarea { max-width: 100%; }
+.botonera > button, .botonera .pildora { max-width: 100%; }
+@media (max-width: 480px) { .botonera .principal, .botonera .secundario { flex: 1 1 100%; } }
+@media (max-width: 480px) { .reserva { grid-template-columns: minmax(0, 1fr); } .reserva button { width: 100%; } }

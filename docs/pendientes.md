@@ -3,8 +3,8 @@
 ## En curso: leads de formación (presencial, online y asesoría)
 Orden acordado:
 1. Panel privado (en curso):
-   - Hecho: acceso por `/panel` en Telegram (enlace de un solo uso), lista de leads con filtros y búsqueda, y ficha de cada lead.
-   - Pendiente: cambiar la fase de un lead (nuevo, contactado, llamada agendada, llamada hecha, pago pendiente, vendido, no vendido, descartado, en pausa), notas, resultado de la venta (producto, importe, motivo), botón "Abrir ficha" en los avisos de Telegram, recordatorio de leads sin contactar a las 24 h y estadísticas (embudo por ruta y por vídeo).
+   - Hecho: acceso por `/panel` en Telegram (enlace de un solo uso), lista de leads con filtros y búsqueda, ficha de cada lead y seguimiento completo: fase, estado de la propuesta (pendiente, enviada, no se pudo enviar, enviada a mano), reserva de la llamada, resultado de la venta (producto, importe, forma de pago, edición o motivo), notas e historial. Bandeja con las vistas Por enviar, Sin agendar, Agendadas, Vendidos y No vendidos. Enlace "Abrir ficha" en los avisos de Telegram.
+   - Pendiente: recordatorio de leads sin contactar a las 24 h y estadísticas (embudo por ruta y por vídeo).
 2. Abrir el formulario al público, conectado a ManyChat con el código del vídeo en el enlace.
 3. Hoja de preparación de la llamada, escrita por Claude con las instrucciones del Proyecto Setter.
 4. Agendado automático de llamadas (hacen falta las reglas: días, horas, duración, topes).

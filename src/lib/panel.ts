@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { sql } from "./db";
+import { urlPanel } from "./config";
 
 export const COOKIE_PANEL = "panel_sesion";
 export const DIAS_SESION = 7;
@@ -10,7 +11,6 @@ export const huella = (secreto: string) => createHash("sha256").update(secreto).
 export const nuevoSecreto = () => randomBytes(32).toString("base64url");
 export const FORMATO_SECRETO = /^[A-Za-z0-9_-]{40,64}$/;
 
-const baseUrl = () => (process.env.PANEL_BASE_URL ?? "https://leads-setter.vercel.app").replace(/\/$/, "");
 
 // Enlace de un solo uso (10 minutos). En la base de datos solo queda su huella.
 export async function crearEnlace(): Promise<string> {
@@ -18,7 +18,7 @@ export async function crearEnlace(): Promise<string> {
   await sql()`insert into setter.panel_tokens (token_hash, expira_at) values (${huella(t)}, now() + interval '10 minutes')`;
   await sql()`delete from setter.panel_tokens where expira_at < now() - interval '1 day'`;
   await sql()`delete from setter.panel_sesiones where expira_at < now()`;
-  return `${baseUrl()}/panel/entrar?t=${t}`;
+  return `${urlPanel()}/panel/entrar?t=${t}`;
 }
 
 // Canjea el enlace por una sesión. El enlace se marca como usado de forma atómica.

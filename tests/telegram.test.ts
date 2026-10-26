@@ -31,6 +31,12 @@ describe("telegram", () => {
     expect(m).toContain("Quiere crecer &lt;rápido&gt;");
   });
 
+  it("incluye el enlace a la ficha cuando se conoce", () => {
+    const m = construirMensaje(resumenDe(solicitudDePrueba(), "11111111-2222-4333-8444-555555555555"), ficha);
+    expect(m).toContain("Abrir ficha: https://leads-setter.vercel.app/panel/lead/11111111-2222-4333-8444-555555555555");
+    expect(construirMensaje(resumenDe(solicitudDePrueba()), ficha)).not.toContain("Abrir ficha");
+  });
+
   it("avisa cuando no hay análisis", () => {
     const m = construirMensaje(resumenDe(solicitudDePrueba()), null, "Error al analizar el formulario.");
     expect(m).toContain("No se pudo analizar");

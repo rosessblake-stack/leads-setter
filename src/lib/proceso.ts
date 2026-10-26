@@ -47,7 +47,7 @@ export async function procesarLead(s: Solicitud, g: LeadGuardado): Promise<void>
       });
     }
 
-    const enviado = await avisarAdmin(construirMensaje(resumenDe(s), ficha, nota));
+    const enviado = await avisarAdmin(construirMensaje(resumenDe(s, g.fichaId), ficha, nota));
     if (enviado) {
       await sql()`
         update setter.fichas set estado = 'notificado', notificado_at = now()

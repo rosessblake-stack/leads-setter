@@ -1,4 +1,5 @@
 import type { FichaAnalizada } from "./analysis";
+import { urlPanel } from "./config";
 import type { Signals } from "@/formulario/signals";
 import type { Solicitud } from "@/formulario/solicitud";
 import type { Ruta } from "@/formulario/tipos";
@@ -23,6 +24,7 @@ export type ResumenLead = {
   v: string | null;
   como_nos_conociste: string | null;
   signals: Partial<Signals> | null;
+  fichaId?: string | null;
 };
 
 const RUTA: Record<Ruta, string> = {
@@ -32,7 +34,7 @@ const RUTA: Record<Ruta, string> = {
   no_claro: "No lo tiene claro",
 };
 
-export function resumenDe(s: Solicitud): ResumenLead {
+export function resumenDe(s: Solicitud, fichaId?: string): ResumenLead {
   return {
     nombre: s.nombre,
     email: s.email,
@@ -43,6 +45,7 @@ export function resumenDe(s: Solicitud): ResumenLead {
     v: s.v,
     como_nos_conociste: s.como_nos_conociste,
     signals: s.signals,
+    fichaId: fichaId ?? null,
   };
 }
 
@@ -90,6 +93,10 @@ export function construirMensaje(r: ResumenLead, ficha: FichaAnalizada | null, n
   if (nota) {
     l.push("");
     l.push(escaparHtml(nota));
+  }
+  if (r.fichaId) {
+    l.push("");
+    l.push(`Abrir ficha: ${urlPanel()}/panel/lead/${r.fichaId}`);
   }
   return l.join("\n");
 }

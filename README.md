@@ -32,7 +32,7 @@ Reel → comentario → ManyChat → /guia?v=CODIGO_VIDEO&mc=ID_CONTACTO
 
 ## Panel privado
 
-`/panel` (lista de leads con filtros) y `/panel/lead/<id>` (ficha). Acceso: el enlace de `/panel` no gasta el acceso al abrirse, solo al pulsar el botón (así las vistas previas de Telegram no lo consumen); crea una sesión de 7 días en una cookie httpOnly limitada a `/panel`. En la base de datos solo se guardan huellas (hash) de enlaces y sesiones. Cada acceso avisa por Telegram.
+`/panel` (bandeja con vistas Por enviar, Sin agendar, Agendadas, Vendidos y No vendidos, filtros por fase y ruta, y búsqueda) y `/panel/lead/<id>` (ficha con seguimiento: fase, propuesta, reserva, resultado de la venta y notas; cada cambio queda en el historial). Acceso: el enlace de `/panel` no gasta el acceso al abrirse, solo al pulsar el botón (así las vistas previas de Telegram no lo consumen); crea una sesión de 7 días en una cookie httpOnly limitada a `/panel`. En la base de datos solo se guardan huellas (hash) de enlaces y sesiones. Cada acceso avisa por Telegram.
 
 El webhook (`/api/telegram`) exige la cabecera secreta `TELEGRAM_WEBHOOK_SECRET` y se registra una vez con `setWebhook` de Telegram.
 

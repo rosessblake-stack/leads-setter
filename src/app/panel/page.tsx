@@ -5,13 +5,17 @@ import {
   FASES,
   NOMBRE_FASE,
   NOMBRE_RUTA,
+  NOMBRE_VISTA,
   POR_PAGINA,
   RUTAS,
+  VISTAS,
   fechaCorta,
   leerFiltros,
   patronBusqueda,
   type Fase,
+  type Filtros,
 } from "@/lib/panel-util";
+import { NOMBRE_PROPUESTA, type Propuesta } from "@/lib/seguimiento-util";
 import type { Ruta } from "@/formulario/tipos";
 
 export const dynamic = "force-dynamic";
@@ -23,26 +27,29 @@ type Fila = {
   ficha_id: string;
   nombre: string;
   ruta: Ruta | null;
-  interes: string | null;
   encaje: string | null;
   puntuacion: number | null;
   oferta_recomendada: string | null;
   fase: Fase;
+  propuesta_estado: Propuesta;
+  reserva_at: Date | null;
   video_codigo: string | null;
   creado_at: Date;
 };
 
 const OFERTA: Record<string, string> = { online: "Online", presencial: "Presencial", asesoria: "Asesoría" };
 
-function enlace(f: ReturnType<typeof leerFiltros>, cambios: Partial<Record<"fase" | "ruta" | "pagina", string | null>>) {
+type Cambios = Partial<Record<"fase" | "ruta" | "vista" | "pagina", string | null>>;
+
+function enlace(f: Filtros, cambios: Cambios) {
   const p = new URLSearchParams();
-  const fase = "fase" in cambios ? cambios.fase : f.fase;
-  const ruta = "ruta" in cambios ? cambios.ruta : f.ruta;
-  if (fase) p.set("fase", fase);
-  if (ruta) p.set("ruta", ruta);
+  const v = (k: "fase" | "ruta" | "vista") => (k in cambios ? cambios[k] : f[k]);
+  for (const k of ["vista", "fase", "ruta"] as const) {
+    const val = v(k);
+    if (val) p.set(k, val);
+  }
   if (f.q) p.set("q", f.q);
-  const pagina = "pagina" in cambios ? cambios.pagina : null;
-  if (pagina && pagina !== "1") p.set("pagina", pagina);
+  if (cambios.pagina && cambios.pagina !== "1") p.set("pagina", cambios.pagina);
   const s = p.toString();
   return s ? `/panel?${s}` : "/panel";
 }
@@ -52,31 +59,52 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
   const f = leerFiltros(await searchParams);
   const patron = f.q ? patronBusqueda(f.q) : null;
 
-  const [filas, [total], porFase] = await Promise.all([
+  // Cada vista es una pregunta concreta: ¿a quién falta escribir?, ¿quién no ha reservado?...
+  const vistaSql = sql()`(
+    ${f.vista}::text is null
+    or (${f.vista}::text = 'por_enviar' and fi.propuesta_estado in ('pendiente', 'no_enviada') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
+    or (${f.vista}::text = 'sin_agendar' and fi.reserva_at is null and f.ruta is distinct from 'asesoria'
+        and fi.propuesta_estado in ('enviada', 'manual') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
+    or (${f.vista}::text = 'agendadas' and fi.reserva_at is not null and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
+    or (${f.vista}::text = 'vendidos' and fi.fase = 'vendido')
+    or (${f.vista}::text = 'no_vendidos' and fi.fase = 'no_vendido')
+  )`;
+  const filtrosSql = sql()`
+    ${vistaSql}
+    and (${f.fase}::text is null or fi.fase = ${f.fase})
+    and (${f.ruta}::text is null or f.ruta = ${f.ruta})
+    and (${patron}::text is null or p.nombre ilike ${patron} or p.email ilike ${patron} or p.ig_username ilike ${patron})`;
+
+  const [filas, [total], [porVista], porFase] = await Promise.all([
     sql()`
-      select fi.id as ficha_id, p.nombre, f.ruta, f.interes, fi.encaje, fi.puntuacion,
-             fi.oferta_recomendada, fi.fase, v.codigo as video_codigo, f.creado_at
+      select fi.id as ficha_id, p.nombre, f.ruta, fi.encaje, fi.puntuacion, fi.oferta_recomendada, fi.fase,
+             fi.propuesta_estado, fi.reserva_at, v.codigo as video_codigo, f.creado_at
       from setter.fichas fi
       join setter.formularios f on f.id = fi.formulario_id
       join setter.personas p on p.id = fi.persona_id
       left join setter.videos v on v.id = f.video_id
-      where (${f.fase}::text is null or fi.fase = ${f.fase})
-        and (${f.ruta}::text is null or f.ruta = ${f.ruta})
-        and (${patron}::text is null or p.nombre ilike ${patron} or p.email ilike ${patron} or p.ig_username ilike ${patron})
-      order by f.creado_at desc
+      where ${filtrosSql}
+      order by (case when ${f.vista}::text = 'agendadas' then fi.reserva_at end) asc nulls last, f.creado_at desc
       limit ${POR_PAGINA} offset ${(f.pagina - 1) * POR_PAGINA}`,
     sql()`
       select count(*)::int as n
       from setter.fichas fi
       join setter.formularios f on f.id = fi.formulario_id
       join setter.personas p on p.id = fi.persona_id
-      where (${f.fase}::text is null or fi.fase = ${f.fase})
-        and (${f.ruta}::text is null or f.ruta = ${f.ruta})
-        and (${patron}::text is null or p.nombre ilike ${patron} or p.email ilike ${patron} or p.ig_username ilike ${patron})`,
+      where ${filtrosSql}`,
+    sql()`
+      select
+        count(*) filter (where fi.propuesta_estado in ('pendiente', 'no_enviada') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as por_enviar,
+        count(*) filter (where fi.reserva_at is null and f.ruta is distinct from 'asesoria' and fi.propuesta_estado in ('enviada', 'manual')
+                           and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as sin_agendar,
+        count(*) filter (where fi.reserva_at is not null and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as agendadas,
+        count(*) filter (where fi.fase = 'vendido')::int as vendidos,
+        count(*) filter (where fi.fase = 'no_vendido')::int as no_vendidos
+      from setter.fichas fi join setter.formularios f on f.id = fi.formulario_id`,
     sql()`select fase, count(*)::int as n from setter.fichas group by fase`,
   ]);
 
-  const cuentas = new Map<string, number>(porFase.map((r) => [r.fase as string, r.n as number]));
+  const cuentasFase = new Map<string, number>(porFase.map((r) => [r.fase as string, r.n as number]));
   const paginas = Math.max(1, Math.ceil((total?.n ?? 0) / POR_PAGINA));
   const lista = filas as unknown as Fila[];
 
@@ -91,18 +119,30 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
         </form>
       </header>
 
-      <nav className="filtros" aria-label="Filtrar por fase">
-        <Link href={enlace(f, { fase: null })} className={`ficha-chip${f.fase ? "" : " activa"}`}>
+      <nav className="filtros" aria-label="Bandeja">
+        <Link href={enlace(f, { vista: null })} className={`ficha-chip${f.vista ? "" : " activa"}`}>
           Todos
+        </Link>
+        {VISTAS.map((v) => (
+          <Link key={v} href={enlace(f, { vista: v })} className={`ficha-chip${f.vista === v ? " activa" : ""}`}>
+            {NOMBRE_VISTA[v]} <span>{(porVista?.[v] as number | undefined) ?? 0}</span>
+          </Link>
+        ))}
+      </nav>
+
+      <nav className="filtros secundarios" aria-label="Filtrar por fase">
+        <Link href={enlace(f, { fase: null })} className={`ficha-chip${f.fase ? "" : " activa"}`}>
+          Cualquier fase
         </Link>
         {FASES.map((fase) => (
           <Link key={fase} href={enlace(f, { fase })} className={`ficha-chip${f.fase === fase ? " activa" : ""}`}>
-            {NOMBRE_FASE[fase]} <span>{cuentas.get(fase) ?? 0}</span>
+            {NOMBRE_FASE[fase]} <span>{cuentasFase.get(fase) ?? 0}</span>
           </Link>
         ))}
       </nav>
 
       <form method="get" action="/panel" className="busqueda">
+        {f.vista && <input type="hidden" name="vista" value={f.vista} />}
         {f.fase && <input type="hidden" name="fase" value={f.fase} />}
         <label>
           <span className="solo-lectores">Ruta</span>
@@ -142,6 +182,8 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
                 <span className="chips">
                   <span className={`fase fase-${l.fase}`}>{NOMBRE_FASE[l.fase]}</span>
                   <span className="chip">{l.ruta ? NOMBRE_RUTA[l.ruta] : "Formulario antiguo"}</span>
+                  <span className={`chip propuesta-${l.propuesta_estado}`}>Propuesta: {NOMBRE_PROPUESTA[l.propuesta_estado]}</span>
+                  {l.reserva_at && <span className="chip reserva">Llamada {fechaCorta(l.reserva_at)}</span>}
                   {l.encaje && <span className={`chip encaje-${l.encaje}`}>Encaje {l.encaje}</span>}
                   {l.puntuacion !== null && <span className="chip">{l.puntuacion}/100</span>}
                   {l.oferta_recomendada && <span className="chip">Recomendado: {OFERTA[l.oferta_recomendada]}</span>}
