@@ -9,8 +9,8 @@
   --accent-ink: #e2584a;
   --good: #6fbf73;
   --line: rgba(255, 255, 255, 0.14);
-  --serif: "Newsreader", Georgia, serif;
-  --grotesk: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --serif: var(--font-serif), "Newsreader", Georgia, serif;
+  --grotesk: var(--font-grotesk), "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 * { box-sizing: border-box; }
 html { -webkit-tap-highlight-color: transparent; }
@@ -139,3 +139,11 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--accent-ink); ou
 .acciones .secundario { flex: 0 0 auto; min-width: 108px; }
 .acciones .principal { flex: 1; }
 form section:focus { outline: none; }
+
+/* Documento legal (política de privacidad) */
+.documento { display: block; padding-top: 40px; padding-bottom: 56px; }
+.documento h1 { font-family: var(--grotesk); font-weight: 700; font-size: clamp(1.7rem, 7vw, 2.3rem); line-height: 1.15; margin: 8px 0 6px; }
+.documento h2 { font-weight: 500; font-size: 1.25rem; margin: 30px 0 8px; }
+.documento p { color: var(--ink-dim); margin: 0 0 12px; }
+.documento section { display: block; }
+.pendiente { color: var(--accent-ink); border-bottom: 1px dashed var(--accent); }

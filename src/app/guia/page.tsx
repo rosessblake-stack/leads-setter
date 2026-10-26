@@ -15,7 +15,7 @@ export default async function Guia({ searchParams }: { searchParams: Promise<Par
         video={uno(p.v) ?? ""}
         manychat={uno(p.mc) ?? ""}
         textoConsentimiento={CONSENT_TEXT}
-        privacidad={process.env.PRIVACY_URL ?? ""}
+        privacidad={process.env.PRIVACY_URL || "/privacidad"}
       />
     </main>
   );

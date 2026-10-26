@@ -16,6 +16,10 @@ Reel → comentario → ManyChat → /guia?v=CODIGO_VIDEO&mc=ID_CONTACTO
 - El resumen `signals` (urgencia, quién decide, primer pago, ingresos, inversión previa, experiencia, clientes al mes, sugerencia de oferta) lo calcula el código.
 - Tope diario de análisis (`MAX_ANALISIS_DIA`).
 
+## Política de privacidad
+
+`/privacidad` (texto en `src/formulario/privacidad.ts`). Es un **borrador**: los huecos `[PENDIENTE: ...]` (empresa y número fiscal, dirección, email de contacto y plazo de conservación) se rellenan antes de abrir el formulario al público, y conviene revisarla con un gestor o abogado. Las tipografías se sirven desde la propia web, sin pedir nada a Google.
+
 ## Comandos del bot (solo el chat del admin)
 
 - `/estado`: comprueba base de datos, clave de Claude, regalo y fichas sin avisar.

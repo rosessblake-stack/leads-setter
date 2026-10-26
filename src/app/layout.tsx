@@ -1,5 +1,22 @@
 import type { Metadata, Viewport } from "next";
+import { Newsreader, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+
+// Las tipografías se descargan al compilar y se sirven desde nuestra propia web
+// (no se pide nada a los servidores de Google cuando alguien abre el formulario).
+const serif = Newsreader({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-serif",
+  display: "swap",
+});
+const grotesk = Space_Grotesk({
+  subsets: ["latin", "latin-ext"],
+  weight: ["500", "600", "700"],
+  variable: "--font-grotesk",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Solicitud",
@@ -10,15 +27,7 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, them
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="es" className={`${serif.variable} ${grotesk.variable}`}>
       <body>{children}</body>
     </html>
   );
