@@ -63,6 +63,10 @@ export async function avisarAdmin(texto: string): Promise<boolean> {
       disable_web_page_preview: true,
     }),
   });
-  if (!r.ok) console.error("Telegram respondió", r.status);
+  if (!r.ok) {
+    // Telegram explica el motivo en "description" (no contiene secretos).
+    const detalle = await r.json().catch(() => ({}));
+    console.error("Telegram respondió", r.status, String(detalle?.description ?? "").slice(0, 200));
+  }
   return r.ok;
 }

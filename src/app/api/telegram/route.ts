@@ -22,6 +22,7 @@ function secretoValido(recibido: string | null): boolean {
 // responde a mensajes de tu chat; cualquier otra cosa se ignora en silencio.
 export async function POST(req: Request) {
   if (!secretoValido(req.headers.get("x-telegram-bot-api-secret-token"))) {
+    console.warn("Webhook de Telegram rechazado: el secreto no coincide o falta");
     return new Response("no autorizado", { status: 401 });
   }
 
@@ -34,10 +35,12 @@ export async function POST(req: Request) {
 
   const mensaje = update.message;
   if (!mensaje || !esAdmin(mensaje.chat?.id, process.env.TELEGRAM_ADMIN_CHAT_ID)) {
+    console.warn("Webhook de Telegram ignorado: el mensaje no viene del chat del admin");
     return new Response("ok");
   }
 
   const comando = parsearComando(mensaje.text);
+  console.log("Comando de Telegram recibido:", comando ?? "ninguno");
   if (comando === "estado") await avisarAdmin(await comandoEstado());
   else if (comando === "leads") await avisarAdmin(await comandoLeads());
   else if (comando === "ayuda") await avisarAdmin(TEXTO_AYUDA);
