@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { ir } from "@/lib/http";
 import { COOKIE_PANEL, sesionValida } from "@/lib/panel";
 import {
   cambiarFase,
@@ -19,7 +19,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (!origen || !host || new URL(origen).host !== host) return new Response("Origen no permitido", { status: 403 });
 
   if (!(await sesionValida((await cookies()).get(COOKIE_PANEL)?.value))) {
-    return NextResponse.redirect(new URL("/panel/entrar", req.url), 303);
+    return ir("/panel/entrar");
   }
 
   const { id } = await ctx.params;
@@ -29,7 +29,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const get = (k: string) => (datos ? (datos.get(k) as string | null) : null);
   const accion = String(get("accion") ?? "");
 
-  const volver = (q: string) => NextResponse.redirect(new URL(`/panel/lead/${id}?${q}#seguimiento`, req.url), 303);
+  const volver = (q: string) => ir(`/panel/lead/${id}?${q}#seguimiento`);
   const fallo = (e: string) => volver("error=" + encodeURIComponent(e));
 
   try {

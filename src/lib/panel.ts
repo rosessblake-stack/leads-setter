@@ -53,7 +53,10 @@ export async function cerrarSesion(valor: string | undefined): Promise<void> {
 // Para las páginas del panel: sin sesión válida, a la pantalla de entrada.
 export async function exigirSesion(): Promise<void> {
   const valor = (await cookies()).get(COOKIE_PANEL)?.value;
-  if (!(await sesionValida(valor))) redirect("/panel/entrar");
+  if (!(await sesionValida(valor))) {
+    console.warn("Panel: página privada sin sesión válida (", valor ? "cookie no válida o caducada" : "sin cookie", ")");
+    redirect("/panel/entrar");
+  }
 }
 
 // Emergencia: cierra todas las sesiones y anula los enlaces pendientes.
