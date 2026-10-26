@@ -2,7 +2,9 @@ import { timingSafeEqual } from "node:crypto";
 import { avisarAdmin } from "@/lib/telegram";
 import {
   comandoEstado,
+  comandoLead,
   comandoLeads,
+  numeroDeLead,
   esAdmin,
   parsearComando,
   TEXTO_AYUDA,
@@ -35,11 +37,7 @@ export async function POST(req: Request) {
 
   const mensaje = update.message;
   if (!mensaje || !esAdmin(mensaje.chat?.id, process.env.TELEGRAM_ADMIN_CHAT_ID)) {
-    // Temporal: anota el ID para poder configurarlo bien. El ID de chat no es un secreto.
-    console.warn(
-      "Webhook de Telegram ignorado: el mensaje no viene del chat del admin. chat_id recibido =",
-      String(mensaje?.chat?.id ?? "ninguno"),
-    );
+    console.warn("Webhook de Telegram ignorado: el mensaje no viene del chat del admin");
     return new Response("ok");
   }
 
@@ -47,6 +45,10 @@ export async function POST(req: Request) {
   console.log("Comando de Telegram recibido:", comando ?? "ninguno");
   if (comando === "estado") await avisarAdmin(await comandoEstado());
   else if (comando === "leads") await avisarAdmin(await comandoLeads());
+  else if (comando === "lead") {
+    const n = numeroDeLead(mensaje.text);
+    await avisarAdmin(n ? await comandoLead(n) : "Usa /lead seguido de un número del 1 al 5, por ejemplo /lead 1.");
+  }
   else if (comando === "ayuda") await avisarAdmin(TEXTO_AYUDA);
 
   return new Response("ok");

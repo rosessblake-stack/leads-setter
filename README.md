@@ -19,6 +19,7 @@ Reel → comentario → ManyChat → /guia?v=CODIGO_VIDEO&mc=ID_CONTACTO
 
 - `/estado`: comprueba base de datos, clave de Claude, regalo y fichas sin avisar.
 - `/leads`: los últimos 5 leads.
+- `/lead N`: la ficha completa del lead número N (1 a 5) de esa lista.
 - `/ayuda`: lista de comandos.
 
 El webhook (`/api/telegram`) exige la cabecera secreta `TELEGRAM_WEBHOOK_SECRET` y se registra una vez con `setWebhook` de Telegram.
