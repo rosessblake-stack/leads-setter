@@ -4,19 +4,19 @@ export type Seccion = { titulo: string; parrafos: string[] };
 
 export const privacidad: { titulo: string; actualizado: string; secciones: Seccion[] } = {
   titulo: "Política de privacidad",
-  actualizado: "26 de octubre de 2026 (borrador pendiente de revisión)",
+  actualizado: "28 de octubre de 2026 (borrador pendiente de revisión legal)",
   secciones: [
     {
       titulo: "1. Quién es el responsable",
       parrafos: [
-        "Blake Braider (@blakebraider), a través de [PENDIENTE: nombre completo de la empresa o LLC y su número fiscal].",
-        "Dirección: [PENDIENTE: dirección postal]. Contacto para temas de privacidad: [PENDIENTE: email de contacto].",
+        "El responsable del tratamiento es BlakeBraider, LLC (Blake Braider, @blakebraider).",
+        "Dirección: 651 N Broad St, Suite 201, Middletown, DE 19709, EE. UU. Teléfono: +1 (516) 512-1626. Contacto para temas de privacidad: info@blakebraider.com.",
       ],
     },
     {
       titulo: "2. Qué datos recogemos",
       parrafos: [
-        "Los que escribes en el formulario de solicitud: nombre, email, teléfono, cómo prefieres que te escribamos, tu Instagram o enlace a tu trabajo, tu ciudad y país, y tus respuestas sobre tu experiencia, tu negocio (clientes, ingresos aproximados, precios, forma de trabajar), tus dudas y lo que quieres conseguir.",
+        "Los que escribes en el formulario de solicitud: nombre, email, tu Instagram o enlace a tu trabajo, tu ciudad y país, y tus respuestas sobre tu experiencia, tu negocio (clientes, ingresos aproximados, precios, forma de trabajar), tus dudas y lo que quieres conseguir.",
         "Si estás en la ruta de formación presencial, se te pregunta por molestias físicas al trabajar (espalda, manos, cuello). Esa respuesta puede considerarse un dato de salud: es opcional y solo la tratamos si la das, con tu consentimiento explícito.",
         "Datos técnicos mínimos: tu zona horaria, la fecha y hora en que empiezas y envías el formulario, el vídeo o enlace desde el que llegaste y el identificador de tu conversación de Instagram en ManyChat.",
       ],
@@ -38,7 +38,7 @@ export const privacidad: { titulo: string; actualizado: string; secciones: Secci
     {
       titulo: "5. Valoración con inteligencia artificial",
       parrafos: [
-        "Usamos un modelo de inteligencia artificial para leer tus respuestas y preparar una ficha con un resumen, una oferta recomendada y una valoración orientativa de encaje. No enviamos al modelo tu nombre, email, teléfono ni enlaces; sí tus respuestas al cuestionario.",
+        "Usamos un modelo de inteligencia artificial para leer tus respuestas y preparar una ficha con un resumen, una oferta recomendada y una valoración orientativa de encaje. No enviamos al modelo tu nombre, email ni enlaces; sí tus respuestas al cuestionario.",
         "Esta valoración es una ayuda interna. No se toma ninguna decisión automática que te produzca efectos legales o te afecte de forma significativa: una persona revisa cada solicitud.",
       ],
     },
