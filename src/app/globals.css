@@ -236,3 +236,9 @@ a.lead:active, .ficha-chip:active, .pildora:active, button:active { transform: s
 .esqueleto > span.corto { height: 18px; width: 40%; }
 @keyframes brillo { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .esqueleto > span { animation: none; } a.lead:active, .ficha-chip:active, .pildora:active, button:active { transform: none; } }
+
+/* Enlace legal pequeño, abajo a la derecha */
+.pie-legal { display: flex; justify-content: flex-end; margin-top: 28px; padding-top: 8px; }
+.pie-legal a { font-size: 0.75rem; color: var(--ink-dim); opacity: 0.8; text-decoration: none; padding: 8px 4px; }
+.pie-legal a:hover { text-decoration: underline; opacity: 1; }
+.enlace-discreto { font-size: 0.85rem; }

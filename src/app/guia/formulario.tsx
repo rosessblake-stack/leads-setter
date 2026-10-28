@@ -255,8 +255,8 @@ export function Formulario({ definicion, video, manychat, textoConsentimiento, p
                 {privacidad ? (
                   <>
                     {" "}
-                    <a href={privacidad} target="_blank" rel="noopener noreferrer">
-                      Política de privacidad
+                    <a className="enlace-discreto" href={privacidad} target="_blank" rel="noopener noreferrer">
+                      Más información
                     </a>
                   </>
                 ) : null}
@@ -289,6 +289,13 @@ export function Formulario({ definicion, video, manychat, textoConsentimiento, p
           </div>
         )}
       </form>
+      {privacidad && (
+        <footer className="pie-legal">
+          <a href={privacidad} target="_blank" rel="noopener noreferrer">
+            Política de privacidad
+          </a>
+        </footer>
+      )}
     </div>
   );
 }
