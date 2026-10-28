@@ -166,3 +166,25 @@ export const ETIQUETA_SIGNAL: Record<string, string> = {
   clientes_mes: "Clientes al mes",
   sugerencia_oferta: "Sugerencia por sus respuestas",
 };
+
+// Clasificación del contenido: tipo (para qué se hizo) y categoría (de qué trata).
+export const TIPOS_VIDEO = ["autoridad", "proceso", "conexion", "vitrina", "escasez", "viralidad", "ensenanza", "reaccion"] as const;
+export const NOMBRE_TIPO_VIDEO: Record<(typeof TIPOS_VIDEO)[number], string> = {
+  autoridad: "Autoridad",
+  proceso: "Proceso",
+  conexion: "Conexión",
+  vitrina: "Vitrina",
+  escasez: "Escasez",
+  viralidad: "Viralidad",
+  ensenanza: "Enseñanza",
+  reaccion: "Reacción",
+};
+export const CATEGORIAS_VIDEO = ["tecnica", "estructura", "formaciones", "negocio", "marca_personal", "mentalidad"] as const;
+export const NOMBRE_CATEGORIA_VIDEO: Record<(typeof CATEGORIAS_VIDEO)[number], string> = {
+  tecnica: "Peinado y técnica",
+  estructura: "Estructura",
+  formaciones: "Formaciones",
+  negocio: "Negocio",
+  marca_personal: "Marca personal",
+  mentalidad: "Mentalidad",
+};

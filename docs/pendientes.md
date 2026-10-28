@@ -66,3 +66,21 @@ Cómo se construye, por etapas:
 
 Asesoría (datos de Blake): la persona se lleva un plan de acción para el mes; Blake hace seguimiento informal; objetivo de una asesoría cada mes y medio; después ofrece packs de 3 o 4 asesorías (precio de pack, no descuento). Reserva de la llamada una semana después del pago. Si no puede asistir: se cambia el día, nunca hay devolución (lo gestiona Blake a mano). Materiales: siempre incluidos en el precio; el cliente no los ve desglosados, pero el profesional debe tenerlos desglosados.
 Niveles: años trabajando, clientes al mes, lo que cobra, y sobre todo cómo se ve su trabajo de cerca para un profesional de nivel élite.
+
+## Contenido, interacciones repetidas y escalera de regalos (28-oct-2026)
+
+Clasificación del contenido (migración 003, ya aplicada):
+- Tipo (para qué se hizo): autoridad, proceso, conexión, vitrina, escasez, viralidad (oportunista, opcional), enseñanza, reacción (por probar).
+- Categoría (de qué trata): peinado y técnica, estructura, formaciones, negocio, marca personal, mentalidad.
+- Cruzando tipo y categoría con avatar, ruta y resultado se ve qué contenido lleva a comprar.
+
+Una persona rellena el formulario una vez. Cada contacto posterior (comentarios en otros vídeos, mensajes, respuestas) se guarda en `eventos` con su vídeo; no se vuelve a pedir el formulario.
+
+Escalera de regalos por ruta (tablas `regalos` y `entregas_regalo`):
+1. Primera vez: rellena el formulario y recibe el regalo de su ruta (una presentación como las de Blake).
+2. Segunda vez que vuelve: se le pregunta la motivación real («¿por qué escribiste en este vídeo?»). Si contesta, recibe otro regalo.
+3. Tercera y siguientes: se pregunta la motivación y qué ha aprendido con lo anterior. Si contesta, otro regalo.
+Cada entrega lleva un enlace con seguimiento (se sabe si lo abrió). Un regalo por ruta (presencial, online, asesoría, no lo sé), no uno por vídeo; la escalera de cada ruta crece con el tiempo.
+
+Pendiente de decidir con Blake: cuántos regalos por ruta preparar al principio (recomendado: 1 por ruta y añadir el segundo cuando llegue la primera persona que vuelve), y las opciones de la pregunta de motivación.
+Reglas: si la persona ya tiene propuesta enviada o llamada agendada, no se le manda otra propuesta por cada vídeo nuevo; la interacción se anota igual.
