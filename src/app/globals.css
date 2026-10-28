@@ -242,3 +242,20 @@ a.lead:active, .ficha-chip:active, .pildora:active, button:active { transform: s
 .pie-legal a { font-size: 0.75rem; color: var(--ink-dim); opacity: 0.8; text-decoration: none; padding: 8px 4px; }
 .pie-legal a:hover { text-decoration: underline; opacity: 1; }
 .enlace-discreto { font-size: 0.85rem; }
+
+/* Alerta de leads sin contactar y estadísticas */
+.alerta { display: block; margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--accent); border-radius: 12px; background: rgba(214, 72, 59, 0.12); color: var(--ink); text-decoration: none; line-height: 1.4; }
+.alerta strong { color: var(--accent-ink); }
+.chip.urgente { border-color: var(--accent); color: var(--accent-ink); }
+.panel-acciones { display: flex; align-items: center; gap: 10px; }
+.enlace-boton { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-dim); text-decoration: none; font-size: 0.9rem; }
+.enlace-boton:hover { border-color: var(--accent-ink); color: var(--ink); }
+.tabla-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table.estadisticas { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+table.estadisticas th, table.estadisticas td { padding: 10px 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.estadisticas thead th { color: var(--ink-dim); font-weight: 500; font-size: 0.8rem; }
+table.estadisticas tbody th { text-align: left; font-weight: 500; position: sticky; left: 0; background: var(--bg); }
+.embudo { list-style: none; padding: 0; margin: 0 0 12px; display: grid; gap: 8px; }
+.embudo li { display: flex; align-items: baseline; gap: 8px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-2); }
+.embudo li strong { font-size: 1.3rem; }
+.embudo li span { margin-left: auto; color: var(--ink-dim); }

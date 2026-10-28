@@ -38,9 +38,10 @@ export const POR_PAGINA = 30;
 type Params = Record<string, string | string[] | undefined>;
 const uno = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
-export const VISTAS = ["por_enviar", "sin_agendar", "agendadas", "vendidos", "no_vendidos"] as const;
+export const VISTAS = ["sin_contactar", "por_enviar", "sin_agendar", "agendadas", "vendidos", "no_vendidos"] as const;
 export type Vista = (typeof VISTAS)[number];
 export const NOMBRE_VISTA: Record<Vista, string> = {
+  sin_contactar: "Sin contactar +24 h",
   por_enviar: "Por enviar",
   sin_agendar: "Sin agendar",
   agendadas: "Agendadas",

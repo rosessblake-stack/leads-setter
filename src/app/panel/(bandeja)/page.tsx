@@ -36,6 +36,7 @@ type Fila = {
   reserva_at: Date | null;
   video_codigo: string | null;
   creado_at: Date;
+  sin_contactar: boolean;
 };
 
 const OFERTA: Record<string, string> = { online: "Online", presencial: "Presencial", asesoria: "Asesoría" };
@@ -60,9 +61,12 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
   const f = leerFiltros(await searchParams);
   const patron = f.q ? patronBusqueda(f.q) : null;
 
+  // Sin contactar: fase «Nuevo», propuesta sin enviar y más de 24 h desde el formulario (se cierra la ventana de Instagram).
+  const SIN_CONTACTAR = sql()`(fi.fase = 'nuevo' and fi.propuesta_estado in ('pendiente', 'no_enviada') and f.creado_at < now() - interval '24 hours')`;
   // Cada vista es una pregunta concreta: ¿a quién falta escribir?, ¿quién no ha reservado?...
   const vistaSql = sql()`(
     ${f.vista}::text is null
+    or (${f.vista}::text = 'sin_contactar' and ${SIN_CONTACTAR})
     or (${f.vista}::text = 'por_enviar' and fi.propuesta_estado in ('pendiente', 'no_enviada') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
     or (${f.vista}::text = 'sin_agendar' and fi.reserva_at is null and f.ruta is distinct from 'asesoria'
         and fi.propuesta_estado in ('enviada', 'manual') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
@@ -81,6 +85,7 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
     const filas = await sql()`
       select fi.id as ficha_id, p.nombre, f.ruta, fi.encaje, fi.puntuacion, fi.oferta_recomendada, fi.fase,
              fi.propuesta_estado, fi.reserva_at, v.codigo as video_codigo, f.creado_at,
+             ${SIN_CONTACTAR} as sin_contactar,
              count(*) over()::int as total
       from setter.fichas fi
       join setter.formularios f on f.id = fi.formulario_id
@@ -91,6 +96,7 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
       limit ${POR_PAGINA} offset ${(f.pagina - 1) * POR_PAGINA}`;
     const [porVista] = await sql()`
       select
+        count(*) filter (where ${SIN_CONTACTAR})::int as sin_contactar,
         count(*) filter (where fi.propuesta_estado in ('pendiente', 'no_enviada') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as por_enviar,
         count(*) filter (where fi.reserva_at is null and f.ruta is distinct from 'asesoria' and fi.propuesta_estado in ('enviada', 'manual')
                            and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as sin_agendar,
@@ -111,12 +117,24 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
     <main className="pantalla panel">
       <header className="panel-cabecera">
         <h1>Leads</h1>
-        <form method="post" action="/panel/salir">
-          <button type="submit" className="secundario">
-            Salir
-          </button>
-        </form>
+        <div className="panel-acciones">
+          <Link href="/panel/estadisticas" className="enlace-boton">
+            Estadísticas
+          </Link>
+          <form method="post" action="/panel/salir">
+            <button type="submit" className="secundario">
+              Salir
+            </button>
+          </form>
+        </div>
       </header>
+
+      {(porVista?.sin_contactar ?? 0) > 0 && f.vista !== "sin_contactar" && (
+        <Link href={enlace(f, { vista: "sin_contactar" })} className="alerta" role="status">
+          <strong>{porVista?.sin_contactar as number}</strong>{" "}
+          {porVista?.sin_contactar === 1 ? "lead lleva" : "leads llevan"} más de 24 h sin contactar. Pulsa para verlos.
+        </Link>
+      )}
 
       <nav className="filtros" aria-label="Bandeja">
         <Link href={enlace(f, { vista: null })} className={`ficha-chip${f.vista ? "" : " activa"}`}>
@@ -179,6 +197,7 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
                   <span className="lead-fecha">{fechaCorta(l.creado_at)}</span>
                 </span>
                 <span className="chips">
+                  {l.sin_contactar && <span className="chip urgente">Sin contactar +24 h</span>}
                   <span className={`fase fase-${l.fase}`}>{NOMBRE_FASE[l.fase]}</span>
                   <span className="chip">{l.ruta ? NOMBRE_RUTA[l.ruta] : "Formulario antiguo"}</span>
                   <span className={`chip propuesta-${l.propuesta_estado}`}>Propuesta: {NOMBRE_PROPUESTA[l.propuesta_estado]}</span>
