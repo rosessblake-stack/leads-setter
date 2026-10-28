@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { intentar } from "@/lib/db";
 import { conexion, googleConfigurado, ocupadosEntre } from "@/lib/google";
-import { infoPagina, manychatConfigurado } from "@/lib/manychat";
+import { buscarFlujo, infoPagina, manychatConfigurado } from "@/lib/manychat";
 import { leerModo } from "@/lib/propuestas";
 import { proponer, ZONA, REGLAS } from "@/lib/disponibilidad";
 import { exigirSesion } from "@/lib/panel";
@@ -28,12 +28,20 @@ export default async function Ajustes({ searchParams }: { searchParams: Promise<
 
   const { modo, many } = await intentar(async () => {
     const modo = await leerModo();
-    let many: { estado: "sin_configurar" | "ok" | "error"; nombre: string | null } = { estado: "sin_configurar", nombre: null };
+    let many: { estado: "sin_configurar" | "ok" | "error"; nombre: string | null; llamada: boolean; asesoria: boolean } = {
+      estado: "sin_configurar",
+      nombre: null,
+      llamada: false,
+      asesoria: false,
+    };
     if (manychatConfigurado()) {
       try {
-        many = { estado: "ok", nombre: (await infoPagina()).nombre };
+        const nombre = (await infoPagina()).nombre;
+        const llamada = await buscarFlujo("llamada").catch(() => null);
+        const asesoria = await buscarFlujo("asesoria").catch(() => null);
+        many = { estado: "ok", nombre, llamada: Boolean(llamada), asesoria: Boolean(asesoria) };
       } catch {
-        many = { estado: "error", nombre: null };
+        many = { estado: "error", nombre: null, llamada: false, asesoria: false };
       }
     }
     return { modo, many };
@@ -95,8 +103,14 @@ export default async function Ajustes({ searchParams }: { searchParams: Promise<
             ? `conectado${many.nombre ? ` (${many.nombre})` : ""}`
             : many.estado === "error"
               ? "no responde (revisa la clave en Vercel)"
-              : "sin configurar (faltan la clave y los flujos en Vercel)"}
+              : "sin configurar (falta la clave MANYCHAT_API_KEY en Vercel)"}
         </p>
+        {many.estado === "ok" && (
+          <p className="resumen">
+            Flujos: «Propuesta llamada» {many.llamada ? "encontrado" : "NO encontrado"} · «Propuesta asesoría»{" "}
+            {many.asesoria ? "encontrado" : "NO encontrado"}
+          </p>
+        )}
         <p className="resumen">
           Modo:{" "}
           {modo.modo === "automatico"
