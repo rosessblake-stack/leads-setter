@@ -10,11 +10,15 @@ const API = () => process.env.GOOGLE_API_BASE ?? "https://www.googleapis.com";
 
 const SCOPES = ["openid", "email", "https://www.googleapis.com/auth/calendar.events", "https://www.googleapis.com/auth/calendar.freebusy"];
 
+// Valores de Vercel sin espacios ni saltos de línea sobrantes al principio o al final (error típico al pegar).
+const clienteId = () => (process.env.GOOGLE_CLIENT_ID ?? "").trim();
+const clienteSecreto = () => (process.env.GOOGLE_CLIENT_SECRET ?? "").trim();
+
 export const redirectUri = () => `${urlPanel()}/api/google/callback`;
-export const googleConfigurado = () => Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+export const googleConfigurado = () => Boolean(clienteId() && clienteSecreto());
 
 // ----- Cifrado del token de refresco (la clave se deriva del secreto de cliente; no hay otra variable que configurar) -----
-const clave = () => createHash("sha256").update("setter-google:" + (process.env.GOOGLE_CLIENT_SECRET ?? "")).digest();
+const clave = () => createHash("sha256").update("setter-google:" + clienteSecreto()).digest();
 
 export function cifrar(texto: string): string {
   const iv = randomBytes(12);
@@ -33,7 +37,7 @@ export function descifrar(valor: string): string {
 // ----- Inicio de sesión -----
 export function urlAutorizacion(estado: string): string {
   const p = new URLSearchParams({
-    client_id: process.env.GOOGLE_CLIENT_ID ?? "",
+    client_id: clienteId(),
     redirect_uri: redirectUri(),
     response_type: "code",
     scope: SCOPES.join(" "),
@@ -48,10 +52,14 @@ async function pedirToken(cuerpo: Record<string, string>) {
   const r = await fetch(`${OAUTH()}/token`, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ client_id: process.env.GOOGLE_CLIENT_ID ?? "", client_secret: process.env.GOOGLE_CLIENT_SECRET ?? "", ...cuerpo }),
+    body: new URLSearchParams({ client_id: clienteId(), client_secret: clienteSecreto(), ...cuerpo }),
     signal: AbortSignal.timeout(10000),
   });
-  if (!r.ok) throw new Error(`Google token ${r.status}`);
+  if (!r.ok) {
+    // Google explica el motivo con un código corto (invalid_client, redirect_uri_mismatch...). No incluye secretos.
+    const j = (await r.json().catch(() => null)) as { error?: string; error_description?: string } | null;
+    throw new Error(`Google token ${r.status}: ${String(j?.error ?? "sin detalle").slice(0, 60)} ${String(j?.error_description ?? "").slice(0, 120)}`.trim());
+  }
   return (await r.json()) as { access_token: string; expires_in: number; refresh_token?: string; id_token?: string };
 }
 
