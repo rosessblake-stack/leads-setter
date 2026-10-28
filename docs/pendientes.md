@@ -84,3 +84,9 @@ Cada entrega lleva un enlace con seguimiento (se sabe si lo abrió). Un regalo p
 
 Pendiente de decidir con Blake: cuántos regalos por ruta preparar al principio (recomendado: 1 por ruta y añadir el segundo cuando llegue la primera persona que vuelve), y las opciones de la pregunta de motivación.
 Reglas: si la persona ya tiene propuesta enviada o llamada agendada, no se le manda otra propuesta por cada vídeo nuevo; la interacción se anota igual.
+
+## Decisiones de Blake (28-oct-2026)
+- Orden de trabajo: primero el esquema completo con todas las rutas funcionando; los regalos (presentaciones, escalera) se dejan para después.
+- Pregunta de motivación: abierta con botones de atajo; Claude clasifica el texto libre y se guarda la frase original. Segunda vez: «¿Qué te motivó a escribir en este vídeo?». Tercera y siguientes: qué ha aprendido o conseguido con lo anterior.
+- Regalos: alojarlos en la propia web (no en Drive: las presentaciones son HTML) con enlace de seguimiento por persona.
+- Reservas: horario 11:00–22:00, 1 h de margen con cualquier evento, preferencia por domingo y lunes. Venta: 30 min, dentro de 1 a 3 días. Asesoría: 1 h, una semana después de confirmar el pago. Motor en `src/lib/disponibilidad.ts` (con tests).
