@@ -1,4 +1,4 @@
-import { FormularioAjax, Pildoras } from "../../ajax";
+import { EnlaceReserva, FormularioAjax, Pildoras } from "../../ajax";
 import {
   FASES_MANUALES,
   FORMAS_PAGO,
@@ -15,6 +15,7 @@ import { NOMBRE_FASE, fechaCorta, type Fase } from "@/lib/panel-util";
 
 export type DatosSeguimiento = {
   id: string;
+  ruta: string | null;
   fase: Fase;
   propuesta_estado: Propuesta;
   propuesta_at: Date | null;
@@ -62,6 +63,15 @@ export function Seguimiento({ d, aviso }: { d: DatosSeguimiento; aviso: { tipo: 
           {d.propuesta_at && d.propuesta_estado !== "pendiente" ? ` · ${fechaCorta(d.propuesta_at)}` : ""}
         </p>
         <Pildoras action={accion} accion="propuesta" campo="estado" activo={d.propuesta_estado} opciones={PROPUESTAS.map((p) => ({ valor: p, etiqueta: NOMBRE_PROPUESTA[p] }))} />
+      </div>
+
+      <div className="subbloque">
+        <h3>Enlace de reserva</h3>
+        <p className="ayuda">
+          Página personal donde la persona elige hora. Ofrece 3 días con tus reglas
+          {d.ruta === "asesoria" ? " (a partir de una semana desde hoy, porque se entiende que ya ha pagado)" : " (de 1 a 3 días desde hoy)"}.
+        </p>
+        <EnlaceReserva action={`/panel/lead/${d.id}/enlace`} tipo={d.ruta === "asesoria" ? "asesoria" : "venta"} />
       </div>
 
       <div className="subbloque">

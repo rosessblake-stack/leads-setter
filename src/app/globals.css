@@ -259,3 +259,13 @@ table.estadisticas tbody th { text-align: left; font-weight: 500; position: stic
 .embudo li { display: flex; align-items: baseline; gap: 8px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-2); }
 .embudo li strong { font-size: 1.3rem; }
 .embudo li span { margin-left: auto; color: var(--ink-dim); }
+
+/* Página pública de reserva */
+.reserva-pagina { max-width: 560px; margin: 0 auto; }
+.reserva-pagina h1 { margin-bottom: 8px; }
+.dia-reserva { margin: 22px 0 0; }
+.dia-reserva h2 { font-size: 1.05rem; margin-bottom: 10px; }
+.dia-reserva h2::first-letter { text-transform: uppercase; }
+.horas { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.hora { background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; min-height: 44px; padding: 8px 6px; font-size: 0.95rem; }
+.hora:hover, .hora:focus-visible { border-color: var(--accent); background: rgba(214, 72, 59, 0.12); }

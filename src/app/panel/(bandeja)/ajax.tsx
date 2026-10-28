@@ -149,3 +149,50 @@ export function Pildoras({
     </>
   );
 }
+
+// Crea el enlace de reserva de un lead y lo deja listo para copiar.
+export function EnlaceReserva({ action, tipo }: { action: string; tipo: "venta" | "asesoria" }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [estado, setEstado] = useState<"" | "creando" | "copiado" | "error">("");
+
+  async function crear() {
+    setEstado("creando");
+    try {
+      const r = await fetch(action, { method: "POST", credentials: "same-origin", signal: AbortSignal.timeout(20000) });
+      if (r.status === 401) {
+        location.href = "/panel/entrar";
+        return;
+      }
+      const j = (await r.json()) as { ok?: boolean; url?: string };
+      if (!r.ok || !j.ok || !j.url) throw new Error();
+      setUrl(j.url);
+      try {
+        await navigator.clipboard.writeText(j.url);
+        setEstado("copiado");
+      } catch {
+        setEstado("");
+      }
+    } catch {
+      setEstado("error");
+    }
+  }
+
+  return (
+    <>
+      <button type="button" className="secundario" onClick={crear} disabled={estado === "creando"}>
+        {estado === "creando" ? "Creando…" : tipo === "asesoria" ? "Crear enlace de reserva (asesoría pagada)" : "Crear enlace de reserva"}
+      </button>
+      {url && (
+        <p className="resumen">
+          <input readOnly value={url} onFocus={(e) => e.currentTarget.select()} aria-label="Enlace de reserva" />
+          {estado === "copiado" && <span className="aviso"> Copiado.</span>}
+        </p>
+      )}
+      {estado === "error" && (
+        <p className="error" role="alert">
+          No se pudo crear el enlace. Inténtalo de nuevo.
+        </p>
+      )}
+    </>
+  );
+}

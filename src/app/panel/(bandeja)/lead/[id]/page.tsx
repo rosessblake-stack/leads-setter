@@ -75,6 +75,7 @@ export default async function Ficha({
       : null;
   const seguimiento = {
     id,
+    ruta: r.ruta ?? null,
     fase: r.fase,
     propuesta_estado: r.propuesta_estado,
     propuesta_at: r.propuesta_at,

@@ -121,6 +121,9 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
           <Link href="/panel/estadisticas" className="enlace-boton">
             Estadísticas
           </Link>
+          <Link href="/panel/ajustes" className="enlace-boton">
+            Ajustes
+          </Link>
           <form method="post" action="/panel/salir">
             <button type="submit" className="secundario">
               Salir
