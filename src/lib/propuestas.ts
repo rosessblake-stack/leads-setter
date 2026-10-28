@@ -5,6 +5,7 @@ import { fechaCorta } from "@/lib/panel-util";
 import { crearEnlaceReserva } from "@/lib/reservas";
 import { avisarAdmin, escaparHtml } from "@/lib/telegram";
 import { urlPanel } from "@/lib/config";
+import { registrarError } from "@/lib/errores";
 
 const HORA = 60 * 60 * 1000;
 export const ESPERA_MIN_H = 1;
@@ -118,6 +119,7 @@ async function procesarUna(f: Fila, ahora: Date): Promise<"enviada" | "preparada
   const asesoria = f.ruta === "asesoria";
   const pagoUrl = process.env.STRIPE_LINK_ASESORIA ?? "";
   if (asesoria && !pagoUrl) {
+    await registrarError("propuestas", "Falta el enlace de pago de la asesoría", { ficha: f.id });
     await sql()`update setter.fichas set propuesta_programada_at = null, propuesta_error = 'Falta el enlace de pago de la asesoría' where id = ${f.id}`;
     await avisarAdmin(`⚠️ No se puede preparar la propuesta de ${escaparHtml(f.nombre)}: falta el enlace de pago de la asesoría.`).catch(() => false);
     return "preparada";
@@ -156,6 +158,7 @@ async function procesarUna(f: Fila, ahora: Date): Promise<"enviada" | "preparada
     await enviarPropuesta(f.manychat_id, p.tipo, p.cuerpo, enlace);
   } catch (e) {
     const motivo = e instanceof Error ? e.message : "error desconocido";
+    await registrarError("manychat", e, { paso: "enviar propuesta", ficha: f.id });
     await sql()`update setter.fichas set propuesta_estado = 'no_enviada', propuesta_mensaje = ${p.manual}, propuesta_programada_at = null, propuesta_error = ${motivo.slice(0, 300)} where id = ${f.id}`;
     await sql()`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'propuesta_fallida', ${sql().json({ motivo: motivo.slice(0, 200) })})`;
     await avisarAdmin(`⚠️ No se pudo enviar la propuesta a <b>${escaparHtml(f.nombre)}</b>: ${escaparHtml(motivo)}\n\nEl texto está en la ficha para enviarlo a mano:\n${urlPanel()}/panel/lead/${f.id}`).catch(() => false);
@@ -184,7 +187,7 @@ export async function procesarPropuestas(ahora = new Date()): Promise<{ enviadas
       if (r === "enviada") enviadas++;
       else if (r === "preparada") preparadas++;
     } catch (e) {
-      console.error("Propuestas: error con una ficha", e instanceof Error ? e.message : "desconocido");
+      await registrarError("propuestas", e, { paso: "procesar ficha", ficha: f.id });
     }
   }
   return { enviadas, preparadas };

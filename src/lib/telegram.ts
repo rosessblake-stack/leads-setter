@@ -3,6 +3,7 @@ import { urlPanel } from "./config";
 import type { Signals } from "@/formulario/signals";
 import type { Solicitud } from "@/formulario/solicitud";
 import type { Ruta } from "@/formulario/tipos";
+import { registrarError } from "@/lib/errores";
 
 export function escaparHtml(t: string): string {
   return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -122,7 +123,7 @@ export async function avisarAdmin(texto: string): Promise<boolean> {
   if (!r.ok) {
     // Telegram explica el motivo en "description" (no contiene secretos).
     const detalle = await r.json().catch(() => ({}));
-    console.error("Telegram respondió", r.status, String(detalle?.description ?? "").slice(0, 200));
+    await registrarError("telegram", `Telegram respondió ${r.status}: ${String(detalle?.description ?? "").slice(0, 200)}`);
   }
   return r.ok;
 }

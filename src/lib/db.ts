@@ -53,6 +53,7 @@ export async function intentar<T>(
       if (e instanceof ErrorTiempo) {
         console.warn("Base de datos: consulta sin respuesta, se descarta la conexión", `(intento ${i + 1})`);
         reiniciar();
+        if (i >= reintentos) void import("./errores").then((m) => m.registrarError("base_de_datos", e, { paso: "consulta sin respuesta" })).catch(() => undefined);
         if (i < reintentos) continue;
       }
       throw e;

@@ -10,6 +10,7 @@ import {
   parsearComando,
   TEXTO_AYUDA,
 } from "@/lib/comandos";
+import { registrarError } from "@/lib/errores";
 
 export const maxDuration = 30;
 
@@ -51,7 +52,7 @@ export async function POST(req: Request) {
       const url = await crearEnlace();
       await avisarAdmin(`Tu enlace para entrar al panel (caduca en 10 minutos y solo funciona una vez):\n${url}`);
     } catch (e) {
-      console.error("Panel: error al crear el enlace", e instanceof Error ? e.message : "desconocido");
+      await registrarError("panel", e, { paso: "enlace de entrada desde Telegram" });
       await avisarAdmin("No pude crear el enlace del panel: error de base de datos.");
     }
   } else if (comando === "cerrar_panel") {

@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { COOKIE_PANEL, sesionValida } from "@/lib/panel";
 import { crearEnlaceReserva } from "@/lib/reservas";
+import { registrarError } from "@/lib/errores";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const maxDuration = 30;
@@ -18,7 +19,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     if (!url) return new Response("No encontrado", { status: 404 });
     return Response.json({ ok: true, url });
   } catch (e) {
-    console.error("Reserva: no se pudo crear el enlace", e instanceof Error ? e.message : "desconocido");
+    await registrarError("reservas", e, { paso: "crear enlace", ficha: id });
     return Response.json({ ok: false, error: "No se pudo crear el enlace." }, { status: 500 });
   }
 }

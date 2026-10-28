@@ -4,6 +4,7 @@ import { permitido } from "@/lib/ratelimit";
 import { confirmarReserva } from "@/lib/reservas";
 import { FORMATO_SECRETO } from "@/lib/panel";
 import { avisarAdmin } from "@/lib/telegram";
+import { registrarError } from "@/lib/errores";
 
 export const maxDuration = 30;
 
@@ -25,7 +26,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ token: string 
     after(() => avisarAdmin(r.aviso).catch(() => {}));
     return ir(`/reservar/${token}`);
   } catch (e) {
-    console.error("Reserva: error al confirmar", e instanceof Error ? e.message : "desconocido");
+    await registrarError("reservas", e, { paso: "confirmar reserva" });
     return ir(`/reservar/${token}?error=${encodeURIComponent("No se pudo reservar. Inténtalo de nuevo.")}`);
   }
 }

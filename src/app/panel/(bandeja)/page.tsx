@@ -96,6 +96,7 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
       limit ${POR_PAGINA} offset ${(f.pagina - 1) * POR_PAGINA}`;
     const [porVista] = await sql()`
       select
+        (select count(*)::int from setter.errores where revisado_at is null) as errores,
         count(*) filter (where ${SIN_CONTACTAR})::int as sin_contactar,
         count(*) filter (where fi.propuesta_estado in ('pendiente', 'no_enviada') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as por_enviar,
         count(*) filter (where fi.reserva_at is null and f.ruta is distinct from 'asesoria' and fi.propuesta_estado in ('enviada', 'manual')
@@ -124,6 +125,9 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
           <Link href="/panel/ajustes" className="enlace-boton">
             Ajustes
           </Link>
+          <Link href="/panel/errores" className="enlace-boton">
+            Errores
+          </Link>
           <form method="post" action="/panel/salir">
             <button type="submit" className="secundario">
               Salir
@@ -131,6 +135,12 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
           </form>
         </div>
       </header>
+
+      {(porVista?.errores ?? 0) > 0 && (
+        <Link href="/panel/errores" className="alerta" role="status">
+          <strong>{porVista?.errores as number}</strong> {porVista?.errores === 1 ? "error sin revisar" : "errores sin revisar"}. Pulsa para ver la causa.
+        </Link>
+      )}
 
       {(porVista?.sin_contactar ?? 0) > 0 && f.vista !== "sin_contactar" && (
         <Link href={enlace(f, { vista: "sin_contactar" })} className="alerta" role="status">

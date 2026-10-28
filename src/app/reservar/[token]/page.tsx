@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ZONA, REGLAS } from "@/lib/disponibilidad";
 import { intentar } from "@/lib/db";
 import { cargarEnlace, propuestaPara } from "@/lib/reservas";
+import { registrarError } from "@/lib/errores";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -29,7 +30,7 @@ export default async function Reservar({
     try {
       return { e, propuesta: await propuestaPara(e), fallo: false };
     } catch (err) {
-      console.error("Reserva: no se pudo leer el calendario", err instanceof Error ? err.message : "desconocido");
+      await registrarError("google", err, { paso: "leer calendario para reservas" });
       return { e, propuesta: null, fallo: true };
     }
   });

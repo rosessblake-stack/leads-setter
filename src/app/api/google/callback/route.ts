@@ -3,6 +3,7 @@ import { sql } from "@/lib/db";
 import { guardarConexion } from "@/lib/google";
 import { ir } from "@/lib/http";
 import { huella, FORMATO_SECRETO } from "@/lib/panel";
+import { registrarError } from "@/lib/errores";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
   try {
     await guardarConexion(codigo);
   } catch (e) {
-    console.error("Google: no se pudo guardar la conexión", e instanceof Error ? e.message : "desconocido");
+    await registrarError("google", e, { paso: "conectar" });
     return ir("/panel/ajustes?google=error");
   }
   return ir("/panel/ajustes?google=ok");

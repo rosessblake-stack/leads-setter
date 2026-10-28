@@ -4,6 +4,7 @@ import { avisarAdmin, construirMensaje, resumenDe } from "./telegram";
 import type { LeadGuardado } from "./lead";
 import { programarPropuesta } from "./propuestas";
 import type { Solicitud } from "@/formulario/solicitud";
+import { registrarError } from "./errores";
 
 // Lee el formulario con Claude, actualiza la ficha y avisa por Telegram.
 // Nunca escribe a la persona. Si algo falla, el aviso sale igualmente.
@@ -23,7 +24,7 @@ export async function procesarLead(s: Solicitud, g: LeadGuardado): Promise<void>
       if (!ficha) nota = "Claude no devolvió un análisis válido.";
     }
   } catch (e) {
-    console.error("Error analizando lead", e instanceof Error ? e.message : "desconocido");
+    await registrarError("claude", e, { ficha: g.fichaId });
     nota = "Error al analizar el formulario.";
   }
 
@@ -55,13 +56,13 @@ export async function procesarLead(s: Solicitud, g: LeadGuardado): Promise<void>
         where id = ${g.fichaId}`;
     }
   } catch (e) {
-    console.error("Error guardando ficha o avisando", e instanceof Error ? e.message : "desconocido");
+    await registrarError("formulario", e, { paso: "guardar ficha o avisar", ficha: g.fichaId });
   }
 
   // La propuesta se envía más tarde (entre 1 y 3 horas), no ahora.
   try {
     await programarPropuesta(g.fichaId, g.personaId, s.ruta);
   } catch (e) {
-    console.error("Error programando la propuesta", e instanceof Error ? e.message : "desconocido");
+    await registrarError("propuestas", e, { paso: "programar", ficha: g.fichaId });
   }
 }

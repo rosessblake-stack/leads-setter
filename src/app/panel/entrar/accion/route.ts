@@ -4,6 +4,7 @@ import { canjear, COOKIE_PANEL, DIAS_SESION, sesionValida } from "@/lib/panel";
 import { ir, tipoNavegador } from "@/lib/http";
 import { permitido } from "@/lib/ratelimit";
 import { avisarAdmin } from "@/lib/telegram";
+import { registrarError } from "@/lib/errores";
 
 export async function POST(req: Request) {
   const nav = tipoNavegador(req.headers.get("user-agent"));
@@ -21,8 +22,8 @@ export async function POST(req: Request) {
 
   const datos = await req.formData().catch(() => null);
   const t = String(datos?.get("t") ?? "");
-  const sesion = await canjear(t).catch((e) => {
-    console.error("Panel: error al canjear el enlace", e instanceof Error ? e.message : "desconocido");
+  const sesion = await canjear(t).catch(async (e) => {
+    await registrarError("panel", e, { paso: "canjear enlace" });
     return null;
   });
 

@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { sql } from "@/lib/db";
 import { procesarPropuestas } from "@/lib/propuestas";
+import { registrarError } from "@/lib/errores";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
     const r = await procesarPropuestas();
     return Response.json({ ok: true, ...r });
   } catch (e) {
-    console.error("Propuestas: error general", e instanceof Error ? e.message : "desconocido");
+    await registrarError("propuestas", e, { paso: "temporizador" });
     return Response.json({ ok: false }, { status: 500 });
   }
 }

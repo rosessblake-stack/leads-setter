@@ -1,4 +1,5 @@
 import { sql } from "./db";
+import { registrarError } from "./errores";
 import { construirMensaje, escaparHtml, type ResumenLead } from "./telegram";
 import type { FichaAnalizada } from "./analysis";
 import type { Signals } from "@/formulario/signals";
@@ -102,7 +103,7 @@ export async function comandoEstado(): Promise<string> {
     datos.sinAvisar = r.sin_avisar;
     datos.ultimo = r.ultimo;
   } catch (e) {
-    console.error("Estado: error de base de datos", e instanceof Error ? e.message : "desconocido");
+    await registrarError("base_de_datos", e, { paso: "comando estado" });
   }
   return formatearEstado(datos);
 }
@@ -128,7 +129,7 @@ export async function comandoLeads(): Promise<string> {
       ),
     ].join("\n");
   } catch (e) {
-    console.error("Leads: error", e instanceof Error ? e.message : "desconocido");
+    await registrarError("base_de_datos", e, { paso: "comando leads" });
     return "No pude leer los leads: error de base de datos.";
   }
 }
@@ -202,7 +203,7 @@ export async function comandoLead(n: number): Promise<string> {
     const { resumen, ficha } = reconstruirLead(filas[0] as unknown as FilaLead);
     return construirMensaje(resumen, ficha, `Estado de la ficha: ${filas[0].estado}`);
   } catch (e) {
-    console.error("Lead: error", e instanceof Error ? e.message : "desconocido");
+    await registrarError("base_de_datos", e, { paso: "comando lead" });
     return "No pude leer ese lead: error de base de datos.";
   }
 }

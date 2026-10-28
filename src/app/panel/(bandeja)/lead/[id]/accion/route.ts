@@ -9,6 +9,7 @@ import {
   registrarResultado,
 } from "@/lib/seguimiento";
 import { leerFaseManual, leerNota, leerPropuesta, leerReserva, leerResultado } from "@/lib/seguimiento-util";
+import { registrarError } from "@/lib/errores";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -72,7 +73,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     if (!existe) return new Response("No encontrado", { status: 404 });
     return fluido ? Response.json({ ok: true }) : volver("guardado=" + accion);
   } catch (e) {
-    console.error("Seguimiento: error", accion, e instanceof Error ? e.message : "desconocido");
+    await registrarError("panel", e, { paso: "seguimiento", accion, ficha: id });
     return fallo("No se pudo guardar. Inténtalo de nuevo.");
   }
 }

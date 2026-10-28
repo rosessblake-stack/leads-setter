@@ -7,6 +7,7 @@ import { definicion, reglasOferta } from "@/formulario/datos";
 import { validarTodo } from "@/formulario/motor";
 import { construirSolicitud } from "@/formulario/solicitud";
 import type { Respuestas } from "@/formulario/tipos";
+import { registrarError } from "@/lib/errores";
 
 export const maxDuration = 60;
 
@@ -60,7 +61,7 @@ export async function POST(req: Request) {
     after(() => procesarLead(solicitud, guardado));
     return json({ ok: true });
   } catch (e) {
-    console.error("Error guardando lead", e instanceof Error ? e.message : "desconocido");
+    await registrarError("formulario", e, { paso: "guardar lead" });
     return json({ ok: false, error: "servidor" }, 500);
   }
 }

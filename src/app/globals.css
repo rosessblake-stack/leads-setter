@@ -269,3 +269,16 @@ table.estadisticas tbody th { text-align: left; font-weight: 500; position: stic
 .horas { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
 .hora { background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; min-height: 44px; padding: 8px 6px; font-size: 0.95rem; }
 .hora:hover, .hora:focus-visible { border-color: var(--accent); background: rgba(214, 72, 59, 0.12); }
+
+/* Errores del sistema */
+ul.errores { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 10px; }
+ul.errores li { display: grid; gap: 6px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-2); min-width: 0; }
+ul.errores li.revisado { opacity: 0.55; }
+.error-mensaje { overflow-wrap: anywhere; font-size: 0.92rem; }
+.pista { color: var(--ink); font-size: 0.9rem; border-left: 3px solid var(--accent); padding-left: 10px; overflow-wrap: anywhere; }
+
+/* Cabecera del panel con varios botones: en pantallas estrechas pasan a otra línea */
+.panel-cabecera { flex-wrap: wrap; }
+.panel-acciones { flex-wrap: wrap; gap: 8px; }
+.panel-acciones form { margin: 0; }
+@media (max-width: 480px) { .panel-cabecera .panel-acciones { width: 100%; } }
