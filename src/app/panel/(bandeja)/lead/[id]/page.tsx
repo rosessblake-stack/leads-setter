@@ -40,7 +40,7 @@ export default async function Ficha({
   const datos = await intentar(async () => {
     const [r] = await sql()`
       select fi.id as ficha_id, fi.nivel, fi.dolores, fi.oferta_recomendada, fi.encaje, fi.resumen, fi.puntuacion,
-             fi.estado, fi.fase, fi.propuesta_estado, fi.propuesta_at,
+             fi.estado, fi.fase, fi.propuesta_estado, fi.propuesta_at, fi.propuesta_mensaje, fi.propuesta_programada_at, fi.propuesta_error,
              to_char(fi.reserva_at at time zone 'Europe/Madrid', 'YYYY-MM-DD"T"HH24:MI') as reserva_input,
              p.id as persona_id, p.nombre, p.email, p.telefono, p.ig_username, p.pais,
              f.ruta, f.interes, f.como_nos_conociste, f.respuestas, f.signals, f.creado_at, f.iniciado_at,
@@ -79,6 +79,9 @@ export default async function Ficha({
     fase: r.fase,
     propuesta_estado: r.propuesta_estado,
     propuesta_at: r.propuesta_at,
+    propuesta_mensaje: r.propuesta_mensaje ?? null,
+    propuesta_programada_at: r.propuesta_programada_at ?? null,
+    propuesta_error: r.propuesta_error ?? null,
     reserva_input: r.reserva_input,
     resultado: resultado ?? null,
     notas,

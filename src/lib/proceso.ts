@@ -2,6 +2,7 @@ import { sql } from "./db";
 import { analizarFormulario, type FichaAnalizada } from "./analysis";
 import { avisarAdmin, construirMensaje, resumenDe } from "./telegram";
 import type { LeadGuardado } from "./lead";
+import { programarPropuesta } from "./propuestas";
 import type { Solicitud } from "@/formulario/solicitud";
 
 // Lee el formulario con Claude, actualiza la ficha y avisa por Telegram.
@@ -55,5 +56,12 @@ export async function procesarLead(s: Solicitud, g: LeadGuardado): Promise<void>
     }
   } catch (e) {
     console.error("Error guardando ficha o avisando", e instanceof Error ? e.message : "desconocido");
+  }
+
+  // La propuesta se envía más tarde (entre 1 y 3 horas), no ahora.
+  try {
+    await programarPropuesta(g.fichaId, g.personaId, s.ruta);
+  } catch (e) {
+    console.error("Error programando la propuesta", e instanceof Error ? e.message : "desconocido");
   }
 }

@@ -196,3 +196,23 @@ export function EnlaceReserva({ action, tipo }: { action: string; tipo: "venta" 
     </>
   );
 }
+
+// Muestra un texto y permite copiarlo con un toque.
+export function CopiarTexto({ texto }: { texto: string }) {
+  const [copiado, setCopiado] = useState(false);
+  async function copiar() {
+    try {
+      await navigator.clipboard.writeText(texto);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    } catch {}
+  }
+  return (
+    <>
+      <textarea readOnly rows={8} value={texto} aria-label="Mensaje de la propuesta" onFocus={(e) => e.currentTarget.select()} />
+      <button type="button" className="secundario" onClick={copiar}>
+        {copiado ? "Copiado" : "Copiar mensaje"}
+      </button>
+    </>
+  );
+}

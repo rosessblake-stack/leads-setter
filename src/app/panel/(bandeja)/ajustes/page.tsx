@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { intentar } from "@/lib/db";
 import { conexion, googleConfigurado, ocupadosEntre } from "@/lib/google";
+import { infoPagina, manychatConfigurado } from "@/lib/manychat";
+import { leerModo } from "@/lib/propuestas";
 import { proponer, ZONA, REGLAS } from "@/lib/disponibilidad";
 import { exigirSesion } from "@/lib/panel";
 import { fechaCorta } from "@/lib/panel-util";
@@ -19,10 +21,23 @@ const dia = (f: string) =>
   new Date(`${f}T12:00:00Z`).toLocaleDateString("es-ES", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" });
 const hora = (t: Date) => t.toLocaleTimeString("es-ES", { timeZone: ZONA, hour: "2-digit", minute: "2-digit" });
 
-export default async function Ajustes({ searchParams }: { searchParams: Promise<{ google?: string }> }) {
+export default async function Ajustes({ searchParams }: { searchParams: Promise<{ google?: string; propuestas?: string }> }) {
   await exigirSesion();
   const q = await searchParams;
   const aviso = q.google ? MENSAJE[q.google] : undefined;
+
+  const { modo, many } = await intentar(async () => {
+    const modo = await leerModo();
+    let many: { estado: "sin_configurar" | "ok" | "error"; nombre: string | null } = { estado: "sin_configurar", nombre: null };
+    if (manychatConfigurado()) {
+      try {
+        many = { estado: "ok", nombre: (await infoPagina()).nombre };
+      } catch {
+        many = { estado: "error", nombre: null };
+      }
+    }
+    return { modo, many };
+  });
 
   const { c, prueba, fallo } = await intentar(async () => {
     const c = await conexion();
@@ -63,6 +78,35 @@ export default async function Ajustes({ searchParams }: { searchParams: Promise<
         <form method="post" action="/panel/google/conectar">
           <button type="submit" className={c ? "secundario" : "principal"}>
             {c ? "Volver a conectar" : "Conectar Google"}
+          </button>
+        </form>
+      </section>
+
+      <section className="bloque">
+        <h2>Propuesta automática por Instagram</h2>
+        {q.propuestas === "ok" && (
+          <p className="aviso" role="status">
+            Guardado.
+          </p>
+        )}
+        <p className="resumen">
+          ManyChat:{" "}
+          {many.estado === "ok"
+            ? `conectado${many.nombre ? ` (${many.nombre})` : ""}`
+            : many.estado === "error"
+              ? "no responde (revisa la clave en Vercel)"
+              : "sin configurar (faltan la clave y los flujos en Vercel)"}
+        </p>
+        <p className="resumen">
+          Modo:{" "}
+          {modo.modo === "automatico"
+            ? "automático (se envían solas, entre 1 y 3 horas después del formulario)"
+            : `calibración (te llegan a Telegram para revisarlas; faltan ${modo.restantes} para pasar a automático)`}
+        </p>
+        <form method="post" action="/panel/propuestas/modo">
+          <input type="hidden" name="modo" value={modo.modo === "automatico" ? "calibracion" : "automatico"} />
+          <button type="submit" className="secundario">
+            {modo.modo === "automatico" ? "Volver a calibración (10 propuestas)" : "Pasar a automático ya"}
           </button>
         </form>
       </section>

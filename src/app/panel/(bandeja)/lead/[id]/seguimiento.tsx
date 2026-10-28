@@ -1,4 +1,4 @@
-import { EnlaceReserva, FormularioAjax, Pildoras } from "../../ajax";
+import { CopiarTexto, EnlaceReserva, FormularioAjax, Pildoras } from "../../ajax";
 import {
   FASES_MANUALES,
   FORMAS_PAGO,
@@ -19,6 +19,9 @@ export type DatosSeguimiento = {
   fase: Fase;
   propuesta_estado: Propuesta;
   propuesta_at: Date | null;
+  propuesta_mensaje: string | null;
+  propuesta_programada_at: Date | null;
+  propuesta_error: string | null;
   reserva_input: string | null;
   resultado: {
     resultado: "vendido" | "no_vendido";
@@ -62,6 +65,16 @@ export function Seguimiento({ d, aviso }: { d: DatosSeguimiento; aviso: { tipo: 
           {NOMBRE_PROPUESTA[d.propuesta_estado]}
           {d.propuesta_at && d.propuesta_estado !== "pendiente" ? ` · ${fechaCorta(d.propuesta_at)}` : ""}
         </p>
+        {d.propuesta_programada_at && d.propuesta_estado === "pendiente" && (
+          <p className="ayuda">Se enviará automáticamente a partir de {fechaCorta(d.propuesta_programada_at)}.</p>
+        )}
+        {d.propuesta_error && <p className="error">{d.propuesta_error}</p>}
+        {d.propuesta_mensaje && (
+          <>
+            <p className="ayuda">Mensaje preparado. Cópialo y envíalo por Instagram si no se ha enviado solo:</p>
+            <CopiarTexto texto={d.propuesta_mensaje} />
+          </>
+        )}
         <Pildoras action={accion} accion="propuesta" campo="estado" activo={d.propuesta_estado} opciones={PROPUESTAS.map((p) => ({ valor: p, etiqueta: NOMBRE_PROPUESTA[p] }))} />
       </div>
 

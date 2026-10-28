@@ -743,21 +743,39 @@
   },
   {
    "id": "A01",
-   "texto": "¿Qué sientes que necesitas ahora mismo?",
-   "tipo": "eleccion",
+   "texto": "¿En qué sientes que necesitas ayuda ahora mismo? Elige hasta 3.",
+   "tipo": "multi",
    "rutas": [
     "asesoria"
    ],
-   "opciones": "__pendiente__"
+   "opciones": [
+    "Contenido y redes sociales",
+    "Clientela (cómo atraer y elegir a tus clientes)",
+    "Precios",
+    "Marca personal",
+    "Sistematización y hábitos",
+    "Equipo y liderazgo",
+    "Mercado VIP",
+    "No lo sé, quiero que me ayudes a decidirlo"
+   ],
+   "maxSelecciones": 3,
+   "excluyentes": [
+    "No lo sé, quiero que me ayudes a decidirlo"
+   ]
   },
   {
    "id": "A02",
-   "texto": "¿Cómo te calificarías hoy?",
+   "texto": "¿En qué nivel te colocas hoy? Piensa en cómo vería tu trabajo, de cerca, un profesional de élite.",
    "tipo": "eleccion",
    "rutas": [
     "asesoria"
    ],
-   "opciones": "__pendiente__"
+   "opciones": [
+    "Principiante",
+    "Intermedio",
+    "Avanzado",
+    "Profesional"
+   ]
   },
   {
    "id": "A03",
@@ -768,18 +786,58 @@
    ]
   },
   {
+   "id": "A34",
+   "texto": "¿Qué te frena hoy, aunque no sepas cómo explicarlo?",
+   "tipo": "texto_largo",
+   "obligatoria": false,
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A35",
+   "texto": "¿Dónde quieres estar dentro de 12 meses?",
+   "tipo": "texto_largo",
+   "obligatoria": false,
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A36",
+   "texto": "¿Has hecho antes formaciones, asesorías o mentorías? ¿Cuáles?",
+   "tipo": "texto",
+   "obligatoria": false,
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
    "id": "A04",
-   "texto": "¿Te interesa en algún momento formar o liderar un equipo, enseñar a otros profesionales, o prefieres mantenerte enfocada/o en tu propio trabajo y tu clientela?",
+   "texto": "¿Te interesa en algún momento liderar un equipo o enseñar a otros profesionales, o prefieres centrarte en tu propio trabajo y tu clientela?",
    "tipo": "eleccion",
    "rutas": [
     "asesoria"
    ],
-   "opciones": "__pendiente__"
+   "opciones": [
+    "Liderar un equipo",
+    "Enseñar a otros",
+    "Centrarme en mi propio trabajo",
+    "Aún no lo sé"
+   ]
   },
   {
    "id": "A05",
    "texto": "¿Trabajas en solitario o tienes equipo? Si tienes equipo, ¿cuántas personas, y también hacen trenzas o son de otras especialidades?",
    "tipo": "texto_largo",
+   "rutas": [
+    "asesoria"
+   ]
+  },
+  {
+   "id": "A08",
+   "texto": "Si tienes equipo, ¿podrían mantener el mismo nivel de calidad y trato sin que tú estés encima de cada detalle?",
+   "tipo": "sino",
    "rutas": [
     "asesoria"
    ]
@@ -794,19 +852,16 @@
   },
   {
    "id": "A07",
-   "texto": "¿Tus clientes te siguen a ti como persona, o siguen a tu negocio/marca?",
+   "texto": "¿Tus clientes te siguen a ti como persona, o siguen a tu negocio y a su marca?",
    "tipo": "eleccion",
    "rutas": [
     "asesoria"
    ],
-   "opciones": "__pendiente__"
-  },
-  {
-   "id": "A08",
-   "texto": "Si tienes equipo, ¿podrían mantener el mismo nivel de calidad y trato sin que tú estés encima de cada detalle?",
-   "tipo": "sino",
-   "rutas": [
-    "asesoria"
+   "opciones": [
+    "Me siguen a mí como persona",
+    "Siguen a la marca del negocio",
+    "Las dos cosas por igual",
+    "Aún no lo sé"
    ]
   },
   {
@@ -835,12 +890,11 @@
   },
   {
    "id": "A12",
-   "texto": "¿Ese precio incluye materiales o los cobras aparte?",
-   "tipo": "eleccion",
+   "texto": "¿Tienes desglosado lo que te cuesta cada servicio, con los materiales incluidos?",
+   "tipo": "sino",
    "rutas": [
     "asesoria"
-   ],
-   "opciones": "__pendiente__"
+   ]
   },
   {
    "id": "A13",
@@ -959,7 +1013,7 @@
   },
   {
    "id": "A25",
-   "texto": "Del 1 al 5, ¿qué tan cómodo/a te sientes hablando en cámara o en voz en off?",
+   "texto": "Del 1 al 5, ¿cómo de a gusto te sientes hablando en cámara o en voz en off?",
    "tipo": "escala",
    "rutas": [
     "asesoria"
@@ -1031,7 +1085,7 @@
   },
   {
    "id": "A33",
-   "texto": "Del 1 al 5, ¿qué tan cómodo/a te sientes con la idea de ser una cara reconocida o un referente del sector, más allá de simplemente hacer buen trabajo?",
+   "texto": "Del 1 al 5, ¿cómo de a gusto te sientes con la idea de ser una cara reconocida o un referente del sector, más allá de hacer buen trabajo?",
    "tipo": "escala",
    "rutas": [
     "asesoria"

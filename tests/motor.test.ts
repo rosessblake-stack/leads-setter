@@ -25,8 +25,8 @@ describe("rutas y totales (con todas las condicionales visibles)", () => {
   it("online = 40", () => {
     expect(visibles(def, base(ONLINE, { V03: "Casi no" })).length).toBe(40);
   });
-  it("asesoría = 49", () => {
-    expect(visibles(def, base(ASES)).length).toBe(49);
+  it("asesoría = 52", () => {
+    expect(visibles(def, base(ASES)).length).toBe(52);
   });
   it("no lo tengo claro = 31", () => {
     expect(visibles(def, base(NOCLARO)).length).toBe(31);
@@ -128,8 +128,15 @@ describe("validación de respuestas", () => {
     expect(validarRespuesta(q("E04"), { E04: true })).toBeNull();
   });
   it("las preguntas con opciones pendientes aceptan texto libre", () => {
-    expect(q("A01").opciones).toBe("__pendiente__");
-    expect(validarRespuesta(q("A01"), { A01: "algo" })).toBeNull();
+    const pendiente = { id: "X", texto: "x", tipo: "eleccion", opciones: "__pendiente__" } as const;
+    expect(validarRespuesta(pendiente, { X: "algo" })).toBeNull();
+  });
+  it("las opciones de asesoría ya están definidas (A01 admite hasta 3 y «No lo sé» es excluyente)", () => {
+    expect(Array.isArray(q("A01").opciones)).toBe(true);
+    expect(q("A01").maxSelecciones).toBe(3);
+    expect(validarRespuesta(q("A01"), { A01: ["Precios", "Marca personal"] })).toBeNull();
+    expect(validarRespuesta(q("A01"), { A01: ["Precios", "Marca personal", "Mercado VIP", "Equipo y liderazgo"] })).not.toBeNull();
+    expect(validarRespuesta(q("A01"), { A01: ["Precios", "No lo sé, quiero que me ayudes a decidirlo"] })).not.toBeNull();
   });
 });
 
