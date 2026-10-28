@@ -47,3 +47,22 @@ Notas de partida (revisar cuando se haga, sin tocar nada de momento):
 ## Otras ideas apuntadas
 - Panel de análisis de contenido con la API de Instagram (qué vídeos traen leads y ventas).
 - Conexión de ventas desde Stripe (las compras de Kajabi y las asesorías pasan por Stripe).
+
+## Ruta de avatares y predicción de compra (idea de Blake, 28-oct-2026)
+
+Objetivo: con el tiempo, saber qué tipo de persona compra, cuál pospone y cuál no compra, por ruta, y llegar a la llamada sabiendo cómo llevarla (dónde apretar, dónde no) y con un porcentaje de probabilidad propio.
+
+Qué hay que registrar desde ya, aunque todavía no se use (sin datos no hay avatar):
+- Tiempos: del formulario a la propuesta, de la propuesta a la reserva, de la reserva a la llamada, de la llamada a la decisión.
+- Si abre y descarga el regalo gratuito (hace falta un enlace con seguimiento).
+- Resultado y motivo de cada lead (ya se guarda: vendido, no vendido, motivo, y «lo piensa» = pospone).
+- Nivel real visto por Blake, distinto del que se pone la persona (verdad de referencia para entrenar).
+- Vídeo de origen y ruta (ya se guarda).
+
+Cómo se construye, por etapas:
+1. Ahora (0 ventas): solo registrar. La puntuación actual es la opinión de Claude sobre el formulario, no una predicción aprendida.
+2. Con unas decenas de resultados: tabla «puntuación prevista contra resultado real» y primeros perfiles por ruta (dolores, nivel, tiempos, regalo).
+3. Con más volumen: avatares con nombre (por ejemplo, «el que compra a la primera», «el que pospone») y guía de llamada por avatar. La probabilidad pasa a calcularse con datos propios.
+
+Asesoría (datos de Blake): la persona se lleva un plan de acción para el mes; Blake hace seguimiento informal; objetivo de una asesoría cada mes y medio; después ofrece packs de 3 o 4 asesorías (precio de pack, no descuento). Reserva de la llamada una semana después del pago. Si no puede asistir: se cambia el día, nunca hay devolución (lo gestiona Blake a mano). Materiales: siempre incluidos en el precio; el cliente no los ve desglosados, pero el profesional debe tenerlos desglosados.
+Niveles: años trabajando, clientes al mes, lo que cobra, y sobre todo cómo se ve su trabajo de cerca para un profesional de nivel élite.
