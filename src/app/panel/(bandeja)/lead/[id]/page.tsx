@@ -17,6 +17,7 @@ import {
 } from "@/lib/panel-util";
 import { definicion } from "@/formulario/datos";
 import { Seguimiento, type DatosSeguimiento } from "./seguimiento";
+import { HerramientasFicha } from "../../ajax";
 import type { Almacenada, Ruta } from "@/formulario/tipos";
 
 export const dynamic = "force-dynamic";
@@ -156,56 +157,82 @@ export default async function Ficha({
         </dl>
       </section>
 
-      <section className="bloque">
-        <h2>Valoración de Claude</h2>
-        {r.resumen ? (
-          <>
-            <p className="chips">
-              {r.oferta_recomendada && <span className="chip">Recomendado: {OFERTA[r.oferta_recomendada]}</span>}
+      <HerramientasFicha />
+
+      <details className="desplegable" id="valoracion" data-ficha>
+        <summary>
+          <h2>Valoración de Claude</h2>
+          {r.resumen && (
+            <span className="chips">
               {r.encaje && <span className={`chip encaje-${r.encaje}`}>Encaje {r.encaje}</span>}
-              {r.puntuacion !== null && <span className="chip">Probabilidad de compra {r.puntuacion}%</span>}
-              {r.nivel && <span className="chip">Nivel {r.nivel}</span>}
-            </p>
-            {Array.isArray(r.dolores) && r.dolores.length > 0 && <p className="ayuda">Dolores: {r.dolores.join(", ")}</p>}
-            <p className="resumen">{r.resumen}</p>
-          </>
-        ) : (
-          <p className="vacio">Esta ficha todavía no tiene análisis.</p>
-        )}
-      </section>
+              {r.puntuacion !== null && <span className="chip">{r.puntuacion}%</span>}
+            </span>
+          )}
+        </summary>
+        <div className="desplegable-cuerpo" data-buscable>
+          {r.resumen ? (
+            <>
+              <p className="chips">
+                {r.oferta_recomendada && <span className="chip">Recomendado: {OFERTA[r.oferta_recomendada]}</span>}
+                {r.encaje && <span className={`chip encaje-${r.encaje}`}>Encaje {r.encaje}</span>}
+                {r.puntuacion !== null && <span className="chip">Probabilidad de compra {r.puntuacion}%</span>}
+                {r.nivel && <span className="chip">Nivel {r.nivel}</span>}
+              </p>
+              {Array.isArray(r.dolores) && r.dolores.length > 0 && <p className="ayuda">Dolores: {r.dolores.join(", ")}</p>}
+              <p className="resumen">{r.resumen}</p>
+            </>
+          ) : (
+            <p className="vacio">Esta ficha todavía no tiene análisis.</p>
+          )}
+        </div>
+      </details>
 
       {lineasSignals.length > 0 && (
-        <section className="bloque">
-          <h2>Señales</h2>
-          <dl className="datos">
-            {lineasSignals.map((s) => (
-              <div key={s.etiqueta}><dt>{s.etiqueta}</dt><dd>{s.valor}</dd></div>
-            ))}
-          </dl>
-        </section>
+        <details className="desplegable" id="senales" data-ficha>
+          <summary>
+            <h2>Señales</h2>
+          </summary>
+          <div className="desplegable-cuerpo">
+            <dl className="datos">
+              {lineasSignals.map((s) => (
+                <div key={s.etiqueta} data-buscable><dt>{s.etiqueta}</dt><dd>{s.valor}</dd></div>
+              ))}
+            </dl>
+          </div>
+        </details>
       )}
 
       {grupos.map((g) => (
-        <section className="bloque" key={g.titulo}>
-          <h2>{g.titulo}</h2>
-          <dl className="respuestas">
-            {g.items.map((i) => (
-              <div key={i.id}><dt>{i.pregunta}</dt><dd>{i.texto}</dd></div>
-            ))}
-          </dl>
-        </section>
+        <details className="desplegable" key={g.titulo} data-ficha data-grupo>
+          <summary>
+            <h2>{g.titulo}</h2>
+            <span className="lead-fecha">{g.items.length} {g.items.length === 1 ? "respuesta" : "respuestas"}</span>
+          </summary>
+          <div className="desplegable-cuerpo">
+            <dl className="respuestas">
+              {g.items.map((i) => (
+                <div key={i.id} data-buscable><dt>{i.pregunta}</dt><dd>{i.texto}</dd></div>
+              ))}
+            </dl>
+          </div>
+        </details>
       ))}
 
-      <section className="bloque">
-        <h2>Historial</h2>
-        <ol className="historial">
-          {eventos.map((e, i) => (
-            <li key={i}>
-              <span className="lead-fecha">{fechaCorta(e.creado_at)}</span> {ETIQUETA_EVENTO[e.tipo as string] ?? String(e.tipo)}
-            </li>
-          ))}
-        </ol>
-      </section>
+      <details className="desplegable" id="historial" data-ficha>
+        <summary>
+          <h2>Historial</h2>
+          <span className="lead-fecha">{eventos.length} {eventos.length === 1 ? "evento" : "eventos"}</span>
+        </summary>
+        <div className="desplegable-cuerpo">
+          <ol className="historial">
+            {eventos.map((e, i) => (
+              <li key={i}>
+                <span className="lead-fecha">{fechaCorta(e.creado_at)}</span> {ETIQUETA_EVENTO[e.tipo as string] ?? String(e.tipo)}
+              </li>
+            ))}
+          </ol>
+        </div>
+      </details>
     </main>
   );
 }

@@ -282,3 +282,65 @@ ul.errores li.revisado { opacity: 0.55; }
 .panel-acciones { flex-wrap: wrap; gap: 8px; }
 .panel-acciones form { margin: 0; }
 @media (max-width: 480px) { .panel-cabecera .panel-acciones { width: 100%; } }
+
+/* Marco del panel: barra lateral + contenido */
+.marco { min-height: 100dvh; }
+.contenido { min-width: 0; }
+.contenido .pantalla { min-height: calc(100dvh - 52px); }
+.barra-superior { position: sticky; top: 0; z-index: 30; background: var(--bg); border-bottom: 1px solid var(--line); padding: max(8px, env(safe-area-inset-top)) 16px 8px; }
+.menu-boton { position: relative; display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 999px; min-height: 40px; padding: 6px 16px; font-size: 0.9rem; }
+.menu-boton .punto, .barra-cuenta.urgente { background: var(--accent); }
+.menu-boton .punto { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.barra { position: fixed; z-index: 50; top: 0; bottom: 0; left: 0; width: min(290px, 84vw); background: var(--bg-2); border-right: 1px solid var(--line); padding: max(20px, env(safe-area-inset-top)) 14px 20px; overflow-y: auto; transform: translateX(-102%); transition: transform 0.2s ease; display: flex; flex-direction: column; gap: 6px; }
+.barra.abierta { transform: none; }
+.barra-velo { position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, 0.55); }
+.barra-marca { font-family: var(--grotesk); font-weight: 700; font-size: 1.25rem; margin: 4px 10px 14px; }
+.barra-grupo { display: grid; gap: 2px; margin-bottom: 14px; }
+.barra-titulo { font-family: var(--grotesk); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-dim); margin: 0 10px 4px; }
+.barra-enlace { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 42px; padding: 8px 10px; border-radius: 10px; color: var(--ink-dim); text-decoration: none; font-size: 0.95rem; border: 1px solid transparent; }
+.barra-enlace:hover { color: var(--ink); background: rgba(255, 255, 255, 0.04); }
+.barra-enlace.activa { color: var(--ink); background: rgba(214, 72, 59, 0.12); border-color: rgba(214, 72, 59, 0.4); }
+.barra-cuenta { min-width: 26px; text-align: center; font-family: var(--grotesk); font-size: 0.75rem; font-weight: 600; color: var(--ink-dim); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; }
+.barra-cuenta.urgente { color: #fff; border-color: var(--accent); }
+.barra-salir { margin-top: auto; padding: 12px 10px 0; }
+.barra-salir button { width: 100%; }
+@media (min-width: 900px) {
+  .marco { display: grid; grid-template-columns: 250px minmax(0, 1fr); }
+  .barra-superior, .barra-velo { display: none; }
+  .barra { position: sticky; top: 0; height: 100dvh; transform: none; width: auto; z-index: 1; }
+  .contenido .pantalla { min-height: 100dvh; max-width: 940px; margin: 0; padding-left: 36px; padding-right: 36px; }
+}
+
+/* Desplegables de la ficha */
+.desplegable { border-top: 1px solid var(--line); }
+.desplegable > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 0; min-height: 52px; }
+.desplegable > summary::-webkit-details-marker { display: none; }
+.desplegable > summary::after { content: "＋"; color: var(--ink-dim); font-size: 1.1rem; flex: none; }
+.desplegable[open] > summary::after { content: "－"; }
+.desplegable > summary h2 { margin: 0; font-size: 1.1rem; }
+.desplegable > summary .chips { margin: 0 0 0 auto; }
+.desplegable-cuerpo { padding: 0 0 22px; }
+.herramientas-ficha { display: grid; gap: 10px; margin: 6px 0 14px; }
+.herramientas-ficha .botonera { display: flex; flex-wrap: wrap; gap: 8px; }
+.herramientas-ficha input[type="search"] { width: 100%; }
+.oculto { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .barra { transition: none; } }
+.desplegable > summary h2 { color: var(--ink); font-family: var(--grotesk); font-weight: 600; font-size: 1rem; }
+
+/* Estado actual de cada cosa, con «Cambiar» para ver las opciones */
+.estado-card { display: grid; gap: 4px; padding: 6px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg-2); margin-bottom: 18px; }
+.estado-card > * { border-bottom: 1px solid var(--line); }
+.estado-card > *:last-child { border-bottom: 0; }
+.estado-bloque { padding: 10px 0; }
+.estado-bloque .botonera { margin-top: 10px; }
+.estado-fila { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 10px 0; }
+.estado-bloque .estado-fila { padding: 0; }
+.estado-etiqueta { font-family: var(--grotesk); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim); min-width: 84px; }
+.estado-valor { font-size: 0.95rem; }
+.estado-valor.fase, .estado-valor.chip { font-size: 0.8rem; }
+.enlace-texto { margin-left: auto; background: transparent; border: 0; color: var(--accent-ink); font-size: 0.85rem; text-decoration: underline; text-underline-offset: 3px; min-height: 44px; padding: 4px 8px; }
+.desplegable.sub > summary { padding: 12px 0; min-height: 46px; }
+.desplegable.sub > summary h3 { margin: 0; font-family: var(--grotesk); font-size: 0.85rem; letter-spacing: 0.04em; font-weight: 600; text-transform: none; color: var(--ink); }
+.herramientas-ficha { grid-template-columns: 1fr auto; align-items: center; }
+.lead-meta { display: block; color: var(--ink-dim); font-size: 0.8rem; margin-top: 8px; }
+.lead-meta:empty { display: none; }

@@ -94,18 +94,9 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
       where ${filtrosSql}
       order by (case when ${f.vista}::text = 'agendadas' then fi.reserva_at end) asc nulls last, f.creado_at desc
       limit ${POR_PAGINA} offset ${(f.pagina - 1) * POR_PAGINA}`;
+    // Contadores de fase para los filtros (los de la barra lateral los pide la propia barra).
     const [porVista] = await sql()`
-      select
-        (select count(*)::int from setter.errores where revisado_at is null) as errores,
-        count(*) filter (where ${SIN_CONTACTAR})::int as sin_contactar,
-        count(*) filter (where fi.propuesta_estado in ('pendiente', 'no_enviada') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as por_enviar,
-        count(*) filter (where fi.reserva_at is null and f.ruta is distinct from 'asesoria' and fi.propuesta_estado in ('enviada', 'manual')
-                           and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as sin_agendar,
-        count(*) filter (where fi.reserva_at is not null and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as agendadas,
-        count(*) filter (where fi.fase = 'vendido')::int as vendidos,
-        count(*) filter (where fi.fase = 'no_vendido')::int as no_vendidos,
-        (select coalesce(jsonb_object_agg(t.fase, t.n), '{}'::jsonb) from (select fase, count(*)::int as n from setter.fichas group by fase) t) as por_fase
-      from setter.fichas fi join setter.formularios f on f.id = fi.formulario_id`;
+      select (select coalesce(jsonb_object_agg(t.fase, t.n), '{}'::jsonb) from (select fase, count(*)::int as n from setter.fichas group by fase) t) as por_fase`;
     return { filas, porVista };
   });
 
@@ -117,82 +108,50 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
   return (
     <main className="pantalla panel">
       <header className="panel-cabecera">
-        <h1>Leads</h1>
-        <div className="panel-acciones">
-          <Link href="/panel/estadisticas" className="enlace-boton">
-            Estadísticas
-          </Link>
-          <Link href="/panel/ajustes" className="enlace-boton">
-            Ajustes
-          </Link>
-          <Link href="/panel/errores" className="enlace-boton">
-            Errores
-          </Link>
-          <form method="post" action="/panel/salir">
+        <h1>{f.vista ? NOMBRE_VISTA[f.vista] : "Todos los leads"}</h1>
+      </header>
+
+      <details className="desplegable filtros-lista" open={Boolean(f.fase || f.ruta || f.q)}>
+        <summary>
+          <h2>Filtrar y buscar</h2>
+          {(f.fase || f.ruta || f.q) && <span className="chip">Filtros activos</span>}
+        </summary>
+        <div className="desplegable-cuerpo">
+          <nav className="filtros secundarios" aria-label="Filtrar por fase">
+            <Link href={enlace(f, { fase: null })} className={`ficha-chip${f.fase ? "" : " activa"}`}>
+              Cualquier fase
+            </Link>
+            {FASES.map((fase) => (
+              <Link key={fase} href={enlace(f, { fase })} className={`ficha-chip${f.fase === fase ? " activa" : ""}`}>
+                {NOMBRE_FASE[fase]} <span>{cuentasFase[fase] ?? 0}</span>
+              </Link>
+            ))}
+          </nav>
+
+          <form method="get" action="/panel" className="busqueda">
+            {f.vista && <input type="hidden" name="vista" value={f.vista} />}
+            {f.fase && <input type="hidden" name="fase" value={f.fase} />}
+            <label>
+              <span className="solo-lectores">Ruta</span>
+              <select name="ruta" defaultValue={f.ruta ?? ""}>
+                <option value="">Todas las rutas</option>
+                {RUTAS.map((r) => (
+                  <option key={r} value={r}>
+                    {NOMBRE_RUTA[r]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span className="solo-lectores">Buscar</span>
+              <input type="search" name="q" defaultValue={f.q ?? ""} placeholder="Nombre, email o Instagram" maxLength={60} />
+            </label>
             <button type="submit" className="secundario">
-              Salir
+              Buscar
             </button>
           </form>
         </div>
-      </header>
-
-      {(porVista?.errores ?? 0) > 0 && (
-        <Link href="/panel/errores" className="alerta" role="status">
-          <strong>{porVista?.errores as number}</strong> {porVista?.errores === 1 ? "error sin revisar" : "errores sin revisar"}. Pulsa para ver la causa.
-        </Link>
-      )}
-
-      {(porVista?.sin_contactar ?? 0) > 0 && f.vista !== "sin_contactar" && (
-        <Link href={enlace(f, { vista: "sin_contactar" })} className="alerta" role="status">
-          <strong>{porVista?.sin_contactar as number}</strong>{" "}
-          {porVista?.sin_contactar === 1 ? "lead lleva" : "leads llevan"} más de 24 h sin contactar. Pulsa para verlos.
-        </Link>
-      )}
-
-      <nav className="filtros" aria-label="Bandeja">
-        <Link href={enlace(f, { vista: null })} className={`ficha-chip${f.vista ? "" : " activa"}`}>
-          Todos
-        </Link>
-        {VISTAS.map((v) => (
-          <Link key={v} href={enlace(f, { vista: v })} className={`ficha-chip${f.vista === v ? " activa" : ""}`}>
-            {NOMBRE_VISTA[v]} <span>{(porVista?.[v] as number | undefined) ?? 0}</span>
-          </Link>
-        ))}
-      </nav>
-
-      <nav className="filtros secundarios" aria-label="Filtrar por fase">
-        <Link href={enlace(f, { fase: null })} className={`ficha-chip${f.fase ? "" : " activa"}`}>
-          Cualquier fase
-        </Link>
-        {FASES.map((fase) => (
-          <Link key={fase} href={enlace(f, { fase })} className={`ficha-chip${f.fase === fase ? " activa" : ""}`}>
-            {NOMBRE_FASE[fase]} <span>{cuentasFase[fase] ?? 0}</span>
-          </Link>
-        ))}
-      </nav>
-
-      <form method="get" action="/panel" className="busqueda">
-        {f.vista && <input type="hidden" name="vista" value={f.vista} />}
-        {f.fase && <input type="hidden" name="fase" value={f.fase} />}
-        <label>
-          <span className="solo-lectores">Ruta</span>
-          <select name="ruta" defaultValue={f.ruta ?? ""}>
-            <option value="">Todas las rutas</option>
-            {RUTAS.map((r) => (
-              <option key={r} value={r}>
-                {NOMBRE_RUTA[r]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span className="solo-lectores">Buscar</span>
-          <input type="search" name="q" defaultValue={f.q ?? ""} placeholder="Nombre, email o Instagram" maxLength={60} />
-        </label>
-        <button type="submit" className="secundario">
-          Buscar
-        </button>
-      </form>
+      </details>
 
       <p className="ayuda">
         {total} {total === 1 ? "lead" : "leads"}
@@ -213,12 +172,18 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
                   {l.sin_contactar && <span className="chip urgente">Sin contactar +24 h</span>}
                   <span className={`fase fase-${l.fase}`}>{NOMBRE_FASE[l.fase]}</span>
                   <span className="chip">{l.ruta ? NOMBRE_RUTA[l.ruta] : "Formulario antiguo"}</span>
-                  <span className={`chip propuesta-${l.propuesta_estado}`}>Propuesta: {NOMBRE_PROPUESTA[l.propuesta_estado]}</span>
                   {l.reserva_at && <span className="chip reserva">Llamada {fechaCorta(l.reserva_at)}</span>}
-                  {l.encaje && <span className={`chip encaje-${l.encaje}`}>Encaje {l.encaje}</span>}
-                  {l.puntuacion !== null && <span className="chip">{l.puntuacion}%</span>}
-                  {l.oferta_recomendada && <span className="chip">Recomendado: {OFERTA[l.oferta_recomendada]}</span>}
-                  {l.video_codigo && <span className="chip">Vídeo {l.video_codigo}</span>}
+                </span>
+                <span className="lead-meta">
+                  {[
+                    l.propuesta_estado !== "pendiente" ? `Propuesta: ${NOMBRE_PROPUESTA[l.propuesta_estado].toLowerCase()}` : null,
+                    l.encaje ? `Encaje ${l.encaje}` : null,
+                    l.puntuacion !== null ? `${l.puntuacion}%` : null,
+                    l.oferta_recomendada ? `Recomendado: ${OFERTA[l.oferta_recomendada]}` : null,
+                    l.video_codigo ? `Vídeo ${l.video_codigo}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </span>
               </Link>
             </li>

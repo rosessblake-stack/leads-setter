@@ -78,22 +78,34 @@ export function FormularioAjax({
   );
 }
 
+// Muestra solo el estado actual y, con «Cambiar», las opciones. Al elegir una se guarda y se cierra.
 export function Pildoras({
   action,
   accion,
   campo,
   activo,
   opciones,
+  etiqueta,
+  prefijoClase,
+  nombres,
+  nota,
+  detalle,
 }: {
   action: string;
   accion: string;
   campo: string;
   activo: string;
   opciones: { valor: string; etiqueta: string }[];
+  etiqueta: string;
+  prefijoClase: string;
+  nombres: Record<string, string>;
+  nota?: string;
+  detalle?: string;
 }) {
   const router = useRouter();
   const [, refrescar] = useTransition();
   const [sel, setSel] = useState(activo);
+  const [abierto, setAbierto] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [guardado, setGuardado] = useState(false);
   const ocupado = useRef(false);
@@ -101,10 +113,15 @@ export function Pildoras({
   useEffect(() => setSel(activo), [activo]);
 
   async function elegir(valor: string) {
-    if (ocupado.current || valor === sel) return;
+    if (ocupado.current) return;
+    if (valor === sel) {
+      setAbierto(false);
+      return;
+    }
     ocupado.current = true;
     const anterior = sel;
     setSel(valor); // se ve al instante; se corrige si falla
+    setAbierto(false);
     setError(null);
     setGuardado(false);
     const datos = new FormData();
@@ -113,6 +130,7 @@ export function Pildoras({
     const r = await enviar(action, datos);
     if (r.ok) {
       setGuardado(true);
+      setTimeout(() => setGuardado(false), 2500);
       refrescar(() => router.refresh());
     } else {
       setSel(anterior);
@@ -122,31 +140,36 @@ export function Pildoras({
   }
 
   return (
-    <>
-      <div className="botonera">
-        {opciones.map((o) => (
-          <button
-            key={o.valor}
-            type="button"
-            className={`pildora${sel === o.valor ? " activa" : ""}`}
-            aria-pressed={sel === o.valor}
-            onClick={() => elegir(o.valor)}
-          >
-            {o.etiqueta}
-          </button>
-        ))}
+    <div className="estado-bloque">
+      <div className="estado-fila">
+        <span className="estado-etiqueta">{etiqueta}</span>
+        <span className={`estado-valor ${prefijoClase}${sel}`}>{nombres[sel] ?? sel}</span>
+        {detalle && <span className="lead-fecha">{detalle}</span>}
+        {guardado && (
+          <span className="aviso" role="status">
+            Guardado
+          </span>
+        )}
+        <button type="button" className="enlace-texto" aria-expanded={abierto} onClick={() => setAbierto((a) => !a)}>
+          {abierto ? "Cerrar" : "Cambiar"}
+        </button>
       </div>
-      {guardado && !error && (
-        <p className="aviso" role="status">
-          Guardado.
-        </p>
+      {abierto && (
+        <div className="botonera">
+          {opciones.map((o) => (
+            <button key={o.valor} type="button" className={`pildora${sel === o.valor ? " activa" : ""}`} aria-pressed={sel === o.valor} onClick={() => elegir(o.valor)}>
+              {o.etiqueta}
+            </button>
+          ))}
+        </div>
       )}
+      {nota && abierto && <p className="ayuda">{nota}</p>}
       {error && (
         <p className="error" role="alert">
           {error}
         </p>
       )}
-    </>
+    </div>
   );
 }
 
@@ -214,5 +237,47 @@ export function CopiarTexto({ texto }: { texto: string }) {
         {copiado ? "Copiado" : "Copiar mensaje"}
       </button>
     </>
+  );
+}
+
+// Herramientas de la ficha: abrir o cerrar todo y buscar dentro de las respuestas, señales y valoración.
+export function HerramientasFicha() {
+  const [busqueda, setBusqueda] = useState("");
+  const [todoAbierto, setTodoAbierto] = useState(false);
+  const todos = () => Array.from(document.querySelectorAll<HTMLDetailsElement>("details.desplegable[data-ficha]"));
+
+  function alternar() {
+    const abrir = !todoAbierto;
+    todos().forEach((d) => (d.open = abrir));
+    setTodoAbierto(abrir);
+  }
+
+  function buscar(texto: string) {
+    setBusqueda(texto);
+    const q = texto.trim().toLowerCase();
+    for (const d of todos()) {
+      const filas = Array.from(d.querySelectorAll<HTMLElement>("[data-buscable]"));
+      if (filas.length === 0) {
+        d.classList.toggle("oculto", q !== ""); // lo que no se puede buscar (historial) se esconde mientras se busca
+        continue;
+      }
+      let coincide = 0;
+      for (const f of filas) {
+        const ok = q === "" || (f.textContent ?? "").toLowerCase().includes(q);
+        f.classList.toggle("oculto", !ok);
+        if (ok) coincide++;
+      }
+      d.classList.toggle("oculto", q !== "" && coincide === 0);
+      if (q !== "" && coincide > 0) d.open = true;
+    }
+  }
+
+  return (
+    <div className="herramientas-ficha">
+      <input type="search" value={busqueda} onChange={(e) => buscar(e.target.value)} placeholder="Buscar en la ficha" aria-label="Buscar en la ficha" maxLength={60} />
+      <button type="button" className="enlace-texto" onClick={alternar}>
+        {todoAbierto ? "Cerrar todo" : "Abrir todo"}
+      </button>
+    </div>
   );
 }
