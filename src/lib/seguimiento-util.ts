@@ -5,12 +5,15 @@ export const FASES_MANUALES: Fase[] = FASES.filter((f) => f !== "vendido" && f !
 export const FASES_FINALES: Fase[] = ["vendido", "no_vendido", "descartado"];
 
 export const PROPUESTAS = ["pendiente", "enviada", "no_enviada", "manual"] as const;
-export type Propuesta = (typeof PROPUESTAS)[number];
+// «enviando» e «incierto» los pone el sistema; no se pueden elegir a mano.
+export type Propuesta = (typeof PROPUESTAS)[number] | "enviando" | "incierto";
 export const NOMBRE_PROPUESTA: Record<Propuesta, string> = {
   pendiente: "Pendiente de enviar",
   enviada: "Enviada",
   no_enviada: "No se pudo enviar",
   manual: "Enviada a mano",
+  enviando: "Enviándose",
+  incierto: "No sé si salió: mira el chat",
 };
 
 export const PRODUCTOS = ["online", "presencial", "asesoria"] as const;
@@ -68,7 +71,7 @@ export function leerFaseManual(v: string | null | undefined): Leer<Fase> {
   return entre(FASES_MANUALES, f) ? { ok: true, valor: f as Fase } : { ok: false, error: "Esa fase no es válida." };
 }
 
-export function leerPropuesta(v: string | null | undefined): Leer<Propuesta> {
+export function leerPropuesta(v: string | null | undefined): Leer<(typeof PROPUESTAS)[number]> {
   const p = texto(v);
   return entre(PROPUESTAS, p) ? { ok: true, valor: p } : { ok: false, error: "Ese estado de propuesta no es válido." };
 }

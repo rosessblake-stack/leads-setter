@@ -58,16 +58,17 @@ function enlace(f: Filtros, cambios: Cambios) {
 
 export default async function Lista({ searchParams }: { searchParams: Promise<Params> }) {
   await exigirSesion();
-  const f = leerFiltros(await searchParams);
+  const sp = await searchParams;
+  const f = leerFiltros(sp);
   const patron = f.q ? patronBusqueda(f.q) : null;
 
   // Sin contactar: fase «Nuevo», propuesta sin enviar y más de 24 h desde el formulario (se cierra la ventana de Instagram).
-  const SIN_CONTACTAR = sql()`(fi.fase = 'nuevo' and fi.propuesta_estado in ('pendiente', 'no_enviada') and f.creado_at < now() - interval '24 hours')`;
+  const SIN_CONTACTAR = sql()`(fi.fase = 'nuevo' and fi.propuesta_estado in ('pendiente', 'no_enviada', 'incierto') and f.creado_at < now() - interval '24 hours')`;
   // Cada vista es una pregunta concreta: ¿a quién falta escribir?, ¿quién no ha reservado?...
   const vistaSql = sql()`(
     ${f.vista}::text is null
     or (${f.vista}::text = 'sin_contactar' and ${SIN_CONTACTAR})
-    or (${f.vista}::text = 'por_enviar' and fi.propuesta_estado in ('pendiente', 'no_enviada') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
+    or (${f.vista}::text = 'por_enviar' and fi.propuesta_estado in ('pendiente', 'no_enviada', 'incierto') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
     or (${f.vista}::text = 'sin_agendar' and fi.reserva_at is null and f.ruta is distinct from 'asesoria'
         and fi.propuesta_estado in ('enviada', 'manual') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
     or (${f.vista}::text = 'agendadas' and fi.reserva_at is not null and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
@@ -110,6 +111,12 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
       <header className="panel-cabecera">
         <h1>{f.vista ? NOMBRE_VISTA[f.vista] : "Todos los leads"}</h1>
       </header>
+
+      {(sp.borrado === "1" || sp.borrado === "2") && (
+        <p className="aviso" role="status">
+          Persona borrada de la base de datos{sp.borrado === "1" ? " y del calendario" : " (no se pudo quitar su evento del calendario: bórralo a mano)"}. Falta borrar a mano su contacto en ManyChat y los mensajes de Telegram.
+        </p>
+      )}
 
       <details className="desplegable filtros-lista" open={Boolean(f.fase || f.ruta || f.q)}>
         <summary>

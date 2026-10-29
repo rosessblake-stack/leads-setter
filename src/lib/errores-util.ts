@@ -42,6 +42,7 @@ export function pista(origen: string, mensaje: string): string | null {
   if (m.includes("invalid_client")) return "Google no reconoce el ID o el secreto de la aplicación. Revisa en Vercel GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET: tienen que ser del mismo cliente de Google, sin espacios.";
   if (m.includes("redirect_uri_mismatch")) return "La dirección de vuelta no coincide con la de Google Cloud. Tiene que ser exactamente https://leads-setter.vercel.app/api/google/callback.";
   if (m.includes("invalid_grant")) return "Google rechazó el permiso (caducado o ya usado). Vuelve a pulsar «Conectar Google» en Ajustes.";
+  if (m.includes("falta encryption_key")) return "Falta la variable ENCRYPTION_KEY en Vercel (una clave aleatoria de 32 bytes en base64; se genera con: openssl rand -base64 32).";
   if (m.includes("google no está conectado")) return "Falta conectar Google en Ajustes.";
   if (origen === "google" && /\b40[13]\b/.test(m)) return "Google rechazó la petición. Prueba a volver a conectar Google en Ajustes.";
   if (m.includes("no encuentro en manychat")) return "En ManyChat no hay un único flujo con ese nombre. Tienen que llamarse «Propuesta llamada» y «Propuesta asesoría», y estar activos.";
@@ -51,6 +52,8 @@ export function pista(origen: string, mensaje: string): string | null {
   if (origen === "telegram" && m.includes("403")) return "Telegram no deja escribirte: abre el bot y pulsa Start, o revisa TELEGRAM_ADMIN_CHAT_ID.";
   if (origen === "claude" && /\b401\b|authentication/.test(m)) return "La clave de Claude (ANTHROPIC_API_KEY) no es válida o no tiene saldo.";
   if (origen === "claude" && m.includes("credit")) return "La cuenta de Claude se ha quedado sin saldo.";
+  if (m.includes("no se envía:")) return "El sistema no pudo comprobar que el contacto de ManyChat es esa persona, así que dejó la propuesta para enviarla a mano.";
+  if (origen === "manychat" && m.includes("no respondió")) return "ManyChat no contestó. Si era un envío, la ficha queda como «No sé si salió»: mira el chat de Instagram antes de reenviar.";
   if (m.includes("tardó demasiado") || m.includes("sin respuesta")) return "La base de datos tardó demasiado. Suele ser puntual: si se repite, avísame.";
   if (m.includes("falta setter_database_url")) return "Falta la variable SETTER_DATABASE_URL en Vercel.";
   if (m.includes("falta el enlace de pago")) return "Falta STRIPE_LINK_ASESORIA en Vercel.";

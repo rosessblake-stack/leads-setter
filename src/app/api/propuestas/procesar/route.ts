@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { sql } from "@/lib/db";
+import { reanalizarPendientes } from "@/lib/proceso";
 import { procesarPropuestas } from "@/lib/propuestas";
 import { registrarError } from "@/lib/errores";
 
@@ -20,8 +21,12 @@ export async function POST(req: Request) {
     const [c] = await sql()`select valor ->> 'secreto' as secreto from setter.ajustes where clave = 'cron'`;
     const clave = String(c?.secreto ?? "");
     if (clave.length < 24 || !igual(recibida, clave)) return new Response("No autorizado", { status: 401 });
+    const reanalizadas = await reanalizarPendientes().catch(async (e) => {
+      await registrarError("claude", e, { paso: "reintento del análisis" });
+      return 0;
+    });
     const r = await procesarPropuestas();
-    return Response.json({ ok: true, ...r });
+    return Response.json({ ok: true, ...r, reanalizadas });
   } catch (e) {
     await registrarError("propuestas", e, { paso: "temporizador" });
     return Response.json({ ok: false }, { status: 500 });

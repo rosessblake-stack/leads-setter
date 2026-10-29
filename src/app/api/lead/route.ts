@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   }
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "desconocida";
-  if (!permitido(ip)) return json({ ok: false, error: "demasiadas_peticiones" }, 429);
+  if (!(await permitido(ip))) return json({ ok: false, error: "demasiadas_peticiones" }, 429);
 
   const largo = Number(req.headers.get("content-length") ?? 0);
   if (largo > MAX_BYTES) return json({ ok: false, error: "demasiado_grande" }, 413);

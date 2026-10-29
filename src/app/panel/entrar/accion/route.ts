@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   }
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "desconocida";
-  if (!permitido(`panel:${ip}`, 10)) return new Response("Demasiados intentos", { status: 429 });
+  if (!(await permitido(`panel:${ip}`, 10))) return new Response("Demasiados intentos", { status: 429 });
 
   const datos = await req.formData().catch(() => null);
   const t = String(datos?.get("t") ?? "");

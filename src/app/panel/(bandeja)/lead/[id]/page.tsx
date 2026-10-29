@@ -218,6 +218,27 @@ export default async function Ficha({
         </details>
       ))}
 
+      <details className="desplegable" id="borrar">
+        <summary>
+          <h2>Borrar a esta persona</h2>
+          <span className="lead-fecha">Derecho de supresión</span>
+        </summary>
+        <div className="desplegable-cuerpo">
+          <p className="ayuda">
+            Borra de forma definitiva a la persona de esta base de datos (ficha, formulario, historial, notas, resultado, reservas) y sus
+            eventos del calendario. Después tendrás que borrar a mano su contacto en ManyChat y los mensajes de Telegram. Las copias de
+            seguridad de Supabase caducan solas. Los datos de pagos y facturas que debas conservar por ley no están aquí: están en Stripe.
+          </p>
+          <form method="post" action={`/panel/lead/${id}/borrar`} className="formulario-seg">
+            <label>
+              Escribe BORRAR para confirmar
+              <input type="text" name="confirmar" autoComplete="off" required />
+            </label>
+            <button type="submit" className="secundario">Borrar definitivamente</button>
+          </form>
+        </div>
+      </details>
+
       <details className="desplegable" id="historial" data-ficha>
         <summary>
           <h2>Historial</h2>

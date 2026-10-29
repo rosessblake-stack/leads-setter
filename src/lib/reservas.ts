@@ -69,24 +69,45 @@ export async function confirmarReserva(token: string, inicioIso: string): Promis
   if (!hueco) return { ok: false, error: "Ese horario ya no está disponible. Elige otro." };
 
   const tipoTexto = e.tipo === "asesoria" ? "Asesoría 1:1" : "Llamada";
-  // El evento se crea antes de la transacción: dentro de ella solo hay una conexión a la base de datos disponible.
-  const ev = await crearEvento({
-    titulo: `${tipoTexto} con ${e.nombre}`,
-    descripcion: `Reservada desde el enlace personal. Ficha: ${urlPanel()}/panel/lead/${e.ficha_id}`,
-    inicio: hueco.inicio,
-    fin: hueco.fin,
-    invitado: e.email,
-    peticion: e.id,
-  });
-  let resultado: "ok" | "ya" | null;
+  // 1) Se reclama el hueco en la base de datos. Hay una restricción de exclusión sobre el rango que ocupa cada
+  //    llamada (desde su inicio hasta 1 h después de acabar): si otra persona lo reservó a la vez, esto falla.
+  let reservaId: string;
   try {
-    resultado = await sql().begin(async (tx) => {
+    const [rv] = await sql()`
+      insert into setter.reservas (ficha_id, enlace_id, tipo, inicio, fin, ocupa)
+      values (${e.ficha_id}, ${e.id}, ${e.tipo}, ${hueco.inicio}, ${hueco.fin},
+              tstzrange(${hueco.inicio}::timestamptz, ${new Date(hueco.fin.getTime() + 60 * 60 * 1000)}::timestamptz))
+      returning id`;
+    reservaId = rv.id as string;
+  } catch (err) {
+    const codigo = (err as { code?: string }).code;
+    if (codigo === "23P01") return { ok: false, error: "Ese horario se acaba de ocupar. Elige otro." };
+    if (codigo === "23505") return { ok: false, error: "Ya hay una llamada reservada." };
+    throw err;
+  }
+
+  // 2) El evento de Google se crea fuera de la transacción (dentro solo hay una conexión a la base de datos).
+  //    Si falla, se libera el hueco.
+  let ev: { id: string; meet: string | null };
+  try {
+    ev = await crearEvento({
+      titulo: `${tipoTexto} con ${e.nombre}`,
+      descripcion: `Reservada desde el enlace personal. Ficha: ${urlPanel()}/panel/lead/${e.ficha_id}`,
+      inicio: hueco.inicio,
+      fin: hueco.fin,
+      invitado: e.email,
+      peticion: e.id,
+    });
+  } catch (err) {
+    await sql()`delete from setter.reservas where id = ${reservaId}`.catch(() => undefined);
+    throw err;
+  }
+
+  // 3) Se completa la reserva. Si esto falla, se deshace todo (evento y hueco) para no dejar huecos fantasma.
+  try {
+    await sql().begin(async (tx) => {
       const [f] = await tx`select fase, persona_id from setter.fichas where id = ${e.ficha_id} for update`;
-      if (!f) return null;
-      const [ya] = await tx`select 1 as x from setter.reservas where ficha_id = ${e.ficha_id} and estado = 'confirmada'`;
-      if (ya) return "ya" as const;
-      await tx`insert into setter.reservas (ficha_id, enlace_id, tipo, inicio, fin, google_event_id, meet_url)
-               values (${e.ficha_id}, ${e.id}, ${e.tipo}, ${hueco.inicio}, ${hueco.fin}, ${ev.id}, ${ev.meet})`;
+      await tx`update setter.reservas set google_event_id = ${ev.id}, meet_url = ${ev.meet} where id = ${reservaId}`;
       await tx`update setter.fichas set reserva_at = ${hueco.inicio} where id = ${e.ficha_id}`;
       await tx`insert into setter.eventos (persona_id, tipo, datos)
                values (${f.persona_id}, 'reserva_confirmada', ${tx.json({ tipo: e.tipo, inicio: hueco.inicio.toISOString() })})`;
@@ -94,15 +115,12 @@ export async function confirmarReserva(token: string, inicioIso: string): Promis
         await tx`update setter.fichas set fase = 'llamada_agendada' where id = ${e.ficha_id}`;
         await tx`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'fase_cambiada', ${tx.json({ de: f.fase, a: "llamada_agendada" })})`;
       }
-      return "ok" as const;
     });
   } catch (err) {
-    await borrarEvento(ev.id).catch(() => {});
+    await borrarEvento(ev.id).catch(() => undefined);
+    await sql()`delete from setter.reservas where id = ${reservaId}`.catch(() => undefined);
     throw err;
   }
-  if (resultado !== "ok") await borrarEvento(ev.id).catch(() => {});
-  if (resultado === "ya") return { ok: false, error: "Ya hay una llamada reservada." };
-  if (resultado === null) return { ok: false, error: "Este enlace ya no es válido." };
 
   return {
     ok: true,

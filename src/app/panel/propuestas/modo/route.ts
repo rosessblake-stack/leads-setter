@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { ir } from "@/lib/http";
 import { COOKIE_PANEL, sesionValida } from "@/lib/panel";
-import { fijarModo } from "@/lib/propuestas";
+import { fijarModo, fijarPausa } from "@/lib/propuestas";
 
 export const maxDuration = 30;
 
@@ -15,6 +15,8 @@ export async function POST(req: Request) {
   const modo = String(datos?.get("modo") ?? "");
   if (modo === "automatico") await fijarModo("automatico", 0);
   else if (modo === "calibracion") await fijarModo("calibracion", 10);
+  else if (modo === "pausar") await fijarPausa(true);
+  else if (modo === "reanudar") await fijarPausa(false);
   else return new Response("Modo no válido", { status: 400 });
   return ir("/panel/ajustes?propuestas=ok");
 }

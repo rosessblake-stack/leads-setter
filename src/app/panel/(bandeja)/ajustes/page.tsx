@@ -2,7 +2,7 @@ import Link from "next/link";
 import { intentar } from "@/lib/db";
 import { conexion, googleConfigurado, ocupadosEntre } from "@/lib/google";
 import { buscarFlujo, infoPagina, manychatConfigurado } from "@/lib/manychat";
-import { leerModo } from "@/lib/propuestas";
+import { HORA_PRIMERA, HORA_ULTIMA, leerModo } from "@/lib/propuestas";
 import { proponer, ZONA, REGLAS } from "@/lib/disponibilidad";
 import { exigirSesion } from "@/lib/panel";
 import { fechaCorta } from "@/lib/panel-util";
@@ -82,7 +82,7 @@ export default async function Ajustes({ searchParams }: { searchParams: Promise<
         ) : (
           <p className="ayuda">Todavía no está conectado. Sin esto no se pueden ofrecer horarios de llamada.</p>
         )}
-        {!googleConfigurado() && <p className="error">Faltan las claves de Google en Vercel.</p>}
+        {!googleConfigurado() && <p className="error">Faltan las claves de Google en Vercel (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET y ENCRYPTION_KEY).</p>}
         <form method="post" action="/panel/google/conectar">
           <button type="submit" className={c ? "secundario" : "principal"}>
             {c ? "Volver a conectar" : "Conectar Google"}
@@ -117,6 +117,15 @@ export default async function Ajustes({ searchParams }: { searchParams: Promise<
             ? "automático (se envían solas, entre 1 y 3 horas después del formulario)"
             : `calibración (te llegan a Telegram para revisarlas; faltan ${modo.restantes} para pasar a automático)`}
         </p>
+        <p className="resumen">
+          Envío: {modo.pausa ? "PAUSADO (no sale ninguna propuesta)" : `activo · máximo ${modo.tope} al día · de ${HORA_PRIMERA}:00 a ${HORA_ULTIMA}:59 en la zona horaria de la persona`}
+        </p>
+        <form method="post" action="/panel/propuestas/modo">
+          <input type="hidden" name="modo" value={modo.pausa ? "reanudar" : "pausar"} />
+          <button type="submit" className="secundario">
+            {modo.pausa ? "Reanudar el envío" : "Pausar el envío"}
+          </button>
+        </form>
         <form method="post" action="/panel/propuestas/modo">
           <input type="hidden" name="modo" value={modo.modo === "automatico" ? "calibracion" : "automatico"} />
           <button type="submit" className="secundario">

@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { urlPanel } from "@/lib/config";
 import { sql } from "@/lib/db";
 import type { Ocupado } from "@/lib/disponibilidad";
@@ -15,21 +15,33 @@ const clienteId = () => (process.env.GOOGLE_CLIENT_ID ?? "").trim();
 const clienteSecreto = () => (process.env.GOOGLE_CLIENT_SECRET ?? "").trim();
 
 export const redirectUri = () => `${urlPanel()}/api/google/callback`;
-export const googleConfigurado = () => Boolean(clienteId() && clienteSecreto());
+export const googleConfigurado = () => Boolean(clienteId() && clienteSecreto() && Buffer.from((process.env.ENCRYPTION_KEY ?? "").trim(), "base64").length >= 32);
 
-// ----- Cifrado del token de refresco (la clave se deriva del secreto de cliente; no hay otra variable que configurar) -----
-const clave = () => createHash("sha256").update("setter-google:" + clienteSecreto()).digest();
+// ----- Cifrado del token de refresco -----
+// La clave es propia (ENCRYPTION_KEY, 32 bytes en base64) y no depende de ningún secreto de Google, así que
+// rotar el secreto de Google no rompe lo guardado. Cada valor lleva el número de la clave con la que se cifró
+// (k1, k2...) para poder rotarla: se pone la nueva en ENCRYPTION_KEY y la anterior en ENCRYPTION_KEY_ANTERIOR.
+const VERSION_ACTUAL = Number(process.env.ENCRYPTION_KEY_VERSION ?? "1");
+
+function claveVersion(version: number): Buffer {
+  const actual = version === VERSION_ACTUAL;
+  const bruta = (actual ? process.env.ENCRYPTION_KEY : process.env.ENCRYPTION_KEY_ANTERIOR) ?? "";
+  const clave = Buffer.from(bruta.trim(), "base64");
+  if (clave.length < 32) throw new Error(actual ? "Falta ENCRYPTION_KEY (32 bytes en base64)" : `Falta ENCRYPTION_KEY_ANTERIOR para la versión k${version}`);
+  return clave.subarray(0, 32);
+}
 
 export function cifrar(texto: string): string {
   const iv = randomBytes(12);
-  const c = createCipheriv("aes-256-gcm", clave(), iv);
+  const c = createCipheriv("aes-256-gcm", claveVersion(VERSION_ACTUAL), iv);
   const datos = Buffer.concat([c.update(texto, "utf8"), c.final()]);
-  return [iv, c.getAuthTag(), datos].map((b) => b.toString("base64url")).join(".");
+  return [`k${VERSION_ACTUAL}`, ...[iv, c.getAuthTag(), datos].map((b) => b.toString("base64url"))].join(".");
 }
 
 export function descifrar(valor: string): string {
-  const [iv, tag, datos] = valor.split(".").map((p) => Buffer.from(p, "base64url"));
-  const d = createDecipheriv("aes-256-gcm", clave(), iv);
+  const [v, ...resto] = valor.split(".");
+  const [iv, tag, datos] = resto.map((p) => Buffer.from(p, "base64url"));
+  const d = createDecipheriv("aes-256-gcm", claveVersion(Number(v.replace(/^k/, ""))), iv);
   d.setAuthTag(tag);
   return Buffer.concat([d.update(datos), d.final()]).toString("utf8");
 }

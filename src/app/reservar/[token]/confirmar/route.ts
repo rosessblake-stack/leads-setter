@@ -13,7 +13,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ token: string 
   const host = req.headers.get("host");
   if (!origen || !host || new URL(origen).host !== host) return new Response("Origen no permitido", { status: 403 });
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "desconocida";
-  if (!permitido(`reserva:${ip}`, 20)) return new Response("Demasiados intentos", { status: 429 });
+  if (!(await permitido(`reserva:${ip}`, 20))) return new Response("Demasiados intentos", { status: 429 });
 
   const { token } = await ctx.params;
   if (!FORMATO_SECRETO.test(token)) return new Response("No encontrado", { status: 404 });

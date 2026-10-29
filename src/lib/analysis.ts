@@ -15,6 +15,8 @@ export const DOLORES = [
   "otro",
 ] as const;
 export const OFERTAS = ["online", "presencial", "asesoria", "ninguna"] as const;
+// Se cambia cada vez que se toca el prompt o el esquema: así se pueden comparar análisis de épocas distintas.
+export const PROMPT_VERSION = "2026-10-29-1";
 export const ENCAJES = ["alto", "medio", "bajo"] as const;
 
 // Esquema cerrado que se le pide a Claude. Los límites numéricos y de longitud
@@ -37,6 +39,7 @@ export type FichaAnalizada = {
   puntuacion: number;
   sospechoso: boolean;
   resumen: string;
+  tokens?: { entrada: number; salida: number };
 };
 
 // Validación final: lo que sale del modelo nunca entra tal cual en la base de datos.
@@ -120,5 +123,5 @@ export async function analizarFormulario(s: Solicitud): Promise<FichaAnalizada |
     output_config: { effort: "low", format: zodOutputFormat(RespuestaModelo) },
   });
   if (respuesta.stop_reason === "refusal" || !respuesta.parsed_output) return null;
-  return normalizarFicha(respuesta.parsed_output);
+  return { ...normalizarFicha(respuesta.parsed_output), tokens: { entrada: respuesta.usage.input_tokens, salida: respuesta.usage.output_tokens } };
 }

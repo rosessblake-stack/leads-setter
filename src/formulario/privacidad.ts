@@ -45,7 +45,7 @@ export const privacidad: { titulo: string; actualizado: string; secciones: Secci
     {
       titulo: "6. Con quién compartimos los datos",
       parrafos: [
-        "No vendemos tus datos. Los tratan, por encargo nuestro, los proveedores que hacen funcionar el servicio: Supabase (base de datos, en la Unión Europea), Vercel (alojamiento de la web), Anthropic (análisis con inteligencia artificial) y Telegram (aviso interno a la persona responsable). ManyChat gestiona la conversación de Instagram que te trae al formulario, con su propia política.",
+        "No vendemos tus datos. Los tratan, por encargo nuestro, los proveedores que hacen funcionar el servicio: Supabase (base de datos, en la Unión Europea), Vercel (alojamiento de la web), Anthropic (análisis con inteligencia artificial), Telegram (aviso interno a la persona responsable), Google (calendario y videollamada, si reservas una llamada) y Stripe (pagos, si compras una asesoría). ManyChat gestiona la conversación de Instagram que te trae al formulario y nos permite escribirte ahí, con su propia política.",
         "Algunos de estos proveedores están o pueden tratar datos fuera de la Unión Europea. En esos casos se apoyan en las garantías previstas por el RGPD, como las cláusulas contractuales tipo o el Marco de Privacidad de Datos UE–EE. UU.",
       ],
     },
