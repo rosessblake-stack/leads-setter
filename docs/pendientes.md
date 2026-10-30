@@ -90,3 +90,16 @@ Reglas: si la persona ya tiene propuesta enviada o llamada agendada, no se le ma
 - Pregunta de motivación: abierta con botones de atajo; Claude clasifica el texto libre y se guarda la frase original. Segunda vez: «¿Qué te motivó a escribir en este vídeo?». Tercera y siguientes: qué ha aprendido o conseguido con lo anterior.
 - Regalos: alojarlos en la propia web (no en Drive: las presentaciones son HTML) con enlace de seguimiento por persona.
 - Reservas: horario 11:00–22:00, 1 h de margen con cualquier evento, preferencia por domingo y lunes. Venta: 30 min, dentro de 1 a 3 días. Asesoría: 1 h, una semana después de confirmar el pago. Motor en `src/lib/disponibilidad.ts` (con tests).
+
+## Fase final: entorno único de seguimiento (idea de Blake, 30-oct-2026)
+
+Cuando todo esté conectado (ManyChat, Google, Stripe, Instagram), un solo panel para ver y observar todo, no solo por Telegram:
+conversaciones abiertas (Instagram primero, luego el resto de redes), métricas, porcentajes de compra y avatares.
+No hace falta «migrar» a otra herramienta: el panel actual ya es una aplicación web propia; se amplía por etapas.
+
+Etapas propuestas:
+1. Bandeja de conversaciones de Instagram enlazada a cada ficha (estado, última interacción, ventana de 24 h).
+2. Métricas por vídeo, tipo y categoría de contenido, con intervalos de confianza.
+3. Porcentaje de compra calibrado con resultados reales y avatares por ruta (cuando haya cientos de ventas).
+4. Roles de usuario (`user_id` en notas y eventos) y, si algún día se ofrece a otros, aislamiento por cliente.
+Requisito previo: seguir guardando desde ya tiempos, origen, nivel real visto por Blake y resultado de cada lead.
