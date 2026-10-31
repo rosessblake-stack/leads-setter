@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel completo, ejemplo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Paleta y tipografías de las presentaciones de Blake: fondo oscuro cálido, acento rojo.
+   Disposición: barra lateral fija + una pantalla por vista (resumen, conversaciones, métricas, avatares). */
+:root {
+  --bg: #141414;
+  --bg-2: #1e1e1e;
+  --bg-3: #262625;
+  --ink: #f1efe9;
+  --ink-dim: #ada69d;
+  --accent: #d6483b;
+  --accent-ink: #e2584a;
+  --good: #6fbf73;
+  --warn: #d9a441;
+  --line: rgba(255,255,255,.14);
+  --serif: "Newsreader", Georgia, serif;
+  --grotesk: "Space Grotesk", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--serif); font-size: 17px; line-height: 1.5; }
+h1, h2, h3 { font-family: var(--grotesk); margin: 0; text-wrap: balance; }
+h1 { font-size: 1.7rem; line-height: 1.15; }
+h2 { font-size: 1.05rem; font-weight: 600; }
+h3 { font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); font-weight: 600; }
+a { color: var(--accent-ink); }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+.num { font-family: var(--grotesk); font-variant-numeric: tabular-nums; }
+
+.aviso-ejemplo { background: rgba(214,72,59,.14); border-bottom: 1px solid var(--accent); padding: 9px 16px; font-family: var(--grotesk); font-size: .8rem; text-align: center; }
+
+.marco { display: grid; grid-template-columns: 236px minmax(0,1fr); min-height: calc(100vh - 38px); }
+.barra { background: var(--bg-2); border-right: 1px solid var(--line); padding: 20px 12px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.marca { font-family: var(--grotesk); font-weight: 700; font-size: 1.15rem; margin: 2px 10px 16px; }
+.grupo { font-family: var(--grotesk); font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); margin: 14px 10px 4px; }
+.nav { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 10px; padding: 9px 10px; color: var(--ink-dim); min-height: 42px; font-size: .95rem; text-decoration: none; }
+.nav:hover { color: var(--ink); background: rgba(255,255,255,.04); }
+.nav[aria-current="page"] { color: var(--ink); background: rgba(214,72,59,.12); border-color: rgba(214,72,59,.4); }
+.cuenta { font-family: var(--grotesk); font-size: .72rem; font-weight: 600; border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; }
+.cuenta.rojo { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+main { padding: 26px 30px 60px; min-width: 0; max-width: 1100px; }
+.cab { display: flex; justify-content: space-between; align-items: end; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+.cab p { margin: 4px 0 0; color: var(--ink-dim); font-size: .95rem; }
+.vista { display: none; }
+.vista.activa { display: block; }
+
+.rejilla { display: grid; gap: 12px; }
+.kpis { grid-template-columns: repeat(4, minmax(0,1fr)); margin-bottom: 18px; }
+.kpi { background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.kpi .v { font-family: var(--grotesk); font-size: 1.9rem; font-weight: 700; line-height: 1.1; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.kpi .d { font-size: .82rem; color: var(--ink-dim); margin-top: 2px; }
+.bien { color: var(--good); }
+.tarjeta { background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+.dos { grid-template-columns: minmax(0,3fr) minmax(0,2fr); }
+.tarjeta h2 { margin-bottom: 12px; }
+
+.embudo { display: grid; gap: 8px; }
+.paso { display: grid; grid-template-columns: 112px minmax(0,1fr) 92px; align-items: center; gap: 10px; font-size: .88rem; }
+.paso .etq { color: var(--ink-dim); font-family: var(--grotesk); font-size: .78rem; }
+.barra-fondo { background: var(--bg-3); border-radius: 6px; height: 22px; overflow: hidden; }
+.barra-valor { background: linear-gradient(90deg, var(--accent), var(--accent-ink)); height: 100%; border-radius: 6px; }
+.paso .n { text-align: right; font-family: var(--grotesk); font-variant-numeric: tabular-nums; }
+.paso .n small { color: var(--ink-dim); }
+
+ul.lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.alerta { display: flex; gap: 10px; align-items: baseline; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: .92rem; }
+.alerta.roja { border-color: var(--accent); background: rgba(214,72,59,.1); }
+.alerta.amarilla { border-color: var(--warn); }
+.alerta span.t { font-family: var(--grotesk); font-size: .74rem; color: var(--ink-dim); white-space: nowrap; }
+
+.chip { display: inline-block; font-family: var(--grotesk); font-size: .7rem; font-weight: 600; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; color: var(--ink-dim); white-space: nowrap; }
+.chip.ok { color: var(--good); border-color: var(--good); }
+.chip.mal { color: var(--accent-ink); border-color: var(--accent); }
+.chip.av { color: var(--warn); border-color: var(--warn); }
+
+/* Conversaciones */
+.chat { display: grid; grid-template-columns: 290px minmax(0,1fr) 300px; gap: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--bg-2); min-height: 560px; }
+.col { min-width: 0; }
+.col + .col { border-left: 1px solid var(--line); }
+.conv-lista { display: flex; flex-direction: column; overflow-y: auto; max-height: 640px; }
+.conv { display: block; width: 100%; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 12px 14px; }
+.conv:hover { background: rgba(255,255,255,.03); }
+.conv[aria-selected="true"] { background: rgba(214,72,59,.1); box-shadow: inset 3px 0 var(--accent); }
+.conv .fila { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.conv strong { font-family: var(--grotesk); font-size: .92rem; }
+.conv .ult { color: var(--ink-dim); font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.conv .pie { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; align-items: center; }
+.hilo { display: flex; flex-direction: column; min-height: 560px; }
+.hilo-cab { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+.msgs { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 440px; }
+.m { max-width: 82%; padding: 9px 13px; border-radius: 14px; font-size: .93rem; line-height: 1.4; }
+.m.ella { background: var(--bg-3); align-self: flex-start; border-bottom-left-radius: 4px; }
+.m.blake { background: rgba(214,72,59,.2); border: 1px solid rgba(214,72,59,.4); align-self: flex-end; border-bottom-right-radius: 4px; }
+.m small { display: block; color: var(--ink-dim); font-family: var(--grotesk); font-size: .66rem; margin-top: 4px; }
+.m .boton { display: inline-block; margin-top: 8px; border: 1px solid var(--accent-ink); border-radius: 8px; padding: 5px 12px; font-family: var(--grotesk); font-size: .76rem; color: var(--accent-ink); }
+.sistema { align-self: center; font-family: var(--grotesk); font-size: .72rem; color: var(--ink-dim); border: 1px dashed var(--line); border-radius: 999px; padding: 3px 12px; }
+.responder { border-top: 1px solid var(--line); padding: 10px 12px; display: flex; gap: 8px; }
+.responder input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line); color: var(--ink); border-radius: 10px; padding: 10px 12px; font: inherit; font-size: .92rem; }
+.btn { background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 9px 16px; font-family: var(--grotesk); font-weight: 600; font-size: .85rem; min-height: 40px; }
+.btn.sec { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.ficha { padding: 16px; display: grid; gap: 14px; align-content: start; }
+.ficha dl { margin: 0; display: grid; gap: 8px; }
+.ficha dt { font-family: var(--grotesk); font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); }
+.ficha dd { margin: 0; font-size: .92rem; }
+.reloj { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.reloj .v { font-family: var(--grotesk); font-weight: 700; font-size: 1.3rem; }
+.medidor { height: 8px; background: var(--bg-3); border-radius: 99px; overflow: hidden; margin-top: 6px; }
+.medidor > i { display: block; height: 100%; background: var(--good); border-radius: 99px; }
+.consejo { border-left: 3px solid var(--accent); padding-left: 10px; font-size: .88rem; color: var(--ink); }
+
+/* Métricas */
+table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+th, td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+th:first-child, td:first-child { text-align: left; white-space: normal; }
+thead th { color: var(--ink-dim); font-family: var(--grotesk); font-weight: 500; font-size: .72rem; }
+.contenedor-tabla { overflow-x: auto; }
+.mini { display: inline-block; width: 90px; height: 8px; background: var(--bg-3); border-radius: 99px; vertical-align: middle; overflow: hidden; margin-right: 8px; }
+.mini > i { display: block; height: 100%; background: var(--accent-ink); }
+.nota { color: var(--ink-dim); font-size: .85rem; margin: 10px 0 0; }
+
+/* Avatares */
+.avatares { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.avatar { background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 10px; align-content: start; }
+.avatar .pct { font-family: var(--grotesk); font-size: 2.1rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.avatar ul { margin: 0; padding-left: 18px; font-size: .88rem; color: var(--ink-dim); }
+.avatar p { margin: 0; font-size: .9rem; }
+.avatar .llamada { border-top: 1px solid var(--line); padding-top: 10px; font-size: .88rem; }
+
+.tabs-movil { display: none; }
+@media (max-width: 980px) {
+  .chat { grid-template-columns: 250px minmax(0,1fr); }
+  .chat .col:nth-child(3) { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); }
+  .avatares { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .dos { grid-template-columns: minmax(0,1fr); }
+}
+@media (max-width: 720px) {
+  .marco { grid-template-columns: minmax(0,1fr); }
+  .barra { position: static; height: auto; flex-direction: row; flex-wrap: wrap; padding: 10px 12px; border-right: 0; border-bottom: 1px solid var(--line); gap: 6px; }
+  .marca, .grupo { display: none; }
+  .nav { width: auto; min-height: 38px; padding: 6px 12px; border-color: var(--line); }
+  main { padding: 18px 16px 48px; }
+  .chat { grid-template-columns: minmax(0,1fr); }
+  .col + .col { border-left: 0; border-top: 1px solid var(--line); }
+  .conv-lista { max-height: 260px; }
+  .avatares { grid-template-columns: minmax(0,1fr); }
+  .paso { grid-template-columns: 84px minmax(0,1fr) 78px; }
+  .m { max-width: 92%; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="aviso-ejemplo" role="note">EJEMPLO con datos inventados. Así se vería el panel cuando todo esté conectado. Ninguna persona ni cifra es real.</div>
+
+<div class="marco">
+  <nav class="barra" aria-label="Panel">
+    <div class="marca">Leads</div>
+    <a class="nav" href="#resumen" data-vista="resumen">Resumen de hoy</a>
+    <div class="grupo">Por hacer</div>
+    <a class="nav" href="#conversaciones" data-vista="conversaciones"><span>Conversaciones</span><span class="cuenta rojo">3</span></a>
+    <a class="nav" href="#resumen" data-vista="x1"><span>Sin contactar +24 h</span><span class="cuenta rojo">2</span></a>
+    <div class="grupo">En marcha</div>
+    <a class="nav" href="#resumen" data-vista="x2"><span>Llamadas agendadas</span><span class="cuenta">5</span></a>
+    <a class="nav" href="#resumen" data-vista="x3"><span>Pago pendiente</span><span class="cuenta">2</span></a>
+    <div class="grupo">Análisis</div>
+    <a class="nav" href="#metricas" data-vista="metricas">Métricas</a>
+    <a class="nav" href="#avatares" data-vista="avatares">Avatares y %</a>
+    <div class="grupo">Sistema</div>
+    <a class="nav" href="#resumen" data-vista="x4"><span>Errores</span><span class="cuenta">0</span></a>
+    <a class="nav" href="#resumen" data-vista="x5">Ajustes</a>
+  </nav>
+
+  <main>
+    <!-- RESUMEN -->
+    <section class="vista" id="v-resumen" aria-labelledby="t-resumen">
+      <div class="cab"><div><h1 id="t-resumen">Resumen de hoy</h1><p>Lo que pide tu atención y cómo va el mes.</p></div><span class="chip">Octubre · datos de ejemplo</span></div>
+      <div class="rejilla kpis">
+        <div class="kpi"><h3>Leads nuevos</h3><div class="v">38</div><div class="d"><span class="bien">▲ 12</span> más que el mes pasado</div></div>
+        <div class="kpi"><h3>Llamadas hechas</h3><div class="v">14</div><div class="d">5 agendadas esta semana</div></div>
+        <div class="kpi"><h3>Ventas</h3><div class="v">6</div><div class="d">3 online · 2 asesoría · 1 presencial</div></div>
+        <div class="kpi"><h3>Ingresos del mes</h3><div class="v">4.191 €</div><div class="d">Cierre: 43 % de las llamadas</div></div>
+      </div>
+      <div class="rejilla dos">
+        <div class="tarjeta">
+          <h2>Embudo del mes</h2>
+          <div class="embudo" role="list">
+            <div class="paso" role="listitem"><span class="etq">Comentan</span><div class="barra-fondo"><div class="barra-valor" style="width:100%"></div></div><span class="n">212</span></div>
+            <div class="paso" role="listitem"><span class="etq">Rellenan formulario</span><div class="barra-fondo"><div class="barra-valor" style="width:18%"></div></div><span class="n">38 <small>18 %</small></span></div>
+            <div class="paso" role="listitem"><span class="etq">Reciben propuesta</span><div class="barra-fondo"><div class="barra-valor" style="width:16%"></div></div><span class="n">34 <small>89 %</small></span></div>
+            <div class="paso" role="listitem"><span class="etq">Reservan llamada</span><div class="barra-fondo"><div class="barra-valor" style="width:8.5%"></div></div><span class="n">18 <small>53 %</small></span></div>
+            <div class="paso" role="listitem"><span class="etq">Hacen la llamada</span><div class="barra-fondo"><div class="barra-valor" style="width:6.6%"></div></div><span class="n">14 <small>78 %</small></span></div>
+            <div class="paso" role="listitem"><span class="etq">Compran</span><div class="barra-fondo"><div class="barra-valor" style="width:2.8%"></div></div><span class="n">6 <small>43 %</small></span></div>
+          </div>
+          <p class="nota">Cada porcentaje es sobre el paso anterior. Con pocos datos se muestra un rango, no una cifra exacta.</p>
+        </div>
+        <div class="tarjeta">
+          <h2>Requiere tu atención</h2>
+          <ul class="lista">
+            <li class="alerta roja"><span>Lucía M. escribió hace 3 h y no se le ha respondido</span><span class="t">quedan 21 h</span></li>
+            <li class="alerta roja"><span>2 leads sin contactar desde hace más de 24 h</span><span class="t">hoy</span></li>
+            <li class="alerta amarilla"><span>Asesoría de Marcos T.: pago confirmado, falta crear su enlace</span><span class="t">hace 1 h</span></li>
+            <li class="alerta"><span>Llamada con Irene S. hoy a las 18:00 · 30 min</span><span class="t">en 4 h</span></li>
+            <li class="alerta"><span>Propuesta enviada a Pablo R. · aún sin respuesta</span><span class="t">hace 5 h</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONVERSACIONES -->
+    <section class="vista" id="v-conversaciones" aria-labelledby="t-conv">
+      <div class="cab"><div><h1 id="t-conv">Conversaciones</h1><p>Instagram, Facebook y el resto de redes en una sola bandeja, enlazadas a cada ficha.</p></div>
+        <span class="chip">Instagram</span></div>
+      <div class="chat">
+        <div class="col conv-lista" role="listbox" aria-label="Conversaciones">
+          <button class="conv" role="option" aria-selected="true" data-c="0"><div class="fila"><strong>Lucía M.</strong><span class="chip mal">Sin responder</span></div><div class="ult">¿Y si ya tengo equipo, me sirve igual?</div><div class="pie"><span class="chip">Asesoría</span><span class="chip av">quedan 21 h</span></div></button>
+          <button class="conv" role="option" aria-selected="false" data-c="1"><div class="fila"><strong>Marcos T.</strong><span class="chip ok">Pagó</span></div><div class="ult">Perfecto, ya he hecho el pago</div><div class="pie"><span class="chip">Asesoría</span><span class="chip av">quedan 9 h</span></div></button>
+          <button class="conv" role="option" aria-selected="false" data-c="2"><div class="fila"><strong>Irene S.</strong><span class="chip ok">Llamada hoy</span></div><div class="ult">Nos vemos a las 18:00, gracias</div><div class="pie"><span class="chip">Presencial</span></div></button>
+          <button class="conv" role="option" aria-selected="false" data-c="3"><div class="fila"><strong>Pablo R.</strong><span class="chip">Propuesta enviada</span></div><div class="ult">Automático · Elige día y hora</div><div class="pie"><span class="chip">Online</span><span class="chip av">quedan 3 h</span></div></button>
+          <button class="conv" role="option" aria-selected="false" data-c="4"><div class="fila"><strong>Valeria D.</strong><span class="chip">Pospone</span></div><div class="ult">Me lo pienso y te digo</div><div class="pie"><span class="chip">Online</span></div></button>
+        </div>
+        <div class="col hilo" aria-live="polite">
+          <div class="hilo-cab"><div><strong class="num" id="h-nombre">Lucía M.</strong> <span class="chip" id="h-red">Instagram · @lucia.trenzas</span></div><div><button class="btn sec" type="button">Abrir ficha</button></div></div>
+          <div class="msgs" id="msgs"></div>
+          <form class="responder" onsubmit="return false"><label for="resp" class="sr" style="position:absolute;left:-9999px">Responder</label><input id="resp" placeholder="Escribe una respuesta"><button class="btn" type="submit">Enviar</button></form>
+        </div>
+        <aside class="col ficha" aria-label="Ficha de la persona">
+          <div><h3>Ficha</h3><h2 id="f-nombre" style="margin-top:4px">Lucía M.</h2></div>
+          <div class="reloj"><h3>Ventana de Instagram</h3><div class="v" id="f-ventana">21 h</div><div class="medidor"><i id="f-medidor" style="width:88%"></i></div></div>
+          <dl>
+            <div><dt>Ruta</dt><dd id="f-ruta">Asesoría</dd></div>
+            <div><dt>Fase</dt><dd id="f-fase">Contactado · propuesta enviada</dd></div>
+            <div><dt>Viene de</dt><dd id="f-video">Vídeo reel-042 · Autoridad · Precios</dd></div>
+            <div><dt>Motivación (sus palabras)</dt><dd id="f-motiv">«Quiero poner bien mis precios y no sé por dónde empezar.»</dd></div>
+          </dl>
+          <div><h3>Probabilidad de compra</h3><div class="num" style="font-size:1.8rem;font-weight:700" id="f-pct">72%</div><div class="medidor"><i id="f-pctbar" style="width:72%"></i></div><div class="nota" id="f-av">Avatar: Compra a la primera</div></div>
+          <div class="consejo" id="f-consejo">Para la llamada: empieza por su problema de precios. Tiene negocio y decide ella; no hace falta presionar.</div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- MÉTRICAS -->
+    <section class="vista" id="v-metricas" aria-labelledby="t-metricas">
+      <div class="cab"><div><h1 id="t-metricas">Métricas de contenido</h1><p>Qué vídeos, tipos y categorías traen leads y ventas.</p></div><span class="chip">Últimos 90 días · datos de ejemplo</span></div>
+      <div class="tarjeta" style="margin-bottom:12px">
+        <h2>Por tipo de contenido</h2>
+        <div class="contenedor-tabla"><table>
+          <thead><tr><th>Tipo</th><th>Vídeos</th><th>Leads</th><th>Llamadas</th><th>Ventas</th><th>Venta por lead</th></tr></thead>
+          <tbody>
+            <tr><td>Autoridad</td><td>12</td><td>46</td><td>21</td><td>9</td><td><span class="mini"><i style="width:78%"></i></span>20 % <small>(11–33 %)</small></td></tr>
+            <tr><td>Proceso</td><td>9</td><td>31</td><td>12</td><td>4</td><td><span class="mini"><i style="width:56%"></i></span>13 % <small>(5–29 %)</small></td></tr>
+            <tr><td>Escasez</td><td>4</td><td>19</td><td>10</td><td>5</td><td><span class="mini"><i style="width:100%"></i></span>26 % <small>(10–48 %)</small></td></tr>
+            <tr><td>Conexión</td><td>8</td><td>22</td><td>6</td><td>2</td><td><span class="mini"><i style="width:36%"></i></span>9 % <small>(1–29 %)</small></td></tr>
+            <tr><td>Vitrina</td><td>15</td><td>11</td><td>2</td><td>0</td><td><span class="mini"><i style="width:0%"></i></span>0 % <small>(0–28 %)</small></td></tr>
+          </tbody></table></div>
+        <p class="nota">El rango entre paréntesis es el intervalo de confianza: con pocas ventas es muy ancho y no permite concluir. Se estrecha con el volumen.</p>
+      </div>
+      <div class="rejilla dos">
+        <div class="tarjeta"><h2>Por categoría</h2>
+          <div class="contenedor-tabla"><table><thead><tr><th>Categoría</th><th>Leads</th><th>Ventas</th><th>Ingresos</th></tr></thead><tbody>
+            <tr><td>Negocio y precios</td><td>41</td><td>8</td><td>2.870 €</td></tr>
+            <tr><td>Formaciones</td><td>28</td><td>6</td><td>3.340 €</td></tr>
+            <tr><td>Marca personal</td><td>19</td><td>3</td><td>650 €</td></tr>
+            <tr><td>Peinado y técnica</td><td>24</td><td>2</td><td>994 €</td></tr>
+            <tr><td>Mentalidad</td><td>17</td><td>1</td><td>100 €</td></tr>
+          </tbody></table></div></div>
+        <div class="tarjeta"><h2>Mejores vídeos</h2>
+          <div class="contenedor-tabla"><table><thead><tr><th>Vídeo</th><th>Tipo</th><th>Leads</th><th>Ventas</th></tr></thead><tbody>
+            <tr><td>reel-042 · Cómo poner tus precios</td><td>Autoridad</td><td>14</td><td>4</td></tr>
+            <tr><td>reel-051 · Quedan 2 plazas</td><td>Escasez</td><td>9</td><td>3</td></tr>
+            <tr><td>reel-038 · Un día en el salón</td><td>Proceso</td><td>8</td><td>2</td></tr>
+            <tr><td>reel-047 · Mi primer curso</td><td>Conexión</td><td>7</td><td>1</td></tr>
+          </tbody></table></div></div>
+      </div>
+    </section>
+
+    <!-- AVATARES -->
+    <section class="vista" id="v-avatares" aria-labelledby="t-av">
+      <div class="cab"><div><h1 id="t-av">Avatares y probabilidad de compra</h1><p>Quién compra, quién pospone y quién no, y cómo llevar cada llamada.</p></div><span class="chip av">Calculado con 340 ventas de ejemplo</span></div>
+      <div class="rejilla avatares">
+        <article class="avatar"><div><span class="chip ok">Asesoría</span></div><h2>Compra a la primera</h2><div class="pct bien">78%</div>
+          <p>Tiene negocio, sabe qué le duele y decide sola.</p>
+          <ul><li>Rellena el formulario en menos de 10 min</li><li>Reserva en las primeras 6 h</li><li>Cita un problema concreto, casi siempre precios</li></ul>
+          <div class="llamada"><strong>En la llamada:</strong> ve directa al plan. No hace falta presionar ni dar plazos.</div></article>
+        <article class="avatar"><div><span class="chip av">Online</span></div><h2>Pospone</h2><div class="pct" style="color:var(--warn)">34%</div>
+          <p>Le interesa, pero compara y espera el momento.</p>
+          <ul><li>Abre el regalo varias veces</li><li>Tarda más de un día en reservar</li><li>Comenta varios vídeos antes de escribir</li></ul>
+          <div class="llamada"><strong>En la llamada:</strong> pregunta qué necesita para decidir hoy. Deja claro el siguiente paso y la fecha límite real.</div></article>
+        <article class="avatar"><div><span class="chip mal">Presencial</span></div><h2>Explora sin comprar</h2><div class="pct" style="color:var(--accent-ink)">9%</div>
+          <p>Curiosidad por la técnica, sin negocio claro.</p>
+          <ul><li>Nivel inicial y pocos clientes</li><li>No reserva o no se presenta</li><li>Motivo: precio</li></ul>
+          <div class="llamada"><strong>Antes de llamar:</strong> ofrécele el curso online. Ahorra tu tiempo de llamada para otros perfiles.</div></article>
+      </div>
+      <div class="tarjeta" style="margin-top:12px">
+        <h2>Cómo se calibra el porcentaje</h2>
+        <div class="contenedor-tabla"><table><thead><tr><th>Lo que decía el sistema</th><th>Personas</th><th>Compraron de verdad</th><th>Diferencia</th></tr></thead><tbody>
+          <tr><td>Probabilidad 70–100 %</td><td>58</td><td>71 %</td><td class="bien">acierta</td></tr>
+          <tr><td>Probabilidad 40–69 %</td><td>112</td><td>46 %</td><td class="bien">acierta</td></tr>
+          <tr><td>Probabilidad 0–39 %</td><td>170</td><td>14 %</td><td class="bien">acierta</td></tr>
+        </tbody></table></div>
+        <p class="nota">Esta tabla compara lo previsto con lo que pasó. Mientras no haya cientos de ventas, el porcentaje es solo una estimación inicial.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+var CONVS = [
+  { n: "Lucía M.", red: "Instagram · @lucia.trenzas", ruta: "Asesoría", fase: "Contactado · propuesta enviada", video: "Vídeo reel-042 · Autoridad · Precios", motiv: "«Quiero poner bien mis precios y no sé por dónde empezar.»", pct: 72, av: "Avatar: Compra a la primera", consejo: "Para la llamada: empieza por su problema de precios. Tiene negocio y decide ella; no hace falta presionar.", ventana: "21 h", barra: 88,
+    m: [["s","Vídeo reel-042 · comentó «PRECIOS»"],["b","Hola Lucía, soy Blake. Gracias por escribirme. Rellena este formulario corto…","Automático · 10:02"],["s","Formulario rellenado · análisis de Claude · 10:14"],["b","Hola Lucía, soy Blake. He recibido tu solicitud de asesoría. En la llamada, que dura 1 hora, vamos a trabajar precios y marca personal…","Propuesta automática · 12:05",1],["e","¿Y si ya tengo equipo, me sirve igual?","hace 3 h"]] },
+  { n: "Marcos T.", red: "Instagram · @marcos.braids", ruta: "Asesoría", fase: "Pago pendiente de confirmar enlace", video: "Vídeo reel-051 · Escasez · Negocio", motiv: "«Llevo dos años y siento que me estanqué.»", pct: 81, av: "Avatar: Compra a la primera", consejo: "Pago confirmado. Crea su enlace: la llamada será dentro de 7 días, para preparar su caso.", ventana: "9 h", barra: 38,
+    m: [["s","Formulario rellenado · 08:40"],["b","Hola Marcos, soy Blake. He recibido tu solicitud de asesoría… El primer paso es el pago.","Propuesta automática · 10:41",1],["e","Perfecto, ya he hecho el pago","hace 1 h"],["s","Pago recibido en Stripe · enlace de reserva listo"]] },
+  { n: "Irene S.", red: "Instagram · @irene.formacion", ruta: "Presencial", fase: "Llamada agendada hoy 18:00", video: "Vídeo reel-038 · Proceso · Formaciones", motiv: "«Quiero formarme contigo en persona.»", pct: 64, av: "Avatar: Pospone", consejo: "Pregunta qué necesita para decidir hoy. Llega con las fechas disponibles.", ventana: "sin límite (llamada hoy)", barra: 100,
+    m: [["b","Hola Irene, soy Blake. He recibido tu solicitud para la formación presencial… Pulsa el botón y elige el día y la hora.","Propuesta automática · ayer",1],["s","Irene reservó: hoy 18:00 · invitación con Meet enviada"],["e","Nos vemos a las 18:00, gracias","hace 20 min"]] },
+  { n: "Pablo R.", red: "Instagram · @pablo.cortes", ruta: "Online", fase: "Propuesta enviada", video: "Vídeo reel-047 · Conexión · Marca personal", motiv: "«Quiero aprender a cobrar mejor.»", pct: 41, av: "Avatar: Pospone", consejo: "Aún no ha abierto el enlace de reserva. Si no abre en 24 h, sugiere el siguiente vídeo.", ventana: "3 h", barra: 12,
+    m: [["b","Hola Pablo, soy Blake. He recibido tu solicitud para la formación online… Elige el día y la hora.","Propuesta automática · hace 5 h",1],["s","Sin respuesta · enlace de reserva sin abrir"]] },
+  { n: "Valeria D.", red: "Instagram · @vale.dc", ruta: "Online", fase: "En pausa · pospone", video: "Vídeo reel-042 · Autoridad · Precios", motiv: "«Me interesa pero ahora no es buen momento.»", pct: 33, av: "Avatar: Pospone", consejo: "Vuelve a escribirle dentro de 15 días con un contenido de escasez. No insistir antes.", ventana: "cerrada", barra: 0,
+    m: [["b","Hola Valeria, soy Blake… Elige el día y la hora que mejor te venga.","Propuesta automática · hace 4 días",1],["e","Me lo pienso y te digo","hace 3 días"],["s","Marcada «Pospone» · recordatorio en 15 días"]] }
+];
+var vistas = ["resumen","conversaciones","metricas","avatares"];
+function mostrar(){
+  var h = (location.hash || "#resumen").slice(1);
+  if (vistas.indexOf(h) < 0) h = "resumen";
+  vistas.forEach(function(v){ document.getElementById("v-"+v).classList.toggle("activa", v === h); });
+  document.querySelectorAll(".nav").forEach(function(a){ a.removeAttribute("aria-current"); });
+  var enlace = document.querySelector('.nav[data-vista="'+h+'"]');
+  if (enlace) enlace.setAttribute("aria-current","page");
+}
+function pintar(i){
+  var c = CONVS[i];
+  document.querySelectorAll(".conv").forEach(function(b){ b.setAttribute("aria-selected", String(+b.dataset.c === i)); });
+  document.getElementById("h-nombre").textContent = c.n;
+  document.getElementById("h-red").textContent = c.red;
+  document.getElementById("f-nombre").textContent = c.n;
+  document.getElementById("f-ruta").textContent = c.ruta;
+  document.getElementById("f-fase").textContent = c.fase;
+  document.getElementById("f-video").textContent = c.video;
+  document.getElementById("f-motiv").textContent = c.motiv;
+  document.getElementById("f-pct").textContent = c.pct + "%";
+  document.getElementById("f-pctbar").style.width = c.pct + "%";
+  document.getElementById("f-av").textContent = c.av;
+  document.getElementById("f-consejo").textContent = c.consejo;
+  document.getElementById("f-ventana").textContent = c.ventana;
+  document.getElementById("f-medidor").style.width = c.barra + "%";
+  var cont = document.getElementById("msgs"); cont.innerHTML = "";
+  c.m.forEach(function(x){
+    var d = document.createElement("div");
+    if (x[0] === "s") { d.className = "sistema"; d.textContent = x[1]; }
+    else {
+      d.className = "m " + (x[0] === "b" ? "blake" : "ella");
+      d.appendChild(document.createTextNode(x[1]));
+      if (x[3]) { var bt = document.createElement("span"); bt.className = "boton"; bt.textContent = "Botón con enlace"; d.appendChild(document.createElement("br")); d.appendChild(bt); }
+      if (x[2]) { var s = document.createElement("small"); s.textContent = x[2]; d.appendChild(s); }
+    }
+    cont.appendChild(d);
+  });
+}
+document.querySelectorAll(".conv").forEach(function(b){ b.addEventListener("click", function(){ pintar(+b.dataset.c); }); });
+window.addEventListener("hashchange", mostrar);
+mostrar(); pintar(0);
+</script>
+</body>
+</html>
