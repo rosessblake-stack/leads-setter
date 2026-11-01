@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador del sistema</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Paleta y tipografías de las presentaciones de Blake. Disposición: pasos arriba, a la izquierda lo que ve la persona
+   (móvil), a la derecha lo que ve Blake (Telegram, panel, calendario). */
+:root {
+  --bg: #141414; --bg-2: #1e1e1e; --bg-3: #262625;
+  --ink: #f1efe9; --ink-dim: #ada69d;
+  --accent: #d6483b; --accent-ink: #e2584a; --good: #6fbf73; --warn: #d9a441;
+  --line: rgba(255,255,255,.14);
+  --serif: "Newsreader", Georgia, serif; --grotesk: "Space Grotesk", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--serif); font-size: 17px; line-height: 1.5; }
+h1, h2, h3 { font-family: var(--grotesk); margin: 0; text-wrap: balance; }
+h1 { font-size: 1.5rem; line-height: 1.15; }
+h2 { font-size: 1rem; font-weight: 600; }
+h3 { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); font-weight: 600; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+.g { font-family: var(--grotesk); font-variant-numeric: tabular-nums; }
+.aviso { background: rgba(214,72,59,.14); border-bottom: 1px solid var(--accent); padding: 8px 16px; font-family: var(--grotesk); font-size: .78rem; text-align: center; }
+.contenedor { max-width: 1240px; margin: 0 auto; padding: 18px 16px 48px; }
+.cab { display: flex; justify-content: space-between; align-items: end; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.cab p { margin: 4px 0 0; color: var(--ink-dim); font-size: .92rem; max-width: 62ch; }
+.reloj-sim { font-family: var(--grotesk); font-size: .8rem; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; background: var(--bg-2); }
+.btn { background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 9px 16px; font-family: var(--grotesk); font-weight: 600; font-size: .85rem; min-height: 40px; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn.sec { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.btn.chico { min-height: 34px; padding: 5px 12px; font-size: .78rem; }
+
+/* Pasos */
+.pasos { list-style: none; margin: 0 0 14px; padding: 0; display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.pasos li { flex: none; }
+.pasos button { display: flex; gap: 8px; align-items: center; background: var(--bg-2); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-family: var(--grotesk); font-size: .74rem; color: var(--ink-dim); min-height: 36px; }
+.pasos button .n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line); font-size: .68rem; }
+.pasos button[aria-current="step"] { color: var(--ink); border-color: var(--accent); background: rgba(214,72,59,.12); }
+.pasos button[aria-current="step"] .n { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pasos button.hecho .n { background: var(--good); border-color: var(--good); color: #141414; }
+.pasos button:disabled { opacity: .45; cursor: default; }
+
+.explica { background: var(--bg-2); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; display: flex; gap: 14px; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.explica p { margin: 4px 0 0; font-size: .95rem; max-width: 70ch; }
+
+.cols { display: grid; grid-template-columns: 372px minmax(0, 1fr); gap: 16px; align-items: start; }
+.etq { display: block; margin-bottom: 8px; }
+
+/* Móvil de la persona */
+.movil { width: 100%; max-width: 372px; margin: 0 auto; border: 1px solid var(--line); border-radius: 30px; background: #0e0e0e; padding: 10px; }
+.pantalla { background: var(--bg); border-radius: 22px; height: 640px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); }
+.barra-m { padding: 10px 14px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 8px; font-family: var(--grotesk); font-size: .82rem; background: var(--bg-2); }
+.barra-m .quien { display: flex; align-items: center; gap: 8px; }
+.pto { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); display: inline-grid; place-items: center; font-size: .72rem; font-weight: 700; color: #fff; }
+.cuerpo-m { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.burbuja { max-width: 86%; padding: 8px 12px; border-radius: 14px; font-size: .88rem; line-height: 1.38; white-space: pre-line; }
+.burbuja.blake { background: var(--bg-3); align-self: flex-start; border-bottom-left-radius: 4px; }
+.burbuja.ella { background: rgba(214,72,59,.22); border: 1px solid rgba(214,72,59,.4); align-self: flex-end; border-bottom-right-radius: 4px; }
+.burbuja .bt { display: block; margin-top: 8px; width: 100%; text-align: center; border: 1px solid var(--accent-ink); border-radius: 8px; padding: 7px 10px; background: transparent; color: var(--accent-ink); font-family: var(--grotesk); font-size: .78rem; font-weight: 600; }
+.burbuja .bt:hover:not(:disabled) { background: rgba(214,72,59,.15); }
+.burbuja .bt:disabled { opacity: .5; cursor: default; }
+.nota-m { align-self: center; font-family: var(--grotesk); font-size: .66rem; color: var(--ink-dim); border: 1px dashed var(--line); border-radius: 999px; padding: 2px 10px; text-align: center; }
+.post { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg-2); }
+.post .img { height: 150px; background: linear-gradient(135deg, #3a2420, #1c1c1c); display: grid; place-items: center; font-family: var(--grotesk); font-size: .8rem; color: var(--ink-dim); padding: 10px; text-align: center; }
+.post .pie { padding: 10px 12px; font-size: .85rem; }
+.com { font-size: .84rem; padding: 6px 12px; border-top: 1px solid var(--line); }
+.form-m { display: grid; gap: 10px; }
+.form-m label { display: grid; gap: 4px; font-size: .82rem; color: var(--ink-dim); }
+.form-m input[type="text"], .form-m select, .form-m textarea { background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; color: var(--ink); min-height: 40px; width: 100%; }
+.form-m .chk { display: flex; gap: 8px; align-items: start; color: var(--ink); font-size: .8rem; }
+.temas { display: grid; gap: 6px; }
+.temas label { display: flex; gap: 8px; align-items: center; color: var(--ink); font-size: .82rem; min-height: 30px; }
+.reserva-m h2 { margin: 0 0 4px; font-size: 1rem; }
+.dia h3 { margin: 12px 0 6px; text-transform: capitalize; color: var(--ink); font-size: .78rem; letter-spacing: .02em; }
+.horas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.hora { background: transparent; border: 1px solid var(--line); border-radius: 8px; min-height: 36px; font-family: var(--grotesk); font-size: .8rem; }
+.hora:hover { border-color: var(--accent); background: rgba(214,72,59,.12); }
+.pref { font-family: var(--grotesk); font-size: .62rem; color: var(--warn); border: 1px solid var(--warn); border-radius: 99px; padding: 1px 7px; margin-left: 6px; text-transform: none; letter-spacing: 0; }
+.stripe { background: #fff; color: #1a1a1a; border-radius: 12px; padding: 14px; display: grid; gap: 8px; font-family: system-ui, sans-serif; font-size: .85rem; }
+.stripe .btn { background: #635bff; }
+.vacio-m { margin: auto; text-align: center; color: var(--ink-dim); font-size: .9rem; padding: 20px; }
+
+/* Lado de Blake */
+.blake-lado { background: var(--bg-2); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; min-width: 0; }
+.tabs { display: flex; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tabs button { flex: 1; background: transparent; border: 0; border-bottom: 2px solid transparent; padding: 12px 10px; font-family: var(--grotesk); font-size: .82rem; color: var(--ink-dim); min-height: 46px; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tabs .punto { display: inline-block; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; margin-left: 6px; }
+.panel-t { padding: 14px; min-height: 560px; }
+.tg { display: flex; flex-direction: column; gap: 10px; max-height: 590px; overflow-y: auto; }
+.tg .msg { background: var(--bg-3); border-radius: 14px; border-bottom-left-radius: 4px; padding: 10px 14px; max-width: 94%; font-size: .9rem; white-space: pre-line; align-self: flex-start; }
+.tg .msg small { display: block; color: var(--ink-dim); font-family: var(--grotesk); font-size: .66rem; margin-top: 6px; }
+.tg .acc { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.tg b { font-family: var(--grotesk); }
+.tg .vacio { color: var(--ink-dim); text-align: center; padding: 40px 10px; }
+.ficha { display: grid; gap: 14px; }
+.ficha-cab { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
+.chip { display: inline-block; font-family: var(--grotesk); font-size: .7rem; font-weight: 600; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; color: var(--ink-dim); white-space: nowrap; }
+.chip.ok { color: var(--good); border-color: var(--good); }
+.chip.mal { color: var(--accent-ink); border-color: var(--accent); }
+.chip.av { color: var(--warn); border-color: var(--warn); }
+.estado { border: 1px solid var(--line); border-radius: 12px; padding: 4px 14px; background: var(--bg); }
+.estado .f { display: flex; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.estado .f:last-child { border-bottom: 0; }
+.estado .e { font-family: var(--grotesk); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); min-width: 84px; }
+.pct { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.pct .v { font-family: var(--grotesk); font-size: 2rem; font-weight: 700; line-height: 1; }
+.med { height: 8px; background: var(--bg-3); border-radius: 99px; overflow: hidden; flex: 1; min-width: 120px; }
+.med > i { display: block; height: 100%; background: var(--good); border-radius: 99px; transition: width .4s; }
+.resumen { border-left: 3px solid var(--accent); padding-left: 12px; font-size: .9rem; margin: 0; }
+.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: .84rem; color: var(--ink-dim); }
+.log li { display: flex; gap: 10px; }
+.log .h { font-family: var(--grotesk); font-size: .7rem; min-width: 74px; padding-top: 2px; }
+.embudo { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 8px; }
+.embudo div { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.embudo .v { font-family: var(--grotesk); font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.embudo .l { font-size: .7rem; color: var(--ink-dim); font-family: var(--grotesk); }
+.resultado { display: flex; gap: 8px; flex-wrap: wrap; }
+.modo { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: .85rem; }
+.modo button[aria-pressed="true"] { border-color: var(--accent); background: rgba(214,72,59,.14); }
+.cal { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(96px, 1fr); gap: 8px; overflow-x: auto; padding-bottom: 6px; }
+.cal-col h3 { text-align: center; text-transform: capitalize; letter-spacing: 0; color: var(--ink); font-size: .74rem; margin-bottom: 6px; }
+.cal-col .eje { position: relative; height: 440px; background: repeating-linear-gradient(to bottom, transparent 0, transparent 39px, var(--line) 39px, var(--line) 40px); border: 1px solid var(--line); border-radius: 8px; }
+.ev { position: absolute; left: 3px; right: 3px; border-radius: 5px; font-family: var(--grotesk); font-size: .6rem; padding: 2px 5px; overflow: hidden; }
+.ev.ocupado { background: rgba(255,255,255,.1); color: var(--ink-dim); }
+.ev.margen { background: repeating-linear-gradient(45deg, rgba(217,164,65,.0), rgba(217,164,65,.0) 4px, rgba(217,164,65,.14) 4px, rgba(217,164,65,.14) 8px); }
+.ev.nuevo { background: var(--accent); color: #fff; font-weight: 600; }
+.leyenda { display: flex; gap: 14px; flex-wrap: wrap; font-size: .78rem; color: var(--ink-dim); margin: 10px 0 0; }
+.leyenda i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; }
+.nota { color: var(--ink-dim); font-size: .84rem; margin: 8px 0 0; }
+
+@media (max-width: 940px) { .cols { grid-template-columns: minmax(0,1fr); } .embudo { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<div class="aviso" role="note">SIMULADOR con datos inventados. No envía nada a nadie. Usa los textos y las reglas de reserva reales del sistema.</div>
+<div class="contenedor">
+  <div class="cab">
+    <div><h1>Simulador del sistema</h1><p>Recorre un lead de principio a fin: lo que ve la persona a la izquierda y lo que ve Blake a la derecha. Pulsa en el móvil, o usa «Hacerlo por mí».</p></div>
+    <div class="reloj-sim" id="reloj" aria-live="polite"></div>
+  </div>
+  <ol class="pasos" id="pasos"></ol>
+  <div class="explica" id="explica"></div>
+  <div class="cols">
+    <div>
+      <span class="etq"><h3>La persona (Instagram)</h3></span>
+      <div class="movil"><div class="pantalla" id="movil"></div></div>
+    </div>
+    <div>
+      <span class="etq"><h3>Blake</h3></span>
+      <div class="blake-lado">
+        <div class="tabs" role="tablist" id="tabs">
+          <button role="tab" id="tab-tg" aria-selected="true" data-tab="tg">Telegram</button>
+          <button role="tab" id="tab-panel" aria-selected="false" data-tab="panel">Panel</button>
+          <button role="tab" id="tab-cal" aria-selected="false" data-tab="cal">Calendario</button>
+        </div>
+        <div class="panel-t" id="lado"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== Datos y reglas ===== */
+var PASOS = ["Elegir lead","Comenta un vídeo","Recibe el formulario","Lo rellena","Análisis y aviso","Espera 1 a 3 h","Propuesta","Reserva","Llamada y resultado"];
+var DIAS_BASE = Date.UTC(2026, 9, 29); /* jueves 29 de octubre de 2026 */
+var RUTAS = { online: "Formación online", presencial: "Formación presencial", asesoria: "Asesoría 1:1" };
+var TEMAS = ["Contenido y redes sociales","Clientela","Precios","Marca personal","Sistematización y hábitos","Equipo y liderazgo","Mercado VIP"];
+var REGLAS = { ini: 11*60, fin: 22*60, margen: 60, paso: 30, dur: { venta: 30, asesoria: 60 } };
+
+function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function fechaDia(d){ return new Date(DIAS_BASE + d*86400000); }
+function nombreDia(d){ return fechaDia(d).toLocaleDateString("es-ES",{timeZone:"UTC",weekday:"long",day:"numeric",month:"long"}); }
+function cortoDia(d){ return fechaDia(d).toLocaleDateString("es-ES",{timeZone:"UTC",weekday:"short",day:"numeric",month:"short"}); }
+function diaSemana(d){ return fechaDia(d).getUTCDay(); }
+function hhmm(m){ var h = Math.floor(m/60), mm = m%60; return (h<10?"0":"")+h+":"+(mm<10?"0":"")+mm; }
+function marca(t){ var d = Math.floor(t/1440), m = t%1440; return cortoDia(d)+" · "+hhmm(m); }
+
+/* Calendario de Blake (inventado): salón de martes a sábado, algún compromiso los lunes y los domingos libres */
+function ocupados(d){
+  var s = diaSemana(d);
+  if (s === 0) return [];
+  if (s === 1) return [[17*60, 18*60, "Dentista"]];
+  if (s === 6) return [[11*60, 14*60, "Salón"],[15*60, 20*60+30, "Salón"]];
+  return [[11*60+30, 13*60, "Salón"],[16*60, 19*60+30, "Salón"]];
+}
+/* Reglas reales: de 11:00 a 22:00, 1 h de margen con cualquier evento, pasos de 30 min */
+function huecos(d, dur, adicionales){
+  var bus = ocupados(d).concat(adicionales || []), r = [];
+  for (var t = REGLAS.ini; t + dur <= REGLAS.fin; t += REGLAS.paso) {
+    var libre = bus.every(function(b){ return t >= b[1] + REGLAS.margen || t + dur <= b[0] - REGLAS.margen; });
+    if (libre) r.push(t);
+  }
+  return r;
+}
+var PREF = [0, 1]; /* domingo y lunes */
+/* Venta: de mañana a 3 días. Asesoría: desde 7 días tras el pago, con ventana de 14 días. Siempre 3 días, preferidos primero. */
+function proponer(tipo, hoyDia, reservas){
+  var dur = REGLAS.dur[tipo], desde = tipo === "asesoria" ? 7 : 1, hasta = tipo === "asesoria" ? 7 + 13 : 3, cand = [];
+  for (var d = hoyDia + desde; d <= hoyDia + hasta; d++) {
+    var extra = (reservas || []).filter(function(r){ return r.dia === d; }).map(function(r){ return [r.ini, r.ini + r.dur, "Reservada"]; });
+    var h = huecos(d, dur, extra);
+    if (h.length) cand.push({ dia: d, pref: PREF.indexOf(diaSemana(d)) >= 0, horas: h });
+  }
+  cand.sort(function(a,b){ return (b.pref - a.pref) || (a.dia - b.dia); });
+  return cand.slice(0,3).sort(function(a,b){ return a.dia - b.dia; });
+}
+
+/* ===== Textos reales de la propuesta ===== */
+function primerNombre(n){ var p = String(n).trim().split(/\s+/)[0] || ""; return (/[\d@\/:.<>\\]/.test(p) || p.length < 2) ? "" : p; }
+function textoPropuesta(s){
+  var n = primerNombre(s.nombre), hola = "Hola" + (n ? " " + n : "") + ", soy Blake.";
+  if (s.ruta === "asesoria") {
+    var t = s.temas.length ? s.temas.map(function(x){ return x.toLowerCase(); }) : null;
+    var temas = t ? (t.length > 1 ? t.slice(0,-1).join(", ") + " y " + t[t.length-1] : t[0]) : "los puntos que más te frenan hoy en tu negocio";
+    return hola + " He recibido tu solicitud de asesoría.\n\nEn la llamada, que dura 1 hora, vamos a trabajar " + temas + ". Te voy a enseñar cómo plantearlo en tu caso, y de ahí sale un plan de acción para todo el mes.\n\nEl primer paso para reservarla es el pago. Cuando lo confirmes, te paso el enlace para elegir día y hora: la llamada se agenda una semana después, para poder analizar y preparar tu caso.";
+  }
+  var que = s.ruta === "presencial" ? "la formación presencial" : "la formación online";
+  return hola + " He recibido tu solicitud para " + que + " y quiero hablar contigo antes de nada.\n\nEs una llamada de 30 minutos para ver si encajamos y resolver tus dudas.";
+}
+
+/* ===== Estado ===== */
+var S;
+function nuevo(){
+  S = { paso: 0, ruta: "online", nombre: "Lucía", ig: "lucia.trenzas", modo: "calibracion", t: 10*60, tAbre: null, tForm: null, tProg: null,
+    movil: [], tg: [], log: [], fase: "nuevo", propuesta: "pendiente", reserva: null, resultado: null, pagado: false,
+    respuestas: { nivel: "Intermedio", meta: "", extra: "", temas: [], consent: false }, ficha: null, tab: "tg", tabNuevo: {}, analizando: false,
+    lleg: null, fase2: "", venta: 0, ingresos: 0, enviadaMovil: false };
+}
+function hora(){ return hhmm(S.t % 1440); }
+function ev(txt){ S.log.unshift({ h: marca(S.t), t: txt }); }
+function tg(html, acciones, nota){ S.tg.push({ html: html, acciones: acciones || [], nota: nota || hora() }); S.tabNuevo.tg = true; }
+function irA(p){ S.paso = p; render(); }
+
+/* ===== Acciones ===== */
+var ACC = {
+  empezar: function(){ S.ruta = document.getElementById("s-ruta").value; S.nombre = (document.getElementById("s-nombre").value || "Lucía").slice(0,40); S.ig = (S.nombre.toLowerCase().replace(/[^a-záéíóúñ]/g,"") || "persona") + ".trenzas"; S.t = 10*60; irA(1); },
+  comentar: function(){ var pal = S.ruta === "asesoria" ? "PRECIOS" : "CURSO"; S.movil.push({ k: "com", t: pal }); ev("Comentó «" + pal + "» en el vídeo reel-042 (Autoridad · Negocio)"); S.t += 1; S.tAbre = S.t;
+    S.movil.push({ k: "b", t: "Hola " + (primerNombre(S.nombre) || "") + ", soy Blake. Gracias por escribirme.\n\n¿Te paso el formulario para saber cómo ayudarte mejor?", bt: "Sí, envíamelo", a: "quiero" }); irA(2); },
+  quiero: function(){ S.movil.push({ k: "e", t: "Sí, envíamelo" }); S.t += 1; S.tAbre = S.t; ev("Tocó el botón: se abre la ventana de 24 h de Instagram");
+    S.movil.push({ k: "b", t: "Perfecto. Son unos minutos y me ayuda a prepararme antes de hablar contigo.", bt: "Abrir formulario", a: "abrirForm" }); render(); },
+  abrirForm: function(){ S.movil.push({ k: "n", t: "Se abre /guia?v=reel-042&mc=… en el navegador" }); irA(3); },
+  autoForm: function(){ var r = S.respuestas; r.meta = r.meta || (S.ruta === "asesoria" ? "Quiero poner bien mis precios y no sé por dónde empezar." : "Quiero aprender a cobrar mejor y estructurar mi negocio."); if (S.ruta === "asesoria" && !r.temas.length) r.temas = ["Precios","Marca personal"]; r.consent = true; ACC.enviarForm(true); },
+  enviarForm: function(auto){ if (!auto) { leerForm(); } var r = S.respuestas; if (!r.consent) return; if (S.ruta === "asesoria" && r.temas.length > 3) return;
+    S.t += 11; S.tForm = S.t; ev("Rellenó el formulario (ruta: " + RUTAS[S.ruta] + ")"); S.analizando = true; S.fase = "nuevo"; irA(4);
+    setTimeout(function(){ S.ficha = analizar(); S.analizando = false; S.t += 1; ev("Claude analizó la ficha: encaje " + S.ficha.encaje + ", " + S.ficha.pct + " %");
+      tg("<b>Nuevo lead:</b> " + esc(S.nombre) + "\nRuta: " + RUTAS[S.ruta] + "\nNivel: " + esc(r.nivel) + "\nEncaje: " + S.ficha.encaje + " · Probabilidad de compra: " + S.ficha.pct + " %\n\n" + esc(S.ficha.resumen) + "\n\nVídeo reel-042 · Autoridad · Negocio");
+      S.tab = "tg"; S.tabNuevo.panel = true; render(); }, 900); },
+  esperar: function(){ var mas = 60 + Math.round(Math.random()*120); S.tProg = S.t + mas; ev("Propuesta programada para " + marca(S.tProg) + " (entre 1 y 3 h)"); S.t = S.tProg; irA(6); propuestaToca(); },
+  enviarYo: function(){ enviarPropuestaMovil("a mano"); S.tg = S.tg.map(function(m){ if (m.id === "prep") m.acciones = []; return m; }); render(); },
+  copiar: function(){ var b = event.target; b.textContent = "Copiado (en la demo)"; },
+  botonProp: function(){ if (S.ruta === "asesoria") { irA(61); } else { S.movil.push({ k: "e", t: "Elegir día y hora" }); irA(7); } },
+  pagar: function(){ S.pagado = true; S.t += 4; ev("Pago de la asesoría recibido (Stripe, enlace con la persona identificada)"); S.fase = "pago_pendiente"; S.fase = "contactado";
+    tg("<b>Pago recibido:</b> asesoría de " + esc(S.nombre) + " (100 €).\nSe ha creado su enlace de reserva: la llamada será dentro de 7 días o más, para preparar su caso."); S.tabNuevo.tg = true;
+    S.movil.push({ k: "b", t: "¡Gracias! Pago recibido. Elige el día y la hora de tu asesoría: será dentro de una semana o más, para analizar y preparar tu caso.", bt: "Elegir día y hora", a: "irReserva" }); irA(62); },
+  irReserva: function(){ S.movil.push({ k: "e", t: "Elegir día y hora" }); irA(7); },
+  reservar: function(dia, ini){ var tipo = S.ruta === "asesoria" ? "asesoria" : "venta"; S.reserva = { dia: dia, ini: ini, dur: REGLAS.dur[tipo], tipo: tipo };
+    S.t += 3; S.fase = "llamada_agendada"; S.movil.push({ k: "n", t: "Reserva confirmada · invitación con Meet en su email" }); S.movil.push({ k: "b", t: "Tu " + (tipo === "asesoria" ? "asesoría" : "llamada") + " está reservada: " + nombreDia(dia) + " a las " + hhmm(ini) + " (hora de España).\n\nTe llegará la invitación con el enlace de la videollamada." }); ev("Reservó: " + nombreDia(dia) + " a las " + hhmm(ini) + " (invitación con Meet enviada)");
+    tg("<b>" + esc(S.nombre) + " ha reservado</b> " + (tipo === "asesoria" ? "su asesoría" : "una llamada") + ":\n" + nombreDia(dia) + ", " + hhmm(ini) + " (hora de España).\nEvento creado en tu calendario con Meet."); S.tabNuevo.cal = true; irA(8); },
+  resultado: function(r, prod, imp){ S.resultado = r; S.t = S.reserva.dia*1440 + S.reserva.ini + S.reserva.dur + 5;
+    if (r === "vendido") { S.fase = "vendido"; S.venta = 1; S.ingresos = imp; ev("Resultado: vendido (" + prod + ", " + imp + " €)"); tg("<b>Venta registrada:</b> " + prod + ", " + imp + " €. La fase pasa a «Vendido» y las estadísticas se actualizan."); }
+    else if (r === "no_vendido") { S.fase = "no_vendido"; ev("Resultado: no vendido (motivo: lo piensa)"); tg("Registrado: no vendido (motivo: lo piensa). Queda marcada como «Pospone»."); }
+    else { S.fase = "no_presento"; ev("No se presentó a la llamada"); tg("Registrado: no se presentó. No cuenta como «no vendido»."); }
+    S.tab = "panel"; render(); },
+  modo: function(m){ S.modo = m; render(); },
+  reiniciar: function(){ nuevo(); render(); }
+};
+
+function leerForm(){ var q = function(id){ var e = document.getElementById(id); return e ? e : null; }, r = S.respuestas;
+  if (q("f-nivel")) r.nivel = q("f-nivel").value; if (q("f-meta")) r.meta = q("f-meta").value; if (q("f-extra")) r.extra = q("f-extra").value; if (q("f-consent")) r.consent = q("f-consent").checked;
+  r.temas = Array.prototype.slice.call(document.querySelectorAll("input[name=tema]:checked")).map(function(e){ return e.value; }); }
+
+function analizar(){
+  var r = S.respuestas, p = 40;
+  p += { Principiante: -8, Intermedio: 0, Avanzado: 12, Profesional: 14 }[r.nivel] || 0;
+  if ((r.meta || "").length > 40) p += 8;
+  if (S.ruta === "presencial") p += (r.nivel === "Avanzado" || r.nivel === "Profesional") ? 10 : -15;
+  if (S.ruta === "asesoria") p += 6 + (r.temas.length ? 6 : 0);
+  p = Math.max(5, Math.min(92, p));
+  var enc = p >= 65 ? "alto" : p >= 40 ? "medio" : "bajo";
+  var res = S.ruta === "asesoria" ? "Tiene negocio y pide ayuda en " + (r.temas.length ? r.temas.join(", ").toLowerCase() : "varios puntos") + ". Objetivo claro." : S.ruta === "presencial" ? "Nivel " + r.nivel.toLowerCase() + ". Quiere formarse en persona." : "Nivel " + r.nivel.toLowerCase() + ". Busca aprender y estructurar su negocio.";
+  return { pct: p, encaje: enc, resumen: res };
+}
+
+function textoDe(){ return textoPropuesta({ nombre: S.nombre, ruta: S.ruta, temas: S.respuestas.temas }); }
+function enviarPropuestaMovil(como){ var asesoria = S.ruta === "asesoria";
+  S.movil.push({ k: "b", t: textoDe() + (asesoria ? "\n\nPulsa el botón para hacer el pago." : "\n\nPulsa el botón y elige el día y la hora que mejor te venga."), bt: asesoria ? "Hacer el pago" : "Elegir día y hora", a: "botonProp" });
+  S.propuesta = como === "a mano" ? "manual" : "enviada"; S.fase = "contactado"; S.enviadaMovil = true;
+  ev(como === "a mano" ? "Propuesta enviada a mano por Blake" : "Propuesta enviada automáticamente (dentro de la ventana de 24 h)"); }
+function propuestaToca(){
+  var horas = (S.t - S.tAbre) / 60;
+  if (S.modo === "calibracion") {
+    S.tg.push({ id: "prep", html: "<b>Propuesta preparada para " + esc(S.nombre) + "</b> (calibración: te quedan 9 antes de pasar a automático)\n\n" + esc(textoDe()), acciones: [["Enviar yo por Instagram","enviarYo"],["Copiar mensaje","copiar"]], nota: hora() });
+    S.tabNuevo.tg = true; ev("Propuesta preparada y enviada a tu Telegram (calibración)"); S.propuesta = "pendiente";
+  } else {
+    S.t += 1; enviarPropuestaMovil("auto");
+    tg("<b>Propuesta enviada</b> a " + esc(S.nombre) + " (" + hora() + ").\nComprobado antes: su Instagram coincide con el del formulario, la ventana de 24 h sigue abierta (quedan " + Math.max(0, Math.round(24 - horas)) + " h) y es de día en su zona horaria.");
+  }
+  S.tab = "tg"; render();
+}
+
+/* ===== Pintar ===== */
+var EXPLICA = [
+  ["Elige a quién vas a simular","La ruta cambia el formulario, el texto de la propuesta y las reglas de reserva (la asesoría se paga primero y se agenda una semana después)."],
+  ["Alguien comenta la palabra clave de un vídeo","ManyChat detecta el comentario. Aún no hay datos en el sistema."],
+  ["ManyChat responde con una pregunta","El primer mensaje lleva un botón de respuesta rápida. Cuando la persona lo toca, Instagram abre la ventana de 24 h para escribirle después."],
+  ["La persona rellena el formulario","Es una página web propia. Las respuestas se guardan con su consentimiento y el código del vídeo."],
+  ["Claude analiza y te avisa","Se rellena la ficha (encaje, probabilidad, resumen) y te llega el aviso a Telegram. La probabilidad es una estimación inicial, no está calibrada."],
+  ["El sistema espera entre 1 y 3 horas","Para no responder al instante ni en plena noche, la propuesta se programa con una espera al azar. El temporizador revisa cada 5 minutos."],
+  ["Llega la propuesta","En calibración te llega a ti para revisarla y la envías tú. En automático sale sola, tras comprobar que es la misma persona y que la ventana sigue abierta."],
+  ["Reserva su llamada","La página calcula los huecos con tu calendario: 11:00 a 22:00, 1 h de margen con cualquier evento, preferencia por domingo y lunes, siempre 3 días."],
+  ["La llamada y el resultado","Tú haces la llamada y registras el resultado en el panel. Todo se suma a las estadísticas y, con el tiempo, a los avatares."]
+];
+function render(){
+  var p = S.paso, vp = p > 8 ? 8 : p > 6 && p < 7 ? 6 : p; if (p === 61 || p === 62) vp = 6;
+  document.getElementById("reloj").textContent = S.paso === 0 ? "Jueves 29 oct · 10:00 (hora de España)" : marca(S.t) + " · hora de España";
+  var ol = document.getElementById("pasos"); ol.innerHTML = "";
+  PASOS.forEach(function(n, i){ var li = document.createElement("li"), b = document.createElement("button"); b.type = "button";
+    b.innerHTML = '<span class="n">' + (i < vp ? "✓" : i + 1) + "</span>" + n; if (i < vp) b.className = "hecho"; if (i === vp) b.setAttribute("aria-current","step"); b.disabled = i >= vp; if (i < vp && i > 0) b.addEventListener("click", function(){ /* solo vista */ }); li.appendChild(b); ol.appendChild(li); });
+  var ex = EXPLICA[vp], auto = botonAuto();
+  document.getElementById("explica").innerHTML = '<div><h2>' + (vp+1) + ". " + ex[0] + "</h2><p>" + ex[1] + "</p></div>" + (auto ? '<button class="btn" type="button" id="auto">' + auto + "</button>" : "");
+  var bAuto = document.getElementById("auto"); if (bAuto) bAuto.addEventListener("click", hacerAuto);
+  pintarMovil(); pintarLado();
+}
+function botonAuto(){ var p = S.paso;
+  if (p === 0) return "Empezar";
+  if (p === 1) return "Hacerlo por mí: comentar";
+  if (p === 2) return "Hacerlo por mí: tocar los botones";
+  if (p === 3) return "Hacerlo por mí: rellenar y enviar";
+  if (p === 4) return S.analizando ? null : "Esperar 1 a 3 horas";
+  if (p === 6) return S.propuesta === "pendiente" ? "Hacerlo por mí: enviar la propuesta" : "Hacerlo por mí: la persona toca el botón";
+  if (p === 61) return "Hacerlo por mí: pagar";
+  if (p === 62) return "Hacerlo por mí: elegir día y hora";
+  if (p === 7) return "Hacerlo por mí: elegir el primer hueco";
+  if (p === 8) return S.resultado ? "Empezar con otra persona" : "Hacerlo por mí: registrar una venta";
+  return null; }
+function hacerAuto(){ var p = S.paso;
+  if (p === 0) ACC.empezar();
+  else if (p === 1) ACC.comentar();
+  else if (p === 2) { if (S.movil[S.movil.length-1].a === "quiero") ACC.quiero(); else ACC.abrirForm(); }
+  else if (p === 3) ACC.autoForm();
+  else if (p === 4) ACC.esperar();
+  else if (p === 6) { if (S.propuesta === "pendiente") ACC.enviarYo(); else ACC.botonProp(); }
+  else if (p === 61) ACC.pagar();
+  else if (p === 62) ACC.irReserva();
+  else if (p === 7) { var pr = proponer(S.ruta === "asesoria" ? "asesoria" : "venta", S.ruta === "asesoria" ? 0 : 0, []); ACC.reservar(pr[0].dia, pr[0].horas[0]); }
+  else if (p === 8) { if (S.resultado) ACC.reiniciar(); else ACC.resultado("vendido", S.ruta === "asesoria" ? "Asesoría" : S.ruta === "presencial" ? "Formación presencial" : "Curso online", S.ruta === "asesoria" ? 100 : S.ruta === "presencial" ? 2500 : 497); }
+}
+
+function pintarMovil(){
+  var m = document.getElementById("movil"), p = S.paso, h = "";
+  if (p === 0) { m.innerHTML = '<div class="vacio-m"><div class="pto" style="margin:0 auto 8px">IG</div>Elige la ruta y pulsa «Empezar».<br>Aquí verás lo que ve la persona.</div>'; return; }
+  if (p === 3) { m.innerHTML = formularioHtml(); enlazarForm(); return; }
+  if (p === 4) { m.innerHTML = barraM("Formulario enviado") + '<div class="cuerpo-m"><div class="vacio-m"><h2>Gracias' + (primerNombre(S.nombre) ? ", " + esc(primerNombre(S.nombre)) : "") + "</h2><p>Ya tengo tu solicitud. La reviso y te escribo por Instagram.</p></div></div>"; return; }
+  if (p === 61) { m.innerHTML = barraM("Pago") + '<div class="cuerpo-m"><div class="stripe"><strong>Asesoría 1:1 · 1 hora</strong><span>Plan de acción para todo el mes.</span><span style="font-size:1.4rem;font-weight:700">100 €</span><span style="color:#666">Email: ' + esc(S.ig) + '@…  ·  referencia de la ficha</span><button class="btn" type="button" data-a="pagar">Pagar</button></div><p class="nota">El enlace de Stripe lleva la ficha y el email de la persona, así el pago se asocia solo.</p></div>'; enlazarBt(); return; }
+  if (p === 7) { m.innerHTML = reservaHtml(); enlazarBt(); return; }
+  if (p === 1) { m.innerHTML = barraM("Instagram · @blakebraider") + '<div class="cuerpo-m"><div class="post"><div class="img">Vídeo reel-042<br>«Cómo poner tus precios»<br><small>Autoridad · Negocio y precios</small></div><div class="pie"><strong>blakebraider</strong> Comenta <b>' + (S.ruta === "asesoria" ? "PRECIOS" : "CURSO") + '</b> y te lo mando por mensaje.</div><div class="com">' + (S.movil.some(function(x){return x.k==="com";}) ? "<strong>" + esc(S.ig) + "</strong> " + (S.ruta === "asesoria" ? "PRECIOS" : "CURSO") : '<button class="btn chico" type="button" data-a="comentar">Comentar «' + (S.ruta === "asesoria" ? "PRECIOS" : "CURSO") + '»</button>') + "</div></div></div>"; enlazarBt(); return; }
+  /* chat */
+  S.movil.forEach(function(x, i){
+    if (x.k === "com") return;
+    if (x.k === "n") h += '<div class="nota-m">' + esc(x.t) + "</div>";
+    else { var ultimo = i === S.movil.length - 1 || !S.movil.slice(i+1).some(function(y){ return y.k !== "n"; });
+      h += '<div class="burbuja ' + (x.k === "b" ? "blake" : "ella") + '">' + esc(x.t) + (x.bt ? '<button class="bt" type="button" data-a="' + x.a + '"' + (ultimo ? "" : " disabled") + ">" + esc(x.bt) + "</button>" : "") + "</div>"; }
+  });
+  if (p === 5 || p === 6 && S.propuesta === "pendiente") h += '<div class="nota-m">' + (p === 5 ? "Esperando…" : "Todavía no ha recibido la propuesta") + "</div>";
+  m.innerHTML = barraM("Blake Braider") + '<div class="cuerpo-m" id="cm">' + h + "</div>"; enlazarBt();
+  var cm = document.getElementById("cm"); if (cm) cm.scrollTop = cm.scrollHeight;
+}
+function barraM(t){ return '<div class="barra-m"><div class="quien"><span class="pto">B</span><span>' + t + "</span></div><span class=\"g\" style=\"color:var(--ink-dim)\">" + hora() + "</span></div>"; }
+function enlazarBt(){ Array.prototype.forEach.call(document.querySelectorAll("#movil [data-a]"), function(b){ b.addEventListener("click", function(){ var a = b.getAttribute("data-a"); if (ACC[a]) ACC[a](); }); }); }
+
+function formularioHtml(){
+  var r = S.respuestas, a = S.ruta === "asesoria", pres = S.ruta === "presencial";
+  var h = barraM("Formulario") + '<div class="cuerpo-m"><div class="form-m" id="form">';
+  h += '<label>Nombre<input type="text" value="' + esc(S.nombre) + '" disabled></label><label>Instagram<input type="text" value="@' + esc(S.ig) + '" disabled></label>';
+  h += '<label>¿En qué nivel te colocas hoy?<select id="f-nivel">' + ["Principiante","Intermedio","Avanzado","Profesional"].map(function(n){ return '<option' + (r.nivel === n ? " selected" : "") + ">" + n + "</option>"; }).join("") + "</select></label>";
+  if (a) { h += '<div><span style="font-size:.82rem;color:var(--ink-dim)">¿En qué necesitas ayuda? Elige hasta 3.</span><div class="temas">' + TEMAS.map(function(t){ return '<label><input type="checkbox" name="tema" value="' + t + '"' + (r.temas.indexOf(t) >= 0 ? " checked" : "") + "> " + t + "</label>"; }).join("") + '</div><span id="aviso-temas" style="font-size:.76rem;color:var(--accent-ink)"></span></div>'; }
+  h += '<label>' + (a ? "¿Qué te frena hoy?" : pres ? "¿Qué quieres mejorar con la formación?" : "¿Qué quieres aprender o conseguir?") + '<textarea id="f-meta" rows="3" placeholder="Escribe con tus palabras">' + esc(r.meta) + "</textarea></label>";
+  h += '<label class="chk"><input type="checkbox" id="f-consent"' + (r.consent ? " checked" : "") + '> <span>Acepto que se traten mis datos para valorar mi solicitud y contactarme. (Política de privacidad, abajo a la derecha.)</span></label>';
+  h += '<button class="btn" type="button" id="f-env"' + (r.consent ? "" : " disabled") + ">Enviar solicitud</button></div></div>";
+  return h;
+}
+function enlazarForm(){
+  var c = document.getElementById("f-consent"), b = document.getElementById("f-env");
+  function refrescar(){ leerForm(); var ok = S.respuestas.consent && (S.ruta !== "asesoria" || S.respuestas.temas.length <= 3); b.disabled = !ok; var av = document.getElementById("aviso-temas"); if (av) av.textContent = S.respuestas.temas.length > 3 ? "Máximo 3 temas." : ""; }
+  document.getElementById("form").addEventListener("change", refrescar); document.getElementById("form").addEventListener("input", refrescar);
+  b.addEventListener("click", function(){ ACC.enviarForm(false); });
+}
+function reservaHtml(){
+  var tipo = S.ruta === "asesoria" ? "asesoria" : "venta", pr = proponer(tipo, 0, []);
+  var h = barraM("Reserva") + '<div class="cuerpo-m reserva-m"><h2>Hola, ' + esc(primerNombre(S.nombre) || "") + "</h2><p style=\"margin:0;font-size:.86rem;color:var(--ink-dim)\">Elige el día y la hora de tu " + (tipo === "asesoria" ? "asesoría (1 hora)" : "llamada (30 minutos)") + ". Horas de España.</p>";
+  pr.forEach(function(d){ h += '<div class="dia"><h3>' + nombreDia(d.dia) + (d.pref ? '<span class="pref">día preferido</span>' : "") + '</h3><div class="horas">' + d.horas.map(function(t){ return '<button class="hora" type="button" data-d="' + d.dia + '" data-t="' + t + '">' + hhmm(t) + "</button>"; }).join("") + "</div></div>"; });
+  return h + "</div>";
+}
+
+function pintarLado(){
+  var l = document.getElementById("lado"), tabs = ["tg","panel","cal"];
+  tabs.forEach(function(t){ var b = document.getElementById("tab-" + (t === "panel" ? "panel" : t === "cal" ? "cal" : "tg")); b.setAttribute("aria-selected", String(S.tab === t)); var pt = b.querySelector(".punto"); if (pt) pt.remove(); if (S.tabNuevo[t] && S.tab !== t) b.insertAdjacentHTML("beforeend", '<span class="punto" aria-label="novedad"></span>'); });
+  S.tabNuevo[S.tab] = false;
+  if (S.tab === "tg") l.innerHTML = tgHtml(); else if (S.tab === "panel") l.innerHTML = panelHtml(); else l.innerHTML = calHtml();
+  Array.prototype.forEach.call(l.querySelectorAll("[data-a]"), function(b){ b.addEventListener("click", function(){ var a = b.getAttribute("data-a"), x = b.getAttribute("data-x"); if (a === "modo") ACC.modo(x); else if (a === "resultado") { var q = x.split("|"); ACC.resultado(q[0], q[1], +q[2]); } else if (ACC[a]) ACC[a](); }); });
+  var tgE = l.querySelector(".tg"); if (tgE) tgE.scrollTop = tgE.scrollHeight;
+}
+function tgHtml(){
+  var h = '<div class="tg">';
+  if (!S.tg.length) h += '<div class="vacio">Aquí llegan los avisos de @blakeleads_bot.<br>Todavía no ha pasado nada.</div>';
+  S.tg.forEach(function(m){ h += '<div class="msg">' + m.html + (m.acciones.length ? '<div class="acc">' + m.acciones.map(function(a){ return '<button class="btn sec chico" type="button" data-a="' + a[1] + '">' + a[0] + "</button>"; }).join("") + "</div>" : "") + "<small>" + m.nota + "</small></div>"; });
+  return h + "</div>";
+}
+function panelHtml(){
+  if (!S.ficha) return '<p class="nota">Cuando alguien rellene el formulario, su ficha aparece aquí.</p>' + embudoHtml();
+  var f = S.ficha, ruta = RUTAS[S.ruta], faseN = { nuevo: "Nuevo", contactado: "Contactado", llamada_agendada: "Llamada agendada", vendido: "Vendido", no_vendido: "No vendido", no_presento: "No se presentó" }[S.fase];
+  var propN = { pendiente: S.propuesta === "pendiente" && S.tProg ? "Preparada, pendiente de enviar" : "Pendiente de enviar", enviada: "Enviada automáticamente", manual: "Enviada a mano" }[S.propuesta];
+  var llam = S.reserva ? nombreDia(S.reserva.dia) + " · " + hhmm(S.reserva.ini) : "Sin reservar";
+  var h = '<div class="ficha"><div class="ficha-cab"><div><h2>' + esc(S.nombre) + '</h2><span class="chip">' + ruta + '</span> <span class="chip ' + (S.fase === "vendido" ? "ok" : S.fase === "no_vendido" || S.fase === "no_presento" ? "mal" : "") + '">' + faseN + '</span> <span class="chip">Vídeo reel-042</span></div></div>';
+  h += '<div class="estado"><div class="f"><span class="e">Fase</span><span>' + faseN + '</span></div><div class="f"><span class="e">Propuesta</span><span>' + propN + '</span></div><div class="f"><span class="e">Llamada</span><span>' + llam + '</span></div><div class="f"><span class="e">Resultado</span><span>' + (S.resultado === "vendido" ? "Vendido" : S.resultado === "no_vendido" ? "No vendido" : S.resultado === "no_presento" ? "No se presentó" : "Sin registrar") + "</span></div></div>";
+  h += '<div><h3>Probabilidad de compra</h3><div class="pct"><span class="v">' + f.pct + '%</span><div class="med"><i style="width:' + f.pct + '%"></i></div><span class="chip ' + (f.encaje === "alto" ? "ok" : f.encaje === "bajo" ? "mal" : "av") + '">Encaje ' + f.encaje + "</span></div><p class=\"nota\">Estimación inicial de Claude. Se calibrará con resultados reales.</p></div>";
+  h += '<p class="resumen">' + esc(f.resumen) + "</p>";
+  h += '<div class="modo"><h3 style="margin-right:6px">Envío de propuestas</h3><button class="btn sec chico" type="button" data-a="modo" data-x="calibracion" aria-pressed="' + (S.modo === "calibracion") + '">Calibración</button><button class="btn sec chico" type="button" data-a="modo" data-x="automatico" aria-pressed="' + (S.modo === "automatico") + '">Automático</button><span class="nota" style="margin:0">Se aplica a la siguiente propuesta.</span></div>';
+  if (S.paso === 8 && !S.resultado) h += '<div><h3>Registrar el resultado de la llamada</h3><div class="resultado"><button class="btn chico" type="button" data-a="resultado" data-x="vendido|' + (S.ruta === "asesoria" ? "Asesoría|100" : S.ruta === "presencial" ? "Formación presencial|2500" : "Curso online|497") + '">Vendido</button><button class="btn sec chico" type="button" data-a="resultado" data-x="no_vendido|x|0">No vendido</button><button class="btn sec chico" type="button" data-a="resultado" data-x="no_presento|x|0">No se presentó</button></div></div>';
+  h += "<div><h3>Historial</h3><ul class=\"log\">" + S.log.map(function(e){ return '<li><span class="h">' + e.h + "</span><span>" + esc(e.t) + "</span></li>"; }).join("") + "</ul></div>";
+  return h + embudoHtml() + "</div>";
+}
+function embudoHtml(){
+  var base = { leads: 38, prop: 34, llam: 18, ventas: 6 }, ya = !!S.ficha;
+  var l = base.leads + (ya ? 1 : 0), pr = base.prop + (S.propuesta !== "pendiente" ? 1 : 0), ll = base.llam + (S.reserva ? 1 : 0), ve = base.ventas + S.venta, ing = 4191 + S.ingresos;
+  return '<div><h3>Embudo del mes (ejemplo + este lead)</h3><div class="embudo"><div><div class="v">' + l + '</div><div class="l">Leads</div></div><div><div class="v">' + pr + '</div><div class="l">Propuestas</div></div><div><div class="v">' + ll + '</div><div class="l">Reservas</div></div><div><div class="v">' + ve + '</div><div class="l">Ventas</div></div><div><div class="v">' + ing.toLocaleString("es-ES") + ' €</div><div class="l">Ingresos</div></div></div></div>';
+}
+function calHtml(){
+  var tipo = S.ruta === "asesoria" ? "asesoria" : "venta", pr = proponer(tipo, 0, []), dias = pr.length ? pr.map(function(d){ return d.dia; }) : [1,2,3];
+  if (S.reserva && dias.indexOf(S.reserva.dia) < 0) dias.push(S.reserva.dia);
+  var px = 40 / 60, base = 11 * 60;
+  var h = '<p class="nota" style="margin-top:0">' + (S.ruta === "asesoria" ? "Los tres días que se ofrecen para la asesoría (desde 7 días tras el pago, domingo y lunes primero)." : "Los tres días que se ofrecen para la llamada de venta (de mañana a 3 días).") + '</p><div class="cal">';
+  dias.forEach(function(d){
+    h += '<div class="cal-col"><h3>' + cortoDia(d) + (PREF.indexOf(diaSemana(d)) >= 0 ? " ★" : "") + '</h3><div class="eje">';
+    ocupados(d).forEach(function(b){ var top = (b[0]-base)*px, alto = (b[1]-b[0])*px, mt = Math.max(0, top - 40), mb = Math.min(440 - (top+alto), 40);
+      h += '<div class="ev margen" style="top:' + mt + "px;height:" + (top - mt) + 'px"></div><div class="ev ocupado" style="top:' + top + "px;height:" + alto + 'px">' + b[2] + " " + hhmm(b[0]) + '</div><div class="ev margen" style="top:' + (top+alto) + "px;height:" + Math.max(0, mb) + 'px"></div>'; });
+    if (S.reserva && S.reserva.dia === d) h += '<div class="ev nuevo" style="top:' + ((S.reserva.ini-base)*px) + "px;height:" + (S.reserva.dur*px) + 'px">' + esc(primerNombre(S.nombre) || "Reserva") + " · " + hhmm(S.reserva.ini) + "</div>";
+    h += "</div></div>";
+  });
+  h += '</div><div class="leyenda"><span><i style="background:rgba(255,255,255,.18)"></i>Ocupado (salón, personal)</span><span><i style="background:rgba(217,164,65,.3)"></i>1 h de margen</span><span><i style="background:var(--accent)"></i>Reserva nueva</span><span>De 11:00 a 22:00 · ★ domingo o lunes</span></div>';
+  return h;
+}
+
+document.getElementById("tabs").addEventListener("click", function(e){ var b = e.target.closest("button[data-tab]"); if (!b) return; S.tab = b.getAttribute("data-tab"); render(); });
+document.getElementById("movil").addEventListener("click", function(e){ var b = e.target.closest("button.hora"); if (!b) return; ACC.reservar(+b.getAttribute("data-d"), +b.getAttribute("data-t")); });
+
+function pantallaInicial(){
+  var m = document.getElementById("movil");
+  m.innerHTML = '<div class="cuerpo-m"><div class="form-m" style="margin:auto 0"><h2>Elige a quién simulas</h2><label>Nombre<input type="text" id="s-nombre" value="Lucía" maxlength="40"></label><label>Ruta<select id="s-ruta"><option value="online">Formación online</option><option value="presencial">Formación presencial</option><option value="asesoria">Asesoría 1:1</option></select></label><button class="btn" type="button" id="s-ir">Empezar</button></div></div>';
+  document.getElementById("s-ir").addEventListener("click", ACC.empezar);
+}
+var renderOriginal = render;
+render = function(){ renderOriginal(); if (S.paso === 0) pantallaInicial(); };
+nuevo(); render();
+</script>
+</body>
+</html>
