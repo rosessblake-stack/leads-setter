@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ZONA, REGLAS } from "@/lib/disponibilidad";
 import { intentar } from "@/lib/db";
+import { tokenPreparacion, urlPreparacion } from "@/lib/preparacion";
 import { cargarEnlace, propuestaPara } from "@/lib/reservas";
 import { registrarError } from "@/lib/errores";
 
@@ -51,6 +52,14 @@ export default async function Reservar({
   const duracion = REGLAS.duracionMin[e.tipo];
 
   if (e.reserva) {
+    let preparacion: string | null = null;
+    if (e.tipo === "asesoria") {
+      try {
+        preparacion = urlPreparacion(tokenPreparacion(e.ficha_id));
+      } catch {
+        preparacion = null;
+      }
+    }
     return (
       <main className="pantalla">
         <section className="centro bienvenida" role="status">
@@ -64,6 +73,16 @@ export default async function Reservar({
                 Enlace de la videollamada
               </a>
             </p>
+          )}
+          {preparacion && (
+            <>
+              <p className="intro">Antes de la llamada, rellena las preguntas de preparación. Me ayudan a preparar tu caso.</p>
+              <p>
+                <a className="principal" href={preparacion} style={{ display: "inline-block", textDecoration: "none", padding: "12px 20px" }}>
+                  Preparar mi asesoría (unos 15 minutos)
+                </a>
+              </p>
+            </>
           )}
           <p className="ayuda">Te llegará la invitación a {e.email}. Si necesitas cambiar el día, escríbeme por Instagram.</p>
         </section>

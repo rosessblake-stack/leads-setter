@@ -1,3 +1,4 @@
+export type Etapa = "inicial" | "preparacion";
 export type Ruta = "presencial" | "online" | "asesoria" | "no_claro";
 
 export type TipoPregunta =
@@ -45,6 +46,8 @@ export type Pregunta = {
   campos?: { id: string; etiqueta: string }[];
   extra?: Extra;
   rutas?: Ruta[];
+  // Rutas para las que esta pregunta no se hace al empezar, sino en el formulario de preparación (tras el pago).
+  preparacion?: Ruta[];
   si?: Condicion;
 };
 

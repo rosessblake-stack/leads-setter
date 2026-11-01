@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { definicion as def, reglasOferta } from "@/formulario/datos";
-import { claveExtra, limpiar, rutaDe, textoFinal, validarRespuesta, validarTodo, visibles } from "@/formulario/motor";
+import { claveExtra, limpiar, rutaDe, textoFinal, validarPreparacion, validarRespuesta, validarTodo, visibles } from "@/formulario/motor";
 import { calcularSignals } from "@/formulario/signals";
 import { construirSolicitud, extraerInstagram } from "@/formulario/solicitud";
 import type { Respuestas } from "@/formulario/tipos";
@@ -25,8 +25,8 @@ describe("rutas y totales (con todas las condicionales visibles)", () => {
   it("online = 40", () => {
     expect(visibles(def, base(ONLINE, { V03: "Casi no" })).length).toBe(40);
   });
-  it("asesoría = 52", () => {
-    expect(visibles(def, base(ASES)).length).toBe(52);
+  it("asesoría = 13 al empezar", () => {
+    expect(visibles(def, base(ASES)).length).toBe(13);
   });
   it("no lo tengo claro = 31", () => {
     expect(visibles(def, base(NOCLARO)).length).toBe(31);
@@ -38,8 +38,33 @@ describe("rutas y totales (con todas las condicionales visibles)", () => {
     expect(ids(ONLINE).has("F01")).toBe(false);
     expect(ids(ONLINE).has("T06")).toBe(false);
     expect(ids(ONLINE).has("T05")).toBe(true);
-    expect(ids(ASES).has("A33") && !ids(ASES).has("S01") && !ids(ASES).has("B01")).toBe(true);
+    expect(ids(ASES).has("A35") && !ids(ASES).has("A33") && !ids(ASES).has("S01") && !ids(ASES).has("B01")).toBe(true);
     expect(ids(NOCLARO).has("N10") && ids(NOCLARO).has("B05") && !ids(NOCLARO).has("E01")).toBe(true);
+  });
+
+  it("asesoría: 13 preguntas al empezar y las otras 39 en la preparación tras el pago", () => {
+    const inicial = visibles(def, base(ASES)).map((q) => q.id);
+    expect(inicial).toEqual(["C01", "C02", "C03", "C04", "C06", "C08", "C10", "C15", "A01", "A02", "A34", "A35", "A05"]);
+    const prep = visibles(def, {}, "preparacion", "asesoria").map((q) => q.id);
+    expect(prep.length).toBe(38); // +1 (C14) si dice que ha invertido antes
+    expect(prep).toContain("C12"); // ingresos: se pregunta después, no al entrar
+    expect(prep).toContain("A33");
+    expect(prep.every((id) => !inicial.includes(id))).toBe(true);
+  });
+
+  it("las demás rutas no cambian y no tienen preparación", () => {
+    for (const ruta of ["presencial", "online", "no_claro"] as const) {
+      expect(visibles(def, {}, "preparacion", ruta)).toEqual([]);
+    }
+    expect(visibles(def, base(PRES)).some((q) => q.id === "C12")).toBe(true);
+  });
+
+  it("validarPreparacion acepta lo opcional vacío y rechaza lo obligatorio mal puesto", () => {
+    const ok = validarPreparacion(def, {}, "asesoria");
+    const obligatorias = visibles(def, {}, "preparacion", "asesoria").filter((q) => q.obligatoria).map((q) => q.id);
+    expect(Object.keys(ok.errores).sort()).toEqual(obligatorias.sort());
+    const mal = validarPreparacion(def, { C12: "una cifra inventada" }, "asesoria");
+    expect(mal.errores.C12).toBeTruthy();
   });
 
   it("en 'No lo tengo claro' las N van antes que las B", () => {

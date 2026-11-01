@@ -103,3 +103,8 @@ Etapas propuestas:
 3. Porcentaje de compra calibrado con resultados reales y avatares por ruta (cuando haya cientos de ventas).
 4. Roles de usuario (`user_id` en notas y eventos) y, si algún día se ofrece a otros, aislamiento por cliente.
 Requisito previo: seguir guardando desde ya tiempos, origen, nivel real visto por Blake y resultado de cada lead.
+
+## Asesoría en dos formularios (decisión de Blake, 1-nov-2026)
+- Al empezar: 13 preguntas (nombre, email, Instagram, enlace a su trabajo, qué le interesa, hasta 3 temas, nivel, tiempo trenzando, clientes al mes, urgencia, solo o con equipo, qué le frena, dónde quiere estar en 12 meses).
+- Tras reservar: formulario de preparación (el resto, unas 38-39 preguntas) en `/preparar/<token>`; el enlace sale en la página de reserva y también se puede copiar desde la ficha. Respuestas en `setter.preparaciones` (migración 010).
+- Pendiente: recordatorio 48 h antes de la llamada si no la ha completado; enviar el enlace por Instagram junto con la confirmación (cuando esté el webhook de Stripe).

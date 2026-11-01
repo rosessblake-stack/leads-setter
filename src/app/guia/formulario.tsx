@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Definicion, Pregunta, Respuestas } from "@/formulario/tipos";
+import type { Definicion, Pregunta, Respuestas, Ruta } from "@/formulario/tipos";
 import { PENDIENTE, claveExtra, extraAplica, limpiar, textoFinal, validarRespuesta, visibles } from "@/formulario/motor";
 
 type Props = {
@@ -10,13 +10,21 @@ type Props = {
   manychat: string;
   textoConsentimiento: string;
   privacidad: string;
+  // «preparacion»: el formulario largo que se rellena tras reservar la asesoría (sin ruta que elegir ni consentimiento).
+  modo?: "inicial" | "preparacion";
+  ruta?: Ruta;
+  token?: string;
 };
 
 const CLAVE = "leads-setter:formulario";
 const BIENVENIDA = "bienvenida";
 const CONSENTIMIENTO = "consentimiento";
 
-export function Formulario({ definicion, video, manychat, textoConsentimiento, privacidad }: Props) {
+export function Formulario({ definicion, video, manychat, textoConsentimiento, privacidad, modo = "inicial", ruta, token }: Props) {
+  const prep = modo === "preparacion";
+  const etapa = prep ? "preparacion" : "inicial";
+  const rutaFija = prep ? ruta : undefined;
+  const clave = prep ? `${CLAVE}:preparacion:${(token ?? "").slice(0, 8)}` : CLAVE;
   const [respuestas, setRespuestas] = useState<Respuestas>({});
   const [paso, setPaso] = useState<string>(BIENVENIDA);
   const [iniciado, setIniciado] = useState<string | null>(null);
@@ -31,7 +39,7 @@ export function Formulario({ definicion, video, manychat, textoConsentimiento, p
   // Recupera lo respondido si la persona vuelve en el mismo navegador.
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(CLAVE);
+      const raw = localStorage.getItem(clave);
       if (raw) {
         const d = JSON.parse(raw);
         if (d?.version === definicion.version && d.respuestas && typeof d.respuestas === "object") {
@@ -44,19 +52,19 @@ export function Formulario({ definicion, video, manychat, textoConsentimiento, p
       /* sin almacenamiento: el formulario funciona igual */
     }
     setCargado(true);
-  }, [definicion.version]);
+  }, [definicion.version, clave]);
 
   useEffect(() => {
     if (!cargado || fase === "listo") return;
     try {
-      localStorage.setItem(CLAVE, JSON.stringify({ version: definicion.version, respuestas, paso, iniciado }));
+      localStorage.setItem(clave, JSON.stringify({ version: definicion.version, respuestas, paso, iniciado }));
     } catch {
       /* ignorar */
     }
-  }, [cargado, fase, definicion.version, respuestas, paso, iniciado]);
+  }, [cargado, fase, definicion.version, respuestas, paso, iniciado, clave]);
 
-  const lista = useMemo(() => visibles(definicion, respuestas), [definicion, respuestas]);
-  const secuencia = useMemo(() => [BIENVENIDA, ...lista.map((q) => q.id), CONSENTIMIENTO], [lista]);
+  const lista = useMemo(() => visibles(definicion, respuestas, etapa, rutaFija), [definicion, respuestas, etapa, rutaFija]);
+  const secuencia = useMemo(() => [BIENVENIDA, ...lista.map((q) => q.id), ...(prep ? [] : [CONSENTIMIENTO])], [lista, prep]);
   const idx = Math.max(0, secuencia.indexOf(paso));
   const pasoActual = secuencia[idx];
   const pregunta = lista.find((q) => q.id === pasoActual);
@@ -74,7 +82,7 @@ export function Formulario({ definicion, video, manychat, textoConsentimiento, p
   }, [pasoActual, cargado, fase]);
 
   function poner(id: string, valor: unknown) {
-    setRespuestas((prev) => limpiar(definicion, { ...prev, [id]: valor }));
+    setRespuestas((prev) => limpiar(definicion, { ...prev, [id]: valor }, etapa, rutaFija));
     setErrores({});
   }
   function ponerExtra(id: string, valor: string) {
@@ -99,6 +107,10 @@ export function Formulario({ definicion, video, manychat, textoConsentimiento, p
       return;
     }
     setErrores({});
+    if (prep && idx === secuencia.length - 1) {
+      void enviar();
+      return;
+    }
     setPaso(secuencia[idx + 1]);
   }
 
@@ -111,30 +123,34 @@ export function Formulario({ definicion, video, manychat, textoConsentimiento, p
   }
 
   async function enviar() {
-    if (!consentimiento) {
+    if (!prep && !consentimiento) {
       setErrorEnvio("Tienes que aceptar para poder enviar la solicitud.");
       return;
     }
     setFase("enviando");
     setErrorEnvio("");
     try {
-      const r = await fetch("/api/lead", {
+      const r = await fetch(prep ? `/api/preparar/${token}` : "/api/lead", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          respuestas,
-          iniciado_at: iniciado ?? undefined,
-          zona_horaria: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          consentimiento: true,
-          v: video || undefined,
-          mc: manychat || undefined,
-          web,
-        }),
+        body: JSON.stringify(
+          prep
+            ? { respuestas, web }
+            : {
+                respuestas,
+                iniciado_at: iniciado ?? undefined,
+                zona_horaria: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                consentimiento: true,
+                v: video || undefined,
+                mc: manychat || undefined,
+                web,
+              },
+        ),
       });
       const j = await r.json().catch(() => ({}));
       if (r.ok && j.ok) {
         try {
-          localStorage.removeItem(CLAVE);
+          localStorage.removeItem(clave);
         } catch {
           /* ignorar */
         }
@@ -177,7 +193,7 @@ export function Formulario({ definicion, video, manychat, textoConsentimiento, p
     return (
       <div className="pantalla">
         <section className="gracias centro" role="status">
-          <h2>{textoFinal(definicion, respuestas)}</h2>
+          <h2>{prep ? "Gracias. Ya tengo tus respuestas: me ayudarán a preparar tu asesoría. Si quieres cambiar algo, vuelve a abrir este enlace." : textoFinal(definicion, respuestas)}</h2>
         </section>
       </div>
     );
@@ -210,8 +226,12 @@ export function Formulario({ definicion, video, manychat, textoConsentimiento, p
       >
         {pasoActual === BIENVENIDA && (
           <section className="bienvenida">
-            <h1>{definicion.bienvenida.titulo}</h1>
-            <p className="intro">{definicion.bienvenida.texto}</p>
+            <h1>{prep ? "Prepara tu asesoría" : definicion.bienvenida.titulo}</h1>
+            <p className="intro">
+              {prep
+                ? "Estas preguntas me ayudan a preparar tu caso antes de la llamada. Tardas unos 15 minutos y puedes dejarlo a medias y volver: se guarda en este navegador."
+                : definicion.bienvenida.texto}
+            </p>
             <button type="submit" className="principal">
               Empezar
             </button>
@@ -284,7 +304,7 @@ export function Formulario({ definicion, video, manychat, textoConsentimiento, p
               Volver
             </button>
             <button type="submit" className="principal" disabled={enviando}>
-              {pasoActual === CONSENTIMIENTO ? (enviando ? "Enviando…" : "Enviar solicitud") : "Siguiente"}
+              {pasoActual === CONSENTIMIENTO ? (enviando ? "Enviando…" : "Enviar solicitud") : prep && idx === secuencia.length - 1 ? (enviando ? "Enviando…" : "Enviar") : "Siguiente"}
             </button>
           </div>
         )}

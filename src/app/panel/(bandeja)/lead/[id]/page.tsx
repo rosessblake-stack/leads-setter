@@ -17,7 +17,7 @@ import {
 } from "@/lib/panel-util";
 import { definicion } from "@/formulario/datos";
 import { Seguimiento, type DatosSeguimiento } from "./seguimiento";
-import { HerramientasFicha } from "../../ajax";
+import { EnlacePreparacion, HerramientasFicha } from "../../ajax";
 import type { Almacenada, Ruta } from "@/formulario/tipos";
 
 export const dynamic = "force-dynamic";
@@ -61,13 +61,14 @@ export default async function Ficha({
         (select to_jsonb(x) from (
           select resultado, producto, importe_cents, forma_pago, edicion, motivo, nota from setter.resultados where ficha_id = ${id}) x) as resultado,
         coalesce((select jsonb_agg(n order by n.id desc) from (
-          select id, texto, creado_at from setter.notas where ficha_id = ${id} order by id desc limit 100) n), '[]'::jsonb) as notas`;
+          select id, texto, creado_at from setter.notas where ficha_id = ${id} order by id desc limit 100) n), '[]'::jsonb) as notas,
+        (select to_jsonb(pp) from (select completada_at, respuestas from setter.preparaciones where ficha_id = ${id}) pp) as preparacion`;
     const eventos = (extra.eventos as { tipo: string; creado_at: string }[]).map((e) => ({ ...e, creado_at: new Date(e.creado_at) }));
     const notas = (extra.notas as { texto: string; creado_at: string }[]).map((n) => ({ texto: n.texto, creado_at: new Date(n.creado_at) }));
-    return { r, eventos, resultado: extra.resultado, notas };
+    return { r, eventos, resultado: extra.resultado, notas, preparacion: extra.preparacion as { completada_at: string | null; respuestas: Record<string, Almacenada> } | null };
   });
   if (!datos) notFound();
-  const { r, eventos, resultado, notas } = datos;
+  const { r, eventos, resultado, notas, preparacion } = datos;
   const q = await searchParams;
   const aviso = q.error
     ? { tipo: "error" as const, texto: q.error.slice(0, 200) }
@@ -90,6 +91,7 @@ export default async function Ficha({
 
   const respuestas = (r.respuestas ?? {}) as Record<string, Almacenada>;
   const grupos = agruparRespuestas(definicion, respuestas);
+  const gruposPrep = agruparRespuestas(definicion, preparacion?.respuestas ?? null);
   const signals = (r.signals ?? {}) as Record<string, unknown>;
   const whatsapp = enlaceWhatsApp(r.telefono);
   const instagram = enlaceInstagram(r.ig_username);
@@ -217,6 +219,32 @@ export default async function Ficha({
           </div>
         </details>
       ))}
+
+      {ruta === "asesoria" && (
+        <details className="desplegable" id="preparacion" data-ficha>
+          <summary>
+            <h2>Preparación de la asesoría</h2>
+            <span className={`chip ${preparacion?.completada_at ? "ok" : "av"}`}>{preparacion?.completada_at ? "Completada" : "Pendiente"}</span>
+          </summary>
+          <div className="desplegable-cuerpo">
+            <p className="ayuda">
+              Las preguntas largas, que la persona rellena tras pagar y antes de la llamada. Le sale el enlace al reservar; también puedes copiarlo aquí
+              y enviárselo.
+            </p>
+            <EnlacePreparacion action={`/panel/lead/${id}/preparacion`} />
+            {gruposPrep.map((g) => (
+              <div key={g.titulo} data-buscable>
+                <h3 style={{ margin: "16px 0 8px" }}>{g.titulo}</h3>
+                <dl className="respuestas">
+                  {g.items.map((i) => (
+                    <div key={i.id}><dt>{i.pregunta}</dt><dd>{i.texto}</dd></div>
+                  ))}
+                </dl>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
 
       <details className="desplegable" id="borrar">
         <summary>

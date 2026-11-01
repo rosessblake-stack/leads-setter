@@ -3,8 +3,10 @@ import { sql } from "@/lib/db";
 import { proponer, REGLAS, type Propuesta, type Tipo } from "@/lib/disponibilidad";
 import { borrarEvento, crearEvento, ocupadosEntre } from "@/lib/google";
 import { huella, nuevoSecreto, FORMATO_SECRETO } from "@/lib/panel";
+import { enlacePreparacion } from "@/lib/preparacion";
 import { escaparHtml } from "@/lib/telegram";
 import { fechaCorta } from "@/lib/panel-util";
+import { registrarError } from "@/lib/errores";
 
 const DIA = 24 * 60 * 60 * 1000;
 
@@ -122,6 +124,8 @@ export async function confirmarReserva(token: string, inicioIso: string): Promis
     throw err;
   }
 
+  // Asesoría: queda lista la preparación (preguntas largas) para que la persona la rellene antes de la llamada.
+  if (e.tipo === "asesoria") await enlacePreparacion(e.ficha_id).catch((err) => registrarError("reservas", err, { paso: "preparación al reservar", ficha: e.ficha_id }));
   return {
     ok: true,
     aviso: `📅 <b>${escaparHtml(e.nombre)}</b> ha reservado ${e.tipo === "asesoria" ? "su asesoría" : "una llamada"}: ${escaparHtml(fechaCorta(hueco.inicio))}\n${urlPanel()}/panel/lead/${e.ficha_id}`,

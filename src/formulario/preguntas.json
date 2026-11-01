@@ -49,7 +49,10 @@
    "id": "C05",
    "texto": "Ciudad y país",
    "tipo": "texto",
-   "obligatoria": true
+   "obligatoria": true,
+   "preparacion": [
+    "asesoria"
+   ]
   },
   {
    "id": "C06",
@@ -74,6 +77,9 @@
     "Un directo",
     "Recomendación",
     "Otro"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -99,6 +105,9 @@
     "Boxeadoras",
     "Twists",
     "Otro"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -124,6 +133,9 @@
     "Trenzo y tengo otro trabajo",
     "Trenzo y estudio",
     "Trenzo solo de forma ocasional"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -138,6 +150,9 @@
     "1.000–2.000 €",
     "2.000–3.500 €",
     "Más de 3.500 €"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -154,6 +169,9 @@
    ],
    "excluyentes": [
     "Nunca"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -163,7 +181,10 @@
    "si": {
     "pregunta": "C13",
     "noIncluye": "Nunca"
-   }
+   },
+   "preparacion": [
+    "asesoria"
+   ]
   },
   {
    "id": "C15",
@@ -185,6 +206,9 @@
     "La consulto con mi pareja",
     "La consulto con mi familia",
     "La consulto con mi socia/o"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -783,6 +807,9 @@
    "tipo": "texto_largo",
    "rutas": [
     "asesoria"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -810,6 +837,9 @@
    "obligatoria": false,
    "rutas": [
     "asesoria"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -824,6 +854,9 @@
     "Enseñar a otros",
     "Centrarme en mi propio trabajo",
     "Aún no lo sé"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -840,6 +873,9 @@
    "tipo": "sino",
    "rutas": [
     "asesoria"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -847,6 +883,9 @@
    "texto": "Si mañana no pudieras seguir, ¿tu negocio seguiría funcionando?",
    "tipo": "sino",
    "rutas": [
+    "asesoria"
+   ],
+   "preparacion": [
     "asesoria"
    ]
   },
@@ -862,6 +901,9 @@
     "Siguen a la marca del negocio",
     "Las dos cosas por igual",
     "Aún no lo sé"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -869,6 +911,9 @@
    "texto": "¿Tienes tus precios, tu forma de trabajar y tu trato con clientes documentado?",
    "tipo": "sino",
    "rutas": [
+    "asesoria"
+   ],
+   "preparacion": [
     "asesoria"
    ]
   },
@@ -878,6 +923,9 @@
    "tipo": "texto_largo",
    "rutas": [
     "asesoria"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -885,6 +933,9 @@
    "texto": "Tus 3 servicios más pedidos y lo que cobras hoy por cada uno",
    "tipo": "texto_largo",
    "rutas": [
+    "asesoria"
+   ],
+   "preparacion": [
     "asesoria"
    ]
   },
@@ -894,6 +945,9 @@
    "tipo": "sino",
    "rutas": [
     "asesoria"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -902,6 +956,9 @@
    "tipo": "texto_largo",
    "rutas": [
     "asesoria"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -909,6 +966,9 @@
    "texto": "¿Tienes tamaños y número de líneas estandarizados (Jumbo, L, M, S, XS)?",
    "tipo": "sino",
    "rutas": [
+    "asesoria"
+   ],
+   "preparacion": [
     "asesoria"
    ]
   },
@@ -922,13 +982,19 @@
    "escala": {
     "min": 1,
     "max": 5
-   }
+   },
+   "preparacion": [
+    "asesoria"
+   ]
   },
   {
    "id": "A16",
    "texto": "Salario mínimo o piso técnico de tu mercado local, si lo sabes",
    "tipo": "numero",
    "rutas": [
+    "asesoria"
+   ],
+   "preparacion": [
     "asesoria"
    ]
   },
@@ -937,6 +1003,9 @@
    "texto": "¿Aplicas recargos por tipo de cliente, largo de cabello natural o de extensión?",
    "tipo": "sino",
    "rutas": [
+    "asesoria"
+   ],
+   "preparacion": [
     "asesoria"
    ]
   },
@@ -956,6 +1025,9 @@
      "id": "recurrentes",
      "etiqueta": "Clientes recurrentes al mes"
     }
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -963,6 +1035,9 @@
    "texto": "¿Tu tipo de clientela ha cambiado con el tiempo? Cuéntanos brevemente cómo empezaste y dónde estás ahora.",
    "tipo": "texto_largo",
    "rutas": [
+    "asesoria"
+   ],
+   "preparacion": [
     "asesoria"
    ]
   },
@@ -972,6 +1047,9 @@
    "tipo": "texto",
    "rutas": [
     "asesoria"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -979,6 +1057,9 @@
    "texto": "¿Llevas registro de datos de tus clientes (edad, profesión, procedencia)?",
    "tipo": "sino",
    "rutas": [
+    "asesoria"
+   ],
+   "preparacion": [
     "asesoria"
    ]
   },
@@ -988,6 +1069,9 @@
    "tipo": "sino",
    "rutas": [
     "asesoria"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -995,6 +1079,9 @@
    "texto": "Seguidores actuales en tu red principal",
    "tipo": "numero",
    "rutas": [
+    "asesoria"
+   ],
+   "preparacion": [
     "asesoria"
    ]
   },
@@ -1009,6 +1096,9 @@
     "Tutoriales para trenzadores",
     "Contenido para el cliente final",
     "Mezcla de ambos"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -1021,13 +1111,19 @@
    "escala": {
     "min": 1,
     "max": 5
-   }
+   },
+   "preparacion": [
+    "asesoria"
+   ]
   },
   {
    "id": "A26",
    "texto": "¿Con qué grabas y qué iluminación usas hoy?",
    "tipo": "texto_largo",
    "rutas": [
+    "asesoria"
+   ],
+   "preparacion": [
     "asesoria"
    ]
   },
@@ -1037,6 +1133,9 @@
    "tipo": "numero",
    "rutas": [
     "asesoria"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -1044,6 +1143,9 @@
    "texto": "¿Cómo gestionas hoy las consultas?",
    "tipo": "texto_largo",
    "rutas": [
+    "asesoria"
+   ],
+   "preparacion": [
     "asesoria"
    ]
   },
@@ -1053,6 +1155,9 @@
    "tipo": "numero",
    "rutas": [
     "asesoria"
+   ],
+   "preparacion": [
+    "asesoria"
    ]
   },
   {
@@ -1060,6 +1165,9 @@
    "texto": "¿Haces seguimiento post-servicio (2-3 semanas después) para pedir testimonio?",
    "tipo": "sino",
    "rutas": [
+    "asesoria"
+   ],
+   "preparacion": [
     "asesoria"
    ]
   },
@@ -1073,13 +1181,19 @@
    "escala": {
     "min": 1,
     "max": 5
-   }
+   },
+   "preparacion": [
+    "asesoria"
+   ]
   },
   {
    "id": "A32",
    "texto": "¿Te interesa a futuro el mercado VIP?",
    "tipo": "sino",
    "rutas": [
+    "asesoria"
+   ],
+   "preparacion": [
     "asesoria"
    ]
   },
@@ -1093,7 +1207,10 @@
    "escala": {
     "min": 1,
     "max": 5
-   }
+   },
+   "preparacion": [
+    "asesoria"
+   ]
   }
  ]
 }

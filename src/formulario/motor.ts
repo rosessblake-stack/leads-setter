@@ -1,4 +1,4 @@
-import type { Almacenada, Condicion, Definicion, Pregunta, Respuestas, Ruta } from "./tipos";
+import type { Almacenada, Condicion, Definicion, Etapa, Pregunta, Respuestas, Ruta } from "./tipos";
 
 export const PENDIENTE = "__pendiente__";
 export const claveExtra = (id: string) => `${id}__extra`;
@@ -28,10 +28,14 @@ function cumple(c: Condicion, r: Respuestas): boolean {
 }
 
 // Preguntas que ve la persona con las respuestas actuales, en orden.
-export function visibles(def: Definicion, r: Respuestas): Pregunta[] {
-  const ruta = rutaDe(def, r);
+// En la etapa «inicial» (el formulario de siempre) no salen las que se dejan para después de la reserva;
+// en la etapa «preparacion» solo salen esas, y la ruta viene dada (no se pregunta).
+export function visibles(def: Definicion, r: Respuestas, etapa: Etapa = "inicial", rutaFija?: Ruta): Pregunta[] {
+  const ruta = rutaFija ?? rutaDe(def, r);
   return def.preguntas.filter((q) => {
     if (q.rutas && (!ruta || !q.rutas.includes(ruta))) return false;
+    const enPreparacion = Boolean(ruta && q.preparacion?.includes(ruta));
+    if (etapa === "inicial" ? enPreparacion : !enPreparacion) return false;
     if (q.si && !cumple(q.si, r)) return false;
     return true;
   });
@@ -148,9 +152,9 @@ export function validarRespuesta(q: Pregunta, r: Respuestas): string | null {
 }
 
 // Quita las respuestas de preguntas que ya no se muestran (p. ej., al cambiar de ruta).
-export function limpiar(def: Definicion, r: Respuestas): Respuestas {
+export function limpiar(def: Definicion, r: Respuestas, etapa: Etapa = "inicial", rutaFija?: Ruta): Respuestas {
   const salida: Respuestas = {};
-  for (const q of visibles(def, r)) {
+  for (const q of visibles(def, r, etapa, rutaFija)) {
     if (r[q.id] !== undefined) salida[q.id] = r[q.id];
     if (r[claveExtra(q.id)] !== undefined && extraAplica(q, r)) salida[claveExtra(q.id)] = r[claveExtra(q.id)];
   }
@@ -176,10 +180,21 @@ export function validarTodo(def: Definicion, r: Respuestas): ResultadoValidacion
   return { ok: Object.keys(errores).length === 0, ruta, errores, limpias };
 }
 
+// Valida el formulario de preparación (tras el pago): la ruta viene dada y no hay consentimiento ni ruta que elegir.
+export function validarPreparacion(def: Definicion, r: Respuestas, ruta: Ruta): ResultadoValidacion {
+  const errores: Record<string, string> = {};
+  const limpias = limpiar(def, r, "preparacion", ruta);
+  for (const q of visibles(def, limpias, "preparacion", ruta)) {
+    const e = validarRespuesta(q, limpias);
+    if (e) errores[q.id] = e;
+  }
+  return { ok: Object.keys(errores).length === 0, ruta, errores, limpias };
+}
+
 // Respuestas ya validadas, con el texto de la pregunta tal como se mostró.
-export function almacenar(def: Definicion, limpias: Respuestas): Record<string, Almacenada> {
+export function almacenar(def: Definicion, limpias: Respuestas, etapa: Etapa = "inicial", rutaFija?: Ruta): Record<string, Almacenada> {
   const salida: Record<string, Almacenada> = {};
-  for (const q of visibles(def, limpias)) {
+  for (const q of visibles(def, limpias, etapa, rutaFija)) {
     const v = limpias[q.id];
     if (vacio(v) && q.tipo !== "casilla") continue;
     let valor: Almacenada["valor"];

@@ -155,6 +155,7 @@ export const ETIQUETA_EVENTO: Record<string, string> = {
   propuesta_cambiada: "Cambió el estado de la propuesta",
   reserva_cambiada: "Cambió la reserva",
   nota_anadida: "Añadiste una nota",
+  preparacion_completada: "Rellenó la preparación de la asesoría",
   resultado_registrado: "Registraste el resultado",
 };
 
