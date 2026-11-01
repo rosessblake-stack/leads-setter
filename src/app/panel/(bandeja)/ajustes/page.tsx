@@ -22,7 +22,7 @@ const dia = (f: string) =>
   new Date(`${f}T12:00:00Z`).toLocaleDateString("es-ES", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" });
 const hora = (t: Date) => t.toLocaleTimeString("es-ES", { timeZone: ZONA, hour: "2-digit", minute: "2-digit" });
 
-export default async function Ajustes({ searchParams }: { searchParams: Promise<{ google?: string; propuestas?: string }> }) {
+export default async function Ajustes({ searchParams }: { searchParams: Promise<{ google?: string; propuestas?: string; prueba?: string; detalle?: string }> }) {
   await exigirSesion();
   const q = await searchParams;
   const aviso = q.google ? MENSAJE[q.google] : undefined;
@@ -105,6 +105,44 @@ export default async function Ajustes({ searchParams }: { searchParams: Promise<
             ))}
           </ul>
         )}
+        <div className="subbloque">
+          <h3>Prueba real del envío</h3>
+          {q.prueba === "ok" && (
+            <p className="aviso" role="status">
+              Enviado. Mira tu Instagram: debe llegarte el mensaje con su botón.
+            </p>
+          )}
+          {q.prueba === "error" && (
+            <p className="error" role="alert">
+              ManyChat respondió con un error: {(q.detalle ?? "").slice(0, 200)}
+            </p>
+          )}
+          {q.prueba === "contacto" && (
+            <p className="error" role="alert">
+              El identificador del contacto son solo números.
+            </p>
+          )}
+          <p className="ayuda">
+            Manda un mensaje de prueba a tu propio Instagram para comprobar que ManyChat lo acepta. Primero tienes que haber escrito tú a tu cuenta
+            (por ejemplo, comentando la palabra clave y tocando el botón) para que la ventana de 24 h esté abierta. El identificador lo ves en ManyChat,
+            en el perfil de tu contacto (campo «ID de contacto»).
+          </p>
+          <form method="post" action="/panel/ajustes/prueba" className="formulario-seg">
+            <label>
+              ID de contacto de ManyChat (el tuyo)
+              <input type="text" name="contacto" inputMode="numeric" pattern="[0-9]*" maxLength={20} required />
+            </label>
+            <label>
+              Flujo
+              <select name="tipo">
+                <option value="llamada">Propuesta llamada</option>
+                <option value="asesoria">Propuesta asesoría</option>
+              </select>
+            </label>
+            <button type="submit" className="secundario">Enviarme una prueba</button>
+          </form>
+        </div>
+
         <p className="resumen">
           Modo:{" "}
           {modo.modo === "automatico"
