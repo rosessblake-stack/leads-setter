@@ -107,3 +107,48 @@ export async function enviarPropuesta(subscriberId: string, tipo: TipoFlujo, tex
   // Aquí está el riesgo de duplicar: si esta llamada no contesta, no se sabe si el mensaje salió. No se reintenta sola.
   await llamar("/fb/sending/sendFlow", "POST", { subscriber_id: Number(subscriberId) || subscriberId, flow_ns: flow });
 }
+
+export type Diagnostico = {
+  conexion: { ok: boolean; detalle: string };
+  flujos: { ok: boolean; detalle: string; encontrados: string[] };
+  campos: { ok: boolean; detalle: string };
+};
+
+// Para la pantalla de Ajustes: comprueba cada pieza por separado y dice qué respondió ManyChat exactamente.
+export async function diagnosticar(): Promise<Diagnostico> {
+  const d: Diagnostico = {
+    conexion: { ok: false, detalle: "" },
+    flujos: { ok: false, detalle: "", encontrados: [] },
+    campos: { ok: false, detalle: "" },
+  };
+  try {
+    const p = await infoPagina();
+    d.conexion = { ok: true, detalle: p.nombre ? `Conectado a la página «${p.nombre}»` : "Conectado" };
+  } catch (e) {
+    d.conexion = { ok: false, detalle: e instanceof Error ? e.message : "Sin respuesta" };
+    return d; // sin conexión no tiene sentido seguir
+  }
+  try {
+    const lista = await listarFlujos();
+    d.flujos.encontrados = lista.map((f) => f.name).slice(0, 40);
+    const llamada = lista.filter((f) => COINCIDE.llamada(normal(f.name)));
+    const asesoria = lista.filter((f) => COINCIDE.asesoria(normal(f.name)));
+    const falta: string[] = [];
+    if (llamada.length !== 1) falta.push(llamada.length === 0 ? "«Propuesta llamada» no aparece" : "«Propuesta llamada» está repetido");
+    if (asesoria.length !== 1) falta.push(asesoria.length === 0 ? "«Propuesta asesoría» no aparece" : "«Propuesta asesoría» está repetido");
+    d.flujos.ok = falta.length === 0;
+    d.flujos.detalle = falta.length === 0 ? `Encuentra los dos flujos entre ${lista.length} automatizaciones` : `${falta.join("; ")} (hay ${lista.length} automatizaciones)`;
+  } catch (e) {
+    d.flujos.detalle = e instanceof Error ? e.message : "Sin respuesta";
+  }
+  try {
+    const campos = ((await llamar("/fb/page/getCustomFields", "GET")) ?? []) as { name?: string }[];
+    const nombres = campos.map((c) => String(c.name ?? ""));
+    const faltan = [CAMPO_TEXTO(), CAMPO_ENLACE()].filter((n) => !nombres.includes(n));
+    d.campos.ok = faltan.length === 0;
+    d.campos.detalle = faltan.length === 0 ? `Existen «${CAMPO_TEXTO()}» y «${CAMPO_ENLACE()}»` : `Faltan los campos: ${faltan.join(", ")}`;
+  } catch (e) {
+    d.campos.detalle = e instanceof Error ? e.message : "Sin respuesta";
+  }
+  return d;
+}

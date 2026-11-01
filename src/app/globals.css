@@ -344,3 +344,5 @@ ul.errores li.revisado { opacity: 0.55; }
 .herramientas-ficha { grid-template-columns: 1fr auto; align-items: center; }
 .lead-meta { display: block; color: var(--ink-dim); font-size: 0.8rem; margin-top: 8px; }
 .lead-meta:empty { display: none; }
+ul.lista-diag { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; font-size: .92rem; }
+ul.lista-diag li { overflow-wrap: anywhere; }

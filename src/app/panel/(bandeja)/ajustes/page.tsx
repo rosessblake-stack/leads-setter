@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { intentar } from "@/lib/db";
 import { conexion, googleConfigurado, ocupadosEntre } from "@/lib/google";
-import { buscarFlujo, infoPagina, manychatConfigurado } from "@/lib/manychat";
+import { diagnosticar, manychatConfigurado, type Diagnostico } from "@/lib/manychat";
+import { registrarError } from "@/lib/errores";
 import { HORA_PRIMERA, HORA_ULTIMA, leerModo } from "@/lib/propuestas";
 import { proponer, ZONA, REGLAS } from "@/lib/disponibilidad";
 import { exigirSesion } from "@/lib/panel";
@@ -26,25 +27,17 @@ export default async function Ajustes({ searchParams }: { searchParams: Promise<
   const q = await searchParams;
   const aviso = q.google ? MENSAJE[q.google] : undefined;
 
-  const { modo, many } = await intentar(async () => {
+  const { modo, diag } = await intentar(async () => {
     const modo = await leerModo();
-    let many: { estado: "sin_configurar" | "ok" | "error"; nombre: string | null; llamada: boolean; asesoria: boolean } = {
-      estado: "sin_configurar",
-      nombre: null,
-      llamada: false,
-      asesoria: false,
-    };
+    let diag: Diagnostico | null = null;
     if (manychatConfigurado()) {
-      try {
-        const nombre = (await infoPagina()).nombre;
-        const llamada = await buscarFlujo("llamada").catch(() => null);
-        const asesoria = await buscarFlujo("asesoria").catch(() => null);
-        many = { estado: "ok", nombre, llamada: Boolean(llamada), asesoria: Boolean(asesoria) };
-      } catch {
-        many = { estado: "error", nombre: null, llamada: false, asesoria: false };
+      diag = await diagnosticar();
+      // Lo que falla queda guardado en la página Errores con el motivo exacto de ManyChat.
+      for (const [parte, r] of [["conexión", diag.conexion], ["flujos", diag.flujos], ["campos", diag.campos]] as const) {
+        if (!r.ok && r.detalle) await registrarError("manychat", `Diagnóstico (${parte}): ${r.detalle}`);
       }
     }
-    return { modo, many };
+    return { modo, diag };
   });
 
   const { c, prueba, fallo } = await intentar(async () => {
@@ -97,19 +90,20 @@ export default async function Ajustes({ searchParams }: { searchParams: Promise<
             Guardado.
           </p>
         )}
-        <p className="resumen">
-          ManyChat:{" "}
-          {many.estado === "ok"
-            ? `conectado${many.nombre ? ` (${many.nombre})` : ""}`
-            : many.estado === "error"
-              ? "no responde (revisa la clave en Vercel)"
-              : "sin configurar (falta la clave MANYCHAT_API_KEY en Vercel)"}
-        </p>
-        {many.estado === "ok" && (
-          <p className="resumen">
-            Flujos: «Propuesta llamada» {many.llamada ? "encontrado" : "NO encontrado"} · «Propuesta asesoría»{" "}
-            {many.asesoria ? "encontrado" : "NO encontrado"}
-          </p>
+        {!diag ? (
+          <p className="resumen">ManyChat: sin configurar (falta la clave MANYCHAT_API_KEY en Vercel)</p>
+        ) : (
+          <ul className="lista-diag">
+            {([
+              ["Conexión", diag.conexion],
+              ["Flujos de propuesta", diag.flujos],
+              ["Campos personalizados", diag.campos],
+            ] as const).map(([titulo, r]) => (
+              <li key={titulo}>
+                <span className={`chip ${r.ok ? "ok" : "mal"}`}>{r.ok ? "Bien" : "Falla"}</span> <strong>{titulo}:</strong> {r.detalle}
+              </li>
+            ))}
+          </ul>
         )}
         <p className="resumen">
           Modo:{" "}
