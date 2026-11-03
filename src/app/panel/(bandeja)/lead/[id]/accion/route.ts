@@ -6,9 +6,10 @@ import {
   cambiarPropuesta,
   fijarReserva,
   guardarNota,
+  marcarCasoExito,
   registrarResultado,
 } from "@/lib/seguimiento";
-import { leerFaseManual, leerNota, leerPropuesta, leerReserva, leerResultado } from "@/lib/seguimiento-util";
+import { leerExito, leerFaseManual, leerNota, leerPropuesta, leerReserva, leerResultado } from "@/lib/seguimiento-util";
 import { registrarError } from "@/lib/errores";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -65,6 +66,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         const r = leerResultado(get);
         if (!r.ok) return fallo(r.error);
         existe = await registrarResultado(id, r.valor);
+        break;
+      }
+      case "exito": {
+        const x = leerExito(get);
+        if (!x.ok) return fallo(x.error);
+        existe = await marcarCasoExito(id, x.valor.exito, x.valor.nota);
         break;
       }
       default:

@@ -40,7 +40,7 @@ export const POR_PAGINA = 30;
 type Params = Record<string, string | string[] | undefined>;
 const uno = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
-export const VISTAS = ["sin_contactar", "por_enviar", "sin_agendar", "agendadas", "vendidos", "no_vendidos"] as const;
+export const VISTAS = ["sin_contactar", "por_enviar", "sin_agendar", "agendadas", "vendidos", "no_vendidos", "casos_exito"] as const;
 export type Vista = (typeof VISTAS)[number];
 export const NOMBRE_VISTA: Record<Vista, string> = {
   sin_contactar: "Sin contactar +24 h",
@@ -49,6 +49,7 @@ export const NOMBRE_VISTA: Record<Vista, string> = {
   agendadas: "Agendadas",
   vendidos: "Vendidos",
   no_vendidos: "No vendidos",
+  casos_exito: "Casos de éxito",
 };
 
 export type Filtros = { fase: Fase | null; ruta: Ruta | null; vista: Vista | null; q: string | null; pagina: number };
@@ -155,6 +156,7 @@ export const ETIQUETA_EVENTO: Record<string, string> = {
   propuesta_cambiada: "Cambió el estado de la propuesta",
   reserva_cambiada: "Cambió la reserva",
   nota_anadida: "Añadiste una nota",
+  caso_exito_cambiado: "Cambiaste la marca de «caso de éxito»",
   preparacion_completada: "Rellenó la preparación de la asesoría",
   resultado_registrado: "Registraste el resultado",
 };

@@ -93,6 +93,12 @@ export function leerNota(v: string | null | undefined): Leer<string> {
   return { ok: true, valor: t };
 }
 
+export function leerExito(get: Get): Leer<{ exito: boolean; nota: string | null }> {
+  const nota = texto(get("nota_exito"));
+  if (nota.length > 1000) return { ok: false, error: "La nota es demasiado larga (máximo 1000 caracteres)." };
+  return { ok: true, valor: { exito: get("exito") === "1", nota: nota === "" ? null : nota } };
+}
+
 export function leerResultado(get: Get): Leer<Resultado> {
   const resultado = texto(get("resultado"));
   const nota = texto(get("nota"));

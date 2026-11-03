@@ -29,6 +29,7 @@ export default async function Estadisticas() {
       from setter.fichas fi
       join setter.formularios f on f.id = fi.formulario_id
       left join setter.resultados r on r.ficha_id = fi.id
+      where fi.origen = 'sistema'
       group by f.ruta order by leads desc`;
     const porVideo = await sql()`
       select v.codigo as clave,
@@ -42,6 +43,7 @@ export default async function Estadisticas() {
       join setter.formularios f on f.id = fi.formulario_id
       left join setter.videos v on v.id = f.video_id
       left join setter.resultados r on r.ficha_id = fi.id
+      where fi.origen = 'sistema'
       group by v.codigo order by vendidos desc, leads desc limit 50`;
     return { porRuta: porRuta as unknown as Fila[], porVideo: porVideo as unknown as Fila[] };
   });

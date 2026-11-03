@@ -23,6 +23,8 @@ export type DatosSeguimiento = {
   propuesta_programada_at: Date | null;
   propuesta_error: string | null;
   reserva_input: string | null;
+  caso_exito: boolean;
+  nota_exito: string | null;
   resultado: {
     resultado: "vendido" | "no_vendido";
     producto: string | null;
@@ -192,6 +194,21 @@ export function Seguimiento({ d, aviso }: { d: DatosSeguimiento; aviso: { tipo: 
             <button type="submit" name="resultado" value="vendido" className="principal">Registrar como vendido</button>
             <button type="submit" name="resultado" value="no_vendido" className="secundario">Registrar como no vendido</button>
           </div>
+        </FormularioAjax>
+      </Sub>
+
+      <Sub id="exito" titulo="Caso de éxito" resumen={d.caso_exito ? "Marcado" : "No"}>
+        <p className="ayuda">Márcalo cuando esta persona sea un ejemplo de lo que quieres encontrar: alguien que compró y salió bien. Servirá para definir los avatares.</p>
+        <FormularioAjax action={accion} className="nota-form">
+          <input type="hidden" name="accion" value="exito" />
+          <label className="chk" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <input type="checkbox" name="exito" value="1" defaultChecked={d.caso_exito} style={{ width: 22, height: 22 }} /> Es un caso de éxito
+          </label>
+          <label>
+            <span className="solo-lectores">Por qué funcionó</span>
+            <textarea name="nota_exito" rows={3} maxLength={1000} defaultValue={d.nota_exito ?? ""} placeholder="Qué le convenció, qué resultado tuvo después…" />
+          </label>
+          <button type="submit" className="secundario">Guardar</button>
         </FormularioAjax>
       </Sub>
 

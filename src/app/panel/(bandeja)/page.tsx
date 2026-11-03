@@ -37,6 +37,8 @@ type Fila = {
   video_codigo: string | null;
   creado_at: Date;
   sin_contactar: boolean;
+  origen: "sistema" | "historico";
+  caso_exito: boolean;
 };
 
 const OFERTA: Record<string, string> = { online: "Online", presencial: "Presencial", asesoria: "Asesoría" };
@@ -67,13 +69,16 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
   // Cada vista es una pregunta concreta: ¿a quién falta escribir?, ¿quién no ha reservado?...
   const vistaSql = sql()`(
     ${f.vista}::text is null
-    or (${f.vista}::text = 'sin_contactar' and ${SIN_CONTACTAR})
-    or (${f.vista}::text = 'por_enviar' and fi.propuesta_estado in ('pendiente', 'no_enviada', 'incierto') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
-    or (${f.vista}::text = 'sin_agendar' and fi.reserva_at is null and f.ruta is distinct from 'asesoria'
-        and fi.propuesta_estado in ('enviada', 'manual') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
-    or (${f.vista}::text = 'agendadas' and fi.reserva_at is not null and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
-    or (${f.vista}::text = 'vendidos' and fi.fase = 'vendido')
-    or (${f.vista}::text = 'no_vendidos' and fi.fase = 'no_vendido')
+    or (${f.vista}::text = 'casos_exito' and fi.caso_exito)
+    or (fi.origen = 'sistema' and (
+         (${f.vista}::text = 'sin_contactar' and ${SIN_CONTACTAR})
+      or (${f.vista}::text = 'por_enviar' and fi.propuesta_estado in ('pendiente', 'no_enviada', 'incierto') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
+      or (${f.vista}::text = 'sin_agendar' and fi.reserva_at is null and f.ruta is distinct from 'asesoria'
+          and fi.propuesta_estado in ('enviada', 'manual') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
+      or (${f.vista}::text = 'agendadas' and fi.reserva_at is not null and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
+      or (${f.vista}::text = 'vendidos' and fi.fase = 'vendido')
+      or (${f.vista}::text = 'no_vendidos' and fi.fase = 'no_vendido')
+    ))
   )`;
   const filtrosSql = sql()`
     ${vistaSql}
@@ -86,7 +91,7 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
     const filas = await sql()`
       select fi.id as ficha_id, p.nombre, f.ruta, fi.encaje, fi.puntuacion, fi.oferta_recomendada, fi.fase,
              fi.propuesta_estado, fi.reserva_at, v.codigo as video_codigo, f.creado_at,
-             ${SIN_CONTACTAR} as sin_contactar,
+             ${SIN_CONTACTAR} as sin_contactar, fi.origen, fi.caso_exito,
              count(*) over()::int as total
       from setter.fichas fi
       join setter.formularios f on f.id = fi.formulario_id
@@ -176,7 +181,9 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
                   <span className="lead-fecha">{fechaCorta(l.creado_at)}</span>
                 </span>
                 <span className="chips">
-                  {l.sin_contactar && <span className="chip urgente">Sin contactar +24 h</span>}
+                  {l.sin_contactar && l.origen === "sistema" && <span className="chip urgente">Sin contactar +24 h</span>}
+                  {l.caso_exito && <span className="chip ok">Caso de éxito</span>}
+                  {l.origen === "historico" && <span className="chip">Cliente anterior</span>}
                   <span className={`fase fase-${l.fase}`}>{NOMBRE_FASE[l.fase]}</span>
                   <span className="chip">{l.ruta ? NOMBRE_RUTA[l.ruta] : "Formulario antiguo"}</span>
                   {l.reserva_at && <span className="chip reserva">Llamada {fechaCorta(l.reserva_at)}</span>}

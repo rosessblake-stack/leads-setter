@@ -65,9 +65,9 @@ function lineasSignals(sg: Partial<Signals>): string[] {
   return l;
 }
 
-export function construirMensaje(r: ResumenLead, ficha: FichaAnalizada | null, nota?: string): string {
+export function construirMensaje(r: ResumenLead, ficha: FichaAnalizada | null, nota?: string, etiqueta = "Nuevo lead"): string {
   const l: string[] = [];
-  l.push(`<b>Nuevo lead:</b> ${escaparHtml(r.nombre)}`);
+  l.push(`<b>${escaparHtml(etiqueta)}:</b> ${escaparHtml(r.nombre)}`);
   const contacto = [r.email, r.telefono, r.ig_username ? "@" + r.ig_username : null].filter(Boolean).join(" · ");
   l.push(escaparHtml(contacto));
   if (r.ubicacion) l.push(escaparHtml(r.ubicacion));

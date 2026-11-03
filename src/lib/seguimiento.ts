@@ -64,6 +64,17 @@ export async function fijarReserva(fichaId: string, local: string | null): Promi
   });
 }
 
+// Marca o desmarca a una persona como caso de éxito, con una nota sobre por qué funcionó.
+export async function marcarCasoExito(fichaId: string, exito: boolean, nota: string | null): Promise<boolean> {
+  return sql().begin(async (tx) => {
+    const [f] = await tx`select persona_id from setter.fichas where id = ${fichaId} for update`;
+    if (!f) return false;
+    await tx`update setter.fichas set caso_exito = ${exito}, nota_exito = ${nota} where id = ${fichaId}`;
+    await tx`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'caso_exito_cambiado', ${tx.json({ caso_exito: exito })})`;
+    return true;
+  });
+}
+
 export async function guardarNota(fichaId: string, texto: string): Promise<boolean> {
   return sql().begin(async (tx) => {
     const [f] = await tx`select persona_id from setter.fichas where id = ${fichaId}`;

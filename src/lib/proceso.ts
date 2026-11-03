@@ -32,7 +32,7 @@ export async function guardarAnalisis(fichaId: string, personaId: string, ficha:
 
 // Lee el formulario con Claude, actualiza la ficha y avisa por Telegram.
 // Nunca escribe a la persona. Si algo falla, el aviso sale igualmente.
-export async function procesarLead(s: Solicitud, g: LeadGuardado): Promise<void> {
+export async function procesarLead(s: Solicitud, g: LeadGuardado, opciones: { historico?: boolean } = {}): Promise<void> {
   let ficha: FichaAnalizada | null = null;
   let nota: string | undefined;
 
@@ -57,7 +57,7 @@ export async function procesarLead(s: Solicitud, g: LeadGuardado): Promise<void>
       await guardarAnalisis(g.fichaId, g.personaId, ficha);
     }
 
-    const enviado = await avisarAdmin(construirMensaje(resumenDe(s, g.fichaId), ficha, nota));
+    const enviado = await avisarAdmin(construirMensaje(resumenDe(s, g.fichaId), ficha, nota, opciones.historico ? "Cliente anterior" : undefined));
     if (enviado) {
       await sql()`
         update setter.fichas set estado = 'notificado', notificado_at = now()
@@ -67,7 +67,8 @@ export async function procesarLead(s: Solicitud, g: LeadGuardado): Promise<void>
     await registrarError("formulario", e, { paso: "guardar ficha o avisar", ficha: g.fichaId });
   }
 
-  // La propuesta se envía más tarde (entre 1 y 3 horas), no ahora.
+  // La propuesta se envía más tarde (entre 1 y 3 horas), no ahora. A un cliente anterior no se le manda ninguna.
+  if (opciones.historico) return;
   try {
     await programarPropuesta(g.fichaId, g.personaId, s.ruta);
   } catch (e) {

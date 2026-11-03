@@ -8,6 +8,8 @@ type Props = {
   definicion: Definicion;
   video: string;
   manychat: string;
+  // Código del enlace para clientes anteriores: cambia los textos y se envía con el formulario.
+  cliente?: string;
   textoConsentimiento: string;
   privacidad: string;
   // «preparacion»: el formulario largo que se rellena tras reservar la asesoría (sin ruta que elegir ni consentimiento).
@@ -20,7 +22,8 @@ const CLAVE = "leads-setter:formulario";
 const BIENVENIDA = "bienvenida";
 const CONSENTIMIENTO = "consentimiento";
 
-export function Formulario({ definicion, video, manychat, textoConsentimiento, privacidad, modo = "inicial", ruta, token }: Props) {
+export function Formulario({ definicion, video, manychat, cliente, textoConsentimiento, privacidad, modo = "inicial", ruta, token }: Props) {
+  const anterior = Boolean(cliente) && modo === "inicial";
   const prep = modo === "preparacion";
   const etapa = prep ? "preparacion" : "inicial";
   const rutaFija = prep ? ruta : undefined;
@@ -143,6 +146,7 @@ export function Formulario({ definicion, video, manychat, textoConsentimiento, p
                 consentimiento: true,
                 v: video || undefined,
                 mc: manychat || undefined,
+                c: cliente || undefined,
                 web,
               },
         ),
@@ -193,7 +197,7 @@ export function Formulario({ definicion, video, manychat, textoConsentimiento, p
     return (
       <div className="pantalla">
         <section className="gracias centro" role="status">
-          <h2>{prep ? "Gracias. Ya tengo tus respuestas: me ayudarán a preparar tu asesoría. Si quieres cambiar algo, vuelve a abrir este enlace." : textoFinal(definicion, respuestas)}</h2>
+          <h2>{prep ? "Gracias. Ya tengo tus respuestas: me ayudarán a preparar tu asesoría. Si quieres cambiar algo, vuelve a abrir este enlace." : anterior ? "Gracias por contarme tu caso. Me ayuda mucho a conocer mejor a quienes ya habéis trabajado conmigo." : textoFinal(definicion, respuestas)}</h2>
         </section>
       </div>
     );
@@ -226,11 +230,13 @@ export function Formulario({ definicion, video, manychat, textoConsentimiento, p
       >
         {pasoActual === BIENVENIDA && (
           <section className="bienvenida">
-            <h1>{prep ? "Prepara tu asesoría" : definicion.bienvenida.titulo}</h1>
+            <h1>{prep ? "Prepara tu asesoría" : anterior ? "Cuéntame tu caso" : definicion.bienvenida.titulo}</h1>
             <p className="intro">
               {prep
                 ? "Estas preguntas me ayudan a preparar tu caso antes de la llamada. Tardas unos 15 minutos y puedes dejarlo a medias y volver: se guarda en este navegador."
-                : definicion.bienvenida.texto}
+                : anterior
+                  ? "Gracias por ayudarme. Este formulario me sirve para conocer mejor tu situación y la de quienes ya habéis trabajado conmigo. Responde con sinceridad y con tus palabras."
+                  : definicion.bienvenida.texto}
             </p>
             <button type="submit" className="principal">
               Empezar

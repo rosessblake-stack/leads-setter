@@ -2,7 +2,7 @@ import { Formulario } from "./formulario";
 import { CONSENT_TEXT } from "@/lib/consent";
 import { definicion } from "@/formulario/datos";
 
-type Params = { v?: string | string[]; mc?: string | string[] };
+type Params = { v?: string | string[]; mc?: string | string[]; c?: string | string[] };
 
 const uno = (x?: string | string[]) => (Array.isArray(x) ? x[0] : x);
 
@@ -14,6 +14,7 @@ export default async function Guia({ searchParams }: { searchParams: Promise<Par
         definicion={definicion}
         video={uno(p.v) ?? ""}
         manychat={uno(p.mc) ?? ""}
+        cliente={uno(p.c) ?? ""}
         textoConsentimiento={CONSENT_TEXT}
         privacidad={process.env.PRIVACY_URL || "/privacidad"}
       />

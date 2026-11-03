@@ -3,6 +3,8 @@ import { intentar } from "@/lib/db";
 import { conexion, googleConfigurado, ocupadosEntre } from "@/lib/google";
 import { diagnosticar, manychatConfigurado, type Diagnostico } from "@/lib/manychat";
 import { registrarError } from "@/lib/errores";
+import { urlClientesAnteriores } from "@/lib/historico";
+import { CopiarTexto } from "../ajax";
 import { HORA_PRIMERA, HORA_ULTIMA, leerModo } from "@/lib/propuestas";
 import { proponer, ZONA, REGLAS } from "@/lib/disponibilidad";
 import { exigirSesion } from "@/lib/panel";
@@ -26,6 +28,13 @@ export default async function Ajustes({ searchParams }: { searchParams: Promise<
   await exigirSesion();
   const q = await searchParams;
   const aviso = q.google ? MENSAJE[q.google] : undefined;
+
+  let enlaceAnteriores: string | null = null;
+  try {
+    enlaceAnteriores = urlClientesAnteriores();
+  } catch {
+    enlaceAnteriores = null;
+  }
 
   const { modo, diag } = await intentar(async () => {
     const modo = await leerModo();
@@ -81,6 +90,16 @@ export default async function Ajustes({ searchParams }: { searchParams: Promise<
             {c ? "Volver a conectar" : "Conectar Google"}
           </button>
         </form>
+      </section>
+
+      <section className="bloque">
+        <h2>Clientes anteriores</h2>
+        <p className="ayuda">
+          Enlace para que personas que ya han comprado rellenen el formulario y conocerlas mejor. Su ficha queda marcada como «Cliente anterior»: no se
+          les prepara ninguna propuesta y no cuentan en el embudo ni en las estadísticas del mes. Después puedes registrar su compra y marcarla como caso
+          de éxito.
+        </p>
+        {enlaceAnteriores ? <CopiarTexto texto={enlaceAnteriores} /> : <p className="error">Falta ENCRYPTION_KEY en Vercel.</p>}
       </section>
 
       <section className="bloque">

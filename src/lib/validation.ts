@@ -15,6 +15,8 @@ export const PayloadSchema = z.object({
   // Identificadores que vienen en el enlace de ManyChat.
   v: z.string().trim().regex(/^[A-Za-z0-9_-]{1,40}$/).optional(),
   mc: z.string().trim().regex(/^[A-Za-z0-9_-]{1,64}$/).optional(),
+  // Código del enlace para clientes anteriores (se comprueba en el servidor; si no vale, se ignora).
+  c: z.string().trim().regex(/^[A-Za-z0-9_-]{20,64}$/).optional(),
   // Campo trampa: las personas no lo ven, los bots sí lo rellenan.
   web: z.string().max(0).optional(),
 });

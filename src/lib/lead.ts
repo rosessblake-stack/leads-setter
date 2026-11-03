@@ -10,7 +10,7 @@ export type LeadGuardado = {
 };
 
 // Guarda persona, formulario, ficha vacía y evento en una sola transacción.
-export async function guardarLead(s: Solicitud): Promise<LeadGuardado> {
+export async function guardarLead(s: Solicitud, opciones: { historico?: boolean } = {}): Promise<LeadGuardado> {
   return sql().begin(async (tx) => {
     let videoId: string | null = null;
     if (s.v) {
@@ -56,8 +56,8 @@ export async function guardarLead(s: Solicitud): Promise<LeadGuardado> {
       returning id`;
 
     const [ficha] = await tx`
-      insert into setter.fichas (persona_id, formulario_id)
-      values (${persona.id}, ${formulario.id})
+      insert into setter.fichas (persona_id, formulario_id, origen)
+      values (${persona.id}, ${formulario.id}, ${opciones.historico ? "historico" : "sistema"})
       returning id`;
 
     await tx`
@@ -68,6 +68,7 @@ export async function guardarLead(s: Solicitud): Promise<LeadGuardado> {
           video_encontrado: videoId !== null,
           ruta: s.ruta,
           manychat_en_conflicto: manychatEnConflicto,
+          cliente_anterior: Boolean(opciones.historico),
         })})`;
 
     return {

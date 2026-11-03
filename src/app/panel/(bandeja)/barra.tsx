@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-type Cuentas = Partial<Record<"todos" | "sin_contactar" | "por_enviar" | "sin_agendar" | "agendadas" | "vendidos" | "no_vendidos" | "errores", number>>;
+type Cuentas = Partial<Record<"todos" | "sin_contactar" | "por_enviar" | "sin_agendar" | "agendadas" | "vendidos" | "no_vendidos" | "casos_exito" | "errores", number>>;
 
 type Item = { clave: string; texto: string; href: string; cuenta?: keyof Cuentas; urgente?: boolean };
 const GRUPOS: { titulo: string | null; items: Item[] }[] = [
@@ -28,6 +28,7 @@ const GRUPOS: { titulo: string | null; items: Item[] }[] = [
     items: [
       { clave: "vendidos", texto: "Vendidos", href: "/panel?vista=vendidos", cuenta: "vendidos" },
       { clave: "no_vendidos", texto: "No vendidos", href: "/panel?vista=no_vendidos", cuenta: "no_vendidos" },
+      { clave: "casos_exito", texto: "Casos de éxito", href: "/panel?vista=casos_exito", cuenta: "casos_exito" },
     ],
   },
   {

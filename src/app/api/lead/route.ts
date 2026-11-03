@@ -3,6 +3,7 @@ import { PayloadSchema } from "@/lib/validation";
 import { guardarLead } from "@/lib/lead";
 import { procesarLead } from "@/lib/proceso";
 import { permitido } from "@/lib/ratelimit";
+import { esTokenHistorico } from "@/lib/historico";
 import { definicion, reglasOferta } from "@/formulario/datos";
 import { validarTodo } from "@/formulario/motor";
 import { construirSolicitud } from "@/formulario/solicitud";
@@ -56,9 +57,10 @@ export async function POST(req: Request) {
   });
 
   try {
-    const guardado = await guardarLead(solicitud);
+    const historico = esTokenHistorico(parsed.data.c);
+    const guardado = await guardarLead(solicitud, { historico });
     // El análisis y el aviso se hacen después de responder a la persona.
-    after(() => procesarLead(solicitud, guardado));
+    after(() => procesarLead(solicitud, guardado, { historico }));
     return json({ ok: true });
   } catch (e) {
     await registrarError("formulario", e, { paso: "guardar lead" });
