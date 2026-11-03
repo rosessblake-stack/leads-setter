@@ -7,6 +7,7 @@ import {
   ETIQUETA_SIGNAL,
   NOMBRE_FASE,
   NOMBRE_RUTA,
+  CLAVE_SIGNAL,
   agruparRespuestas,
   enlaceChatInstagram,
   enlaceInstagram,
@@ -106,9 +107,13 @@ export default async function Ficha({
     .map(([k, etiqueta]) => {
       const v = signals[k];
       if (v === null || v === undefined || v === "") return null;
-      return { etiqueta, valor: Array.isArray(v) ? v.join(", ") : k === "urgencia" ? `${v}/10` : String(v) };
+      return { etiqueta, valor: Array.isArray(v) ? v.join(", ") : k === "urgencia" ? `${v}/10` : String(v), clave: CLAVE_SIGNAL.has(k) };
     })
-    .filter((x): x is { etiqueta: string; valor: string } => x !== null);
+    .filter((x): x is { etiqueta: string; valor: string; clave: boolean } => x !== null);
+  const claves = [
+    ...lineasSignals.filter((s) => s.clave).map((s) => ({ pregunta: s.etiqueta, texto: s.valor })),
+    ...grupos.flatMap((g) => g.items.filter((i) => i.clave)),
+  ];
 
   return (
     <main className="pantalla panel">
@@ -165,6 +170,22 @@ export default async function Ficha({
 
       <HerramientasFicha />
 
+      {claves.length > 0 && (
+        <details className="desplegable clave-bloque" id="llamada" open>
+          <summary>
+            <h2>Para la llamada</h2>
+            <span className="lead-fecha">{claves.length} {claves.length === 1 ? "dato" : "datos"} clave</span>
+          </summary>
+          <div className="desplegable-cuerpo" data-buscable>
+            <dl className="respuestas">
+              {claves.map((c, i) => (
+                <div key={i} className="clave"><dt>{c.pregunta}</dt><dd>{c.texto}</dd></div>
+              ))}
+            </dl>
+          </div>
+        </details>
+      )}
+
       <details className="desplegable" id="valoracion" data-ficha>
         <summary>
           <h2>Valoración de Claude</h2>
@@ -201,7 +222,7 @@ export default async function Ficha({
           <div className="desplegable-cuerpo">
             <dl className="datos">
               {lineasSignals.map((s) => (
-                <div key={s.etiqueta} data-buscable><dt>{s.etiqueta}</dt><dd>{s.valor}</dd></div>
+                <div key={s.etiqueta} data-buscable className={s.clave ? "clave" : undefined}><dt>{s.etiqueta}</dt><dd>{s.valor}</dd></div>
               ))}
             </dl>
           </div>
@@ -217,7 +238,7 @@ export default async function Ficha({
           <div className="desplegable-cuerpo">
             <dl className="respuestas">
               {g.items.map((i) => (
-                <div key={i.id} data-buscable><dt>{i.pregunta}</dt><dd>{i.texto}</dd></div>
+                <div key={i.id} data-buscable className={i.clave ? "clave" : undefined}><dt>{i.pregunta}</dt><dd>{i.texto}</dd></div>
               ))}
             </dl>
           </div>
