@@ -8,6 +8,9 @@ import {
   NOMBRE_FASE,
   NOMBRE_RUTA,
   CLAVE_SIGNAL,
+  IMPRESCINDIBLE_LLAMADA,
+  ORDEN_LLAMADA,
+  type ItemRespuesta,
   agruparRespuestas,
   enlaceChatInstagram,
   enlaceInstagram,
@@ -110,10 +113,16 @@ export default async function Ficha({
       return { etiqueta, valor: Array.isArray(v) ? v.join(", ") : k === "urgencia" ? `${v}/10` : String(v), clave: CLAVE_SIGNAL.has(k) };
     })
     .filter((x): x is { etiqueta: string; valor: string; clave: boolean } => x !== null);
-  const claves = [
-    ...lineasSignals.filter((s) => s.clave).map((s) => ({ pregunta: s.etiqueta, texto: s.valor })),
-    ...grupos.flatMap((g) => g.items.filter((i) => i.clave)),
-  ];
+  const porId = new Map(grupos.flatMap((g) => g.items).map((i) => [i.id, i]));
+  const textoPregunta = new Map(definicion.preguntas.map((q) => [q.id, q.texto]));
+  // Datos clave en el orden de la llamada. Una imprescindible sin responder se muestra igual: hay que preguntarla.
+  const pasos = ORDEN_LLAMADA.map((p) => ({
+    paso: p.paso,
+    items: p.ids
+      .map((id) => porId.get(id) ?? (IMPRESCINDIBLE_LLAMADA.has(id) && textoPregunta.get(id) ? { id, pregunta: textoPregunta.get(id)!, texto: "", clave: true, imprescindible: true } : null))
+      .filter((x): x is ItemRespuesta => x !== null),
+  })).filter((p) => p.items.length > 0);
+  const totalClaves = pasos.reduce((n, p) => n + p.items.length, 0);
 
   return (
     <main className="pantalla panel">
@@ -170,18 +179,27 @@ export default async function Ficha({
 
       <HerramientasFicha />
 
-      {claves.length > 0 && (
+      {totalClaves > 0 && (
         <details className="desplegable clave-bloque" id="llamada" open>
           <summary>
             <h2>Para la llamada</h2>
-            <span className="lead-fecha">{claves.length} {claves.length === 1 ? "dato" : "datos"} clave</span>
+            <span className="lead-fecha">En el orden de la llamada</span>
           </summary>
           <div className="desplegable-cuerpo" data-buscable>
-            <dl className="respuestas">
-              {claves.map((c, i) => (
-                <div key={i} className="clave"><dt>{c.pregunta}</dt><dd>{c.texto}</dd></div>
-              ))}
-            </dl>
+            <p className="ayuda">Lo marcado con «No pasar por alto» hay que dejarlo claro antes de cerrar.</p>
+            {pasos.map((p, n) => (
+              <div key={p.paso}>
+                <h3 style={{ margin: "16px 0 8px" }}>{n + 1}. {p.paso}</h3>
+                <dl className="respuestas">
+                  {p.items.map((i) => (
+                    <div key={i.id} className={i.imprescindible ? "clave imprescindible" : "clave"}>
+                      <dt>{i.imprescindible && <span className="no-pasar">No pasar por alto</span>}{i.pregunta}</dt>
+                      <dd>{i.texto || "Sin responder: pregúntalo en la llamada"}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ))}
           </div>
         </details>
       )}
@@ -238,7 +256,7 @@ export default async function Ficha({
           <div className="desplegable-cuerpo">
             <dl className="respuestas">
               {g.items.map((i) => (
-                <div key={i.id} data-buscable className={i.clave ? "clave" : undefined}><dt>{i.pregunta}</dt><dd>{i.texto}</dd></div>
+                <div key={i.id} data-buscable className={i.imprescindible ? "clave imprescindible" : i.clave ? "clave" : undefined}><dt>{i.pregunta}</dt><dd>{i.texto}</dd></div>
               ))}
             </dl>
           </div>

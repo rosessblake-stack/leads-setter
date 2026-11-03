@@ -126,17 +126,21 @@ const MODULOS: { prefijo: string; titulo: string }[] = [
 ];
 
 // Respuestas ordenadas como en el formulario y agrupadas por bloque.
-// Respuestas que importan para preparar la llamada (se marcan en rojo en la ficha): lo que quiere, su nivel y
-// dinero, sus dolores, lo que le frena y lo que decide la compra. Se pueden ajustar aquí.
-export const CLAVE_LLAMADA: ReadonlySet<string> = new Set([
-  "C06", "F01", "F02", "F03", "N08", // qué quiere comprar, cuándo y si puede viajar
-  "C08", "C10", "C12", "C13", "C14", "A02", "A03", "A36", // nivel, experiencia y formación previa
-  "T02", "T03", "S01", "S02", "S03", "S04", "N01", "N02", "N03", "N05", "A01", "A34", "A35", "E01", // objetivo y dolores
-  "C15", "C16", "N07", "N09", "N10", "E02", "E03", // urgencia, quién decide, frenos y dudas
-]);
+// Respuestas que importan para preparar la llamada (se marcan en rojo en la ficha), en el orden en que se
+// tratan en la llamada. Las «imprescindibles» no se pueden pasar por alto. Se pueden ajustar aquí.
+export const ORDEN_LLAMADA: { paso: string; ids: string[] }[] = [
+  { paso: "Motivo y objetivo", ids: ["N01", "S01", "S02", "A01", "A34", "A35", "E01"] },
+  { paso: "Su situación y nivel", ids: ["C08", "C10", "C12", "A02", "A03", "C13", "C14", "A36"] },
+  { paso: "Dolores y dificultades", ids: ["T02", "T03", "S03", "S04", "N02", "N03", "N05"] },
+  { paso: "Qué quiere comprar", ids: ["C06", "F01", "F02", "F03", "N08", "N09"] },
+  { paso: "Decisión, frenos y pago", ids: ["C15", "C16", "N07", "N10", "E02", "E03"] },
+];
+// Sin estas no se debe cerrar la llamada: qué compra, cuánto gana, quién decide, urgencia, frenos y pago.
+export const IMPRESCINDIBLE_LLAMADA: ReadonlySet<string> = new Set(["C06", "C12", "C15", "C16", "N07", "E03", "A34"]);
+export const CLAVE_LLAMADA: ReadonlySet<string> = new Set(ORDEN_LLAMADA.flatMap((p) => p.ids));
 export const CLAVE_SIGNAL: ReadonlySet<string> = new Set(["urgencia", "quien_decide", "primer_pago_mismo_dia", "inversion_previa"]);
 
-export type ItemRespuesta = { id: string; pregunta: string; texto: string; clave: boolean };
+export type ItemRespuesta = { id: string; pregunta: string; texto: string; clave: boolean; imprescindible: boolean };
 
 export function agruparRespuestas(
   def: Definicion,
@@ -149,7 +153,7 @@ export function agruparRespuestas(
     if (!a) continue;
     const prefijo = q.id[0];
     const lista = grupos.get(prefijo) ?? [];
-    lista.push({ id: q.id, pregunta: a.pregunta, texto: formatearValor(a), clave: CLAVE_LLAMADA.has(q.id) });
+    lista.push({ id: q.id, pregunta: a.pregunta, texto: formatearValor(a), clave: CLAVE_LLAMADA.has(q.id), imprescindible: IMPRESCINDIBLE_LLAMADA.has(q.id) });
     grupos.set(prefijo, lista);
   }
   return MODULOS.filter((m) => grupos.has(m.prefijo)).map((m) => ({ titulo: m.titulo, items: grupos.get(m.prefijo)! }));

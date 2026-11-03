@@ -184,6 +184,8 @@ dt { font-family: var(--grotesk); font-size: 0.72rem; letter-spacing: 0.06em; te
 .clave { border-left: 3px solid var(--accent); padding-left: 10px; }
 .clave dt, .clave dd { color: var(--accent-ink); }
 .clave dd { font-weight: 600; }
+.clave.imprescindible { border-left-width: 6px; background: rgba(214, 72, 59, 0.12); padding: 8px 10px 8px 12px; border-radius: 0 8px 8px 0; }
+.no-pasar { display: block; font-family: var(--grotesk); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #fff; background: var(--accent); width: fit-content; border-radius: 999px; padding: 2px 8px; margin-bottom: 4px; }
 .respuestas dt { text-transform: none; letter-spacing: 0.01em; font-size: 0.82rem; }
 dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
 .resumen { color: var(--ink); border-left: 2px solid var(--accent); padding-left: 14px; margin: 12px 0; }
