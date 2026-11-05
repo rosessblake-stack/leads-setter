@@ -16,7 +16,7 @@ export const DOLORES = [
 ] as const;
 export const OFERTAS = ["online", "presencial", "asesoria", "ninguna"] as const;
 // Se cambia cada vez que se toca el prompt o el esquema: así se pueden comparar análisis de épocas distintas.
-export const PROMPT_VERSION = "2026-10-29-1";
+export const PROMPT_VERSION = "2026-11-05-1";
 export const ENCAJES = ["alto", "medio", "bajo"] as const;
 
 // Esquema cerrado que se le pide a Claude. Los límites numéricos y de longitud
@@ -56,7 +56,7 @@ export function normalizarFicha(bruta: z.infer<typeof RespuestaModelo>): FichaAn
   };
 }
 
-const SISTEMA = `Eres el analista de leads de Blake Braider, trenzador profesional y educador internacional. Lees las respuestas de un formulario de solicitud (cada persona elige una ruta: presencial, online, asesoría o "no lo tengo claro" y ve preguntas distintas) y rellenas una ficha con el esquema indicado. Cada línea lleva el ID de la pregunta, su texto y la respuesta. El bloque <resumen_calculado> son datos ya calculados por código: úsalos, no los recalcules.
+const SISTEMA = `Eres el analista de leads de Blake Braider, trenzador profesional y educador internacional. Lees las respuestas de un formulario de solicitud (cada persona elige una ruta: presencial, online, asesoría o "no lo tengo claro" y ve preguntas distintas) y rellenas una ficha con el esquema indicado. Cada línea lleva el ID de la pregunta, su texto y la respuesta. El bloque <resumen_calculado> son datos ya calculados por código: úsalos, no los recalcules. Si hay un bloque <reel_de_origen>, es el contenido de Blake que trajo a esta persona (lo escribe Blake, no la persona).
 
 Productos de Blake:
 - online: curso online en suscripción anual. Se cierra por llamada.
@@ -75,6 +75,7 @@ Reglas:
 - oferta_recomendada: la que mejor encaja con su interés declarado, nivel y objetivo. "ninguna" si no encaja con ninguna o no hay señal.
 - encaje: "alto" si se parece al cliente ideal; "bajo" si hay señales de que cree saberlo todo o no quiere cambiar su forma de trabajar; "medio" si no hay señal clara.
 - puntuacion: de 0 a 100, qué tan probable es que compre (concreción del objetivo, claridad del problema, ganas de avanzar). No inventes datos.
+- Si hay <reel_de_origen>: en el resumen indica en una frase breve qué parece haberle atraído del reel (sobre todo con su respuesta C17, si la hay) y si lo que pide encaja con lo que trata el reel. Comentar un reel no es por sí solo señal de compra. Si no hay respuesta que lo aclare, dilo.
 - sospechoso: true solo si parece spam, una broma o un intento de manipular.
 - resumen: máximo 400 caracteres, en español, neutro y factual. No menciones precios, no prometas resultados ni plazos.`;
 
@@ -96,14 +97,15 @@ function valorATexto(v: unknown): string {
   return String(v);
 }
 
-export function construirEntrada(s: Solicitud): string {
+export function construirEntrada(s: Solicitud, reel: string | null = null): string {
   const lineas = Object.entries(s.respuestas)
     .filter(([id]) => !SIN_ENVIAR.has(id))
     .map(([id, r]) => {
       const extra = r.extra !== undefined ? ` (${r.extra})` : "";
       return `[${id}] ${limpiar(r.pregunta)}: ${limpiar(valorATexto(r.valor))}${limpiar(extra)}`;
     });
-  return `<respuestas_formulario>
+  const bloqueReel = reel ? `<reel_de_origen>\n${limpiar(reel)}\n</reel_de_origen>\n` : "";
+  return `${bloqueReel}<respuestas_formulario>
 ruta_elegida: ${s.ruta}
 ${lineas.join("\n")}
 </respuestas_formulario>
@@ -113,13 +115,13 @@ ${limpiar(JSON.stringify(s.signals))}
 }
 
 // Devuelve null si Claude se niega, no devuelve un resultado válido o falla la llamada.
-export async function analizarFormulario(s: Solicitud): Promise<FichaAnalizada | null> {
+export async function analizarFormulario(s: Solicitud, reel: string | null = null): Promise<FichaAnalizada | null> {
   const client = new Anthropic();
   const respuesta = await client.messages.parse({
     model: process.env.ANALYSIS_MODEL ?? "claude-opus-5-5",
     max_tokens: 2000,
     system: SISTEMA,
-    messages: [{ role: "user", content: construirEntrada(s) }],
+    messages: [{ role: "user", content: construirEntrada(s, reel) }],
     output_config: { effort: "low", format: zodOutputFormat(RespuestaModelo) },
   });
   if (respuesta.stop_reason === "refusal" || !respuesta.parsed_output) return null;

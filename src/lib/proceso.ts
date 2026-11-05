@@ -30,6 +30,15 @@ export async function guardarAnalisis(fichaId: string, personaId: string, ficha:
   });
 }
 
+// Qué es el reel que trajo a la persona, tal como lo ha registrado Blake. Null si no hay código o no está registrado.
+async function textoReel(codigo: string | null): Promise<string | null> {
+  if (!codigo) return null;
+  const [v] = await sql()`select descripcion, tema, tipo, categoria from setter.videos where codigo = ${codigo}`;
+  if (!v) return null;
+  const partes = [`Código: ${codigo}`, v.descripcion && `De qué trata: ${v.descripcion}`, v.tema && `Tema: ${v.tema}`, v.tipo && `Tipo: ${v.tipo}`, v.categoria && `Categoría: ${v.categoria}`];
+  return partes.filter(Boolean).join("\n");
+}
+
 // Lee el formulario con Claude, actualiza la ficha y avisa por Telegram.
 // Nunca escribe a la persona. Si algo falla, el aviso sale igualmente.
 export async function procesarLead(s: Solicitud, g: LeadGuardado, opciones: { historico?: boolean } = {}): Promise<void> {
@@ -44,7 +53,7 @@ export async function procesarLead(s: Solicitud, g: LeadGuardado, opciones: { hi
     if (n >= tope) {
       nota = "Tope diario de análisis alcanzado: ficha sin analizar.";
     } else {
-      ficha = await analizarFormulario(s);
+      ficha = await analizarFormulario(s, await textoReel(s.v));
       if (!ficha) nota = "Claude no devolvió un análisis válido.";
     }
   } catch (e) {
@@ -93,10 +102,11 @@ export async function reanalizarPendientes(): Promise<number> {
   for (const r of reclamadas) {
     try {
       const [f] = await sql()`
-        select fo.ruta, fo.respuestas, fo.signals, p.nombre
-        from setter.formularios fo join setter.personas p on p.id = ${r.persona_id} where fo.id = ${r.formulario_id}`;
+        select fo.ruta, fo.respuestas, fo.signals, p.nombre, v.codigo as video
+        from setter.formularios fo join setter.personas p on p.id = ${r.persona_id}
+        left join setter.videos v on v.id = fo.video_id where fo.id = ${r.formulario_id}`;
       if (!f) continue;
-      const ficha = await analizarFormulario({ ruta: f.ruta, respuestas: f.respuestas, signals: f.signals } as unknown as Solicitud);
+      const ficha = await analizarFormulario({ ruta: f.ruta, respuestas: f.respuestas, signals: f.signals } as unknown as Solicitud, await textoReel(f.video as string | null));
       if (!ficha) continue;
       await guardarAnalisis(r.id as string, r.persona_id as string, ficha);
       hechas++;

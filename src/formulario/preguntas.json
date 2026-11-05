@@ -1,5 +1,5 @@
 {
- "version": "2026-10-26",
+ "version": "2026-11-05",
  "bienvenida": {
   "titulo": "No es lo mismo trenzar que ser profesional. Demuéstralo.",
   "texto": "Completa este formulario para entender tu nivel, tu momento de negocio y si esta formación es adecuada para ti. Si encajas, la llamada será directa, honesta y muy práctica."
@@ -65,6 +65,12 @@
     "Asesoría 1:1 virtual",
     "No lo tengo claro, quiero que me orientes"
    ]
+  },
+  {
+   "id": "C17",
+   "texto": "¿Qué fue lo que te llamó la atención o te hizo escribirme?",
+   "tipo": "texto_largo",
+   "obligatoria": false
   },
   {
    "id": "C07",

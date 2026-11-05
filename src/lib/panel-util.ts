@@ -129,7 +129,7 @@ const MODULOS: { prefijo: string; titulo: string }[] = [
 // Respuestas que importan para preparar la llamada (se marcan en rojo en la ficha), en el orden en que se
 // tratan en la llamada. Las «imprescindibles» no se pueden pasar por alto. Se pueden ajustar aquí.
 export const ORDEN_LLAMADA: { paso: string; ids: string[] }[] = [
-  { paso: "Motivo y objetivo", ids: ["N01", "S01", "S02", "A01", "A34", "A35", "E01"] },
+  { paso: "Motivo y objetivo", ids: ["C17", "N01", "S01", "S02", "A01", "A34", "A35", "E01"] },
   { paso: "Su situación y nivel", ids: ["C08", "C10", "C12", "A02", "A03", "C13", "C14", "A36"] },
   { paso: "Dolores y dificultades", ids: ["T02", "T03", "S03", "S04", "N02", "N03", "N05"] },
   { paso: "Qué quiere comprar", ids: ["C06", "F01", "F02", "F03", "N08", "N09"] },

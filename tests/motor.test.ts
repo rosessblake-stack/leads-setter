@@ -19,17 +19,17 @@ const ASES = "Asesoría 1:1 virtual";
 const NOCLARO = "No lo tengo claro, quiero que me orientes";
 
 describe("rutas y totales (con todas las condicionales visibles)", () => {
-  it("presencial = 45", () => {
-    expect(visibles(def, base(PRES, { V03: "Casi no" })).length).toBe(45);
+  it("presencial = 46", () => {
+    expect(visibles(def, base(PRES, { V03: "Casi no" })).length).toBe(46);
   });
-  it("online = 40", () => {
-    expect(visibles(def, base(ONLINE, { V03: "Casi no" })).length).toBe(40);
+  it("online = 41", () => {
+    expect(visibles(def, base(ONLINE, { V03: "Casi no" })).length).toBe(41);
   });
-  it("asesoría = 13 al empezar", () => {
-    expect(visibles(def, base(ASES)).length).toBe(13);
+  it("asesoría = 14 al empezar", () => {
+    expect(visibles(def, base(ASES)).length).toBe(14);
   });
-  it("no lo tengo claro = 31", () => {
-    expect(visibles(def, base(NOCLARO)).length).toBe(31);
+  it("no lo tengo claro = 32", () => {
+    expect(visibles(def, base(NOCLARO)).length).toBe(32);
   });
 
   it("cada ruta muestra solo sus módulos", () => {
@@ -42,9 +42,9 @@ describe("rutas y totales (con todas las condicionales visibles)", () => {
     expect(ids(NOCLARO).has("N10") && ids(NOCLARO).has("B05") && !ids(NOCLARO).has("E01")).toBe(true);
   });
 
-  it("asesoría: 13 preguntas al empezar y las otras 39 en la preparación tras el pago", () => {
+  it("asesoría: 14 preguntas al empezar y las otras 39 en la preparación tras el pago", () => {
     const inicial = visibles(def, base(ASES)).map((q) => q.id);
-    expect(inicial).toEqual(["C01", "C02", "C03", "C04", "C06", "C08", "C10", "C15", "A01", "A02", "A34", "A35", "A05"]);
+    expect(inicial).toEqual(["C01", "C02", "C03", "C04", "C06", "C17", "C08", "C10", "C15", "A01", "A02", "A34", "A35", "A05"]);
     const prep = visibles(def, {}, "preparacion", "asesoria").map((q) => q.id);
     expect(prep.length).toBe(38); // +1 (C14) si dice que ha invertido antes
     expect(prep).toContain("C12"); // ingresos: se pregunta después, no al entrar
