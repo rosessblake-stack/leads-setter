@@ -13,9 +13,28 @@ export type LeadGuardado = {
 export async function guardarLead(s: Solicitud, opciones: { historico?: boolean } = {}): Promise<LeadGuardado> {
   return sql().begin(async (tx) => {
     let videoId: string | null = null;
+    let videoCodigo: string | null = s.v;
+    let videoOrigen: "enlace" | "comentario" | null = null;
     if (s.v) {
       const [video] = await tx`select id from setter.videos where codigo = ${s.v}`;
       videoId = video?.id ?? null;
+      if (videoId) videoOrigen = "enlace";
+    }
+    // Sin código en el enlace, se busca el reel que comentó esa persona (por su usuario de Instagram).
+    if (!videoId) {
+      // (Se consulta con la misma transacción: hay una sola conexión a la base de datos.)
+      const usuario = s.ig_username?.replace(/^@/, "").trim().toLowerCase();
+      if (usuario) {
+        const [v] = await tx`
+          select v.id, v.codigo from setter.comentarios_ig c join setter.videos v on v.ig_media_id = c.ig_media_id
+          where lower(c.username) = ${usuario} and c.comentado_at > now() - interval '14 days'
+          order by c.comentado_at desc limit 1`;
+        if (v) {
+          videoId = v.id as string;
+          videoCodigo = v.codigo as string;
+          videoOrigen = "comentario";
+        }
+      }
     }
 
     // Si ese ID de ManyChat ya pertenece a otra persona, no lo reasignamos.
@@ -66,6 +85,7 @@ export async function guardarLead(s: Solicitud, opciones: { historico?: boolean 
         ${tx.json({
           codigo_video: s.v,
           video_encontrado: videoId !== null,
+          video_origen: videoOrigen,
           ruta: s.ruta,
           manychat_en_conflicto: manychatEnConflicto,
           cliente_anterior: Boolean(opciones.historico),
@@ -75,7 +95,7 @@ export async function guardarLead(s: Solicitud, opciones: { historico?: boolean 
       personaId: persona.id,
       formularioId: formulario.id,
       fichaId: ficha.id,
-      videoCodigo: s.v,
+      videoCodigo,
     };
   });
 }

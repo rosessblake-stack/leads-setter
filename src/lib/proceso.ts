@@ -33,9 +33,9 @@ export async function guardarAnalisis(fichaId: string, personaId: string, ficha:
 // Qué es el reel que trajo a la persona, tal como lo ha registrado Blake. Null si no hay código o no está registrado.
 async function textoReel(codigo: string | null): Promise<string | null> {
   if (!codigo) return null;
-  const [v] = await sql()`select descripcion, tema, tipo, categoria from setter.videos where codigo = ${codigo}`;
+  const [v] = await sql()`select descripcion, tema, tipo, categoria, notas from setter.videos where codigo = ${codigo}`;
   if (!v) return null;
-  const partes = [`Código: ${codigo}`, v.descripcion && `De qué trata: ${v.descripcion}`, v.tema && `Tema: ${v.tema}`, v.tipo && `Tipo: ${v.tipo}`, v.categoria && `Categoría: ${v.categoria}`];
+  const partes = [`Código: ${codigo}`, (v.descripcion ? `De qué trata: ${v.descripcion}` : v.notas && /^Texto del reel:/.test(v.notas) ? `${String(v.notas).slice(0, 500)} (sin confirmar por Blake)` : null), v.tema && `Tema: ${v.tema}`, v.tipo && `Tipo: ${v.tipo}`, v.categoria && `Categoría: ${v.categoria}`];
   return partes.filter(Boolean).join("\n");
 }
 
@@ -53,7 +53,7 @@ export async function procesarLead(s: Solicitud, g: LeadGuardado, opciones: { hi
     if (n >= tope) {
       nota = "Tope diario de análisis alcanzado: ficha sin analizar.";
     } else {
-      ficha = await analizarFormulario(s, await textoReel(s.v));
+      ficha = await analizarFormulario(s, await textoReel(g.videoCodigo ?? s.v));
       if (!ficha) nota = "Claude no devolvió un análisis válido.";
     }
   } catch (e) {

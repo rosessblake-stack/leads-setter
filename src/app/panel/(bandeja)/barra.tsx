@@ -35,6 +35,7 @@ const GRUPOS: { titulo: string | null; items: Item[] }[] = [
     titulo: "Sistema",
     items: [
       { clave: "estadisticas", texto: "Estadísticas", href: "/panel/estadisticas" },
+      { clave: "videos", texto: "Vídeos", href: "/panel/videos" },
       { clave: "errores", texto: "Errores", href: "/panel/errores", cuenta: "errores", urgente: true },
       { clave: "ajustes", texto: "Ajustes", href: "/panel/ajustes" },
     ],
@@ -45,6 +46,7 @@ function activaClave(pathname: string, vista: string | null): string | null {
   if (pathname === "/panel") return vista ?? "todos";
   if (pathname.startsWith("/panel/estadisticas")) return "estadisticas";
   if (pathname.startsWith("/panel/errores")) return "errores";
+  if (pathname.startsWith("/panel/videos")) return "videos";
   if (pathname.startsWith("/panel/ajustes")) return "ajustes";
   return null;
 }
