@@ -16,7 +16,7 @@ export const DOLORES = [
 ] as const;
 export const OFERTAS = ["online", "presencial", "asesoria", "ninguna"] as const;
 // Se cambia cada vez que se toca el prompt o el esquema: así se pueden comparar análisis de épocas distintas.
-export const PROMPT_VERSION = "2026-11-05-1";
+export const PROMPT_VERSION = "2026-11-07-1";
 export const ENCAJES = ["alto", "medio", "bajo"] as const;
 
 // Esquema cerrado que se le pide a Claude. Los límites numéricos y de longitud
@@ -73,6 +73,7 @@ Reglas:
 - nivel: el de la persona según lo que cuenta; "no_claro" si no se puede saber.
 - dolores: las dificultades que menciona, usando solo las etiquetas permitidas.
 - oferta_recomendada: la que mejor encaja con su interés declarado, nivel y objetivo. "ninguna" si no encaja con ninguna o no hay señal.
+  Criterio para la formación presencial: está pensada sobre todo para personas de nivel avanzado o profesional. Una persona de nivel intermedio también encaja si hay señales de predisposición real para trabajar con ella (progresa, practica con regularidad, acepta correcciones, tiene un objetivo concreto y tiempo para hacerlo). Si es principiante, o es intermedia sin esas señales, recomienda la formación online (o la asesoría si ya tiene un negocio que estructurar) aunque haya pedido la presencial, y dilo en el resumen sin mencionar precios. Su interés declarado no cambia esta recomendación: cuenta con lo que describe de su nivel y su actitud.
 - encaje: "alto" si se parece al cliente ideal; "bajo" si hay señales de que cree saberlo todo o no quiere cambiar su forma de trabajar; "medio" si no hay señal clara.
 - puntuacion: de 0 a 100, qué tan probable es que compre (concreción del objetivo, claridad del problema, ganas de avanzar). No inventes datos.
 - Si hay <reel_de_origen>: en el resumen indica en una frase breve qué parece haberle atraído del reel (sobre todo con su respuesta C17, si la hay) y si lo que pide encaja con lo que trata el reel. Comentar un reel no es por sí solo señal de compra. Si no hay respuesta que lo aclare, dilo.

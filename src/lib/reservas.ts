@@ -18,6 +18,7 @@ export type Enlace = {
   expira_at: Date;
   nombre: string;
   email: string;
+  zona: string | null;
   reserva: { inicio: Date; fin: Date; meet_url: string | null } | null;
 };
 
@@ -40,7 +41,7 @@ export async function crearEnlaceReserva(fichaId: string): Promise<string | null
 export async function cargarEnlace(token: string): Promise<Enlace | null> {
   if (!FORMATO_SECRETO.test(token)) return null;
   const [e] = await sql()`
-    select e.id, e.ficha_id, e.tipo, e.pago_at, e.expira_at, p.nombre, p.email
+    select e.id, e.ficha_id, e.tipo, e.pago_at, e.expira_at, p.nombre, p.email, p.zona_horaria as zona
     from setter.enlaces_reserva e
     join setter.fichas fi on fi.id = e.ficha_id
     join setter.personas p on p.id = fi.persona_id

@@ -4,6 +4,7 @@ import { intentar } from "@/lib/db";
 import { tokenPreparacion, urlPreparacion } from "@/lib/preparacion";
 import { cargarEnlace, propuestaPara } from "@/lib/reservas";
 import { registrarError } from "@/lib/errores";
+import { nombreZona, zonaPersona } from "@/lib/zona";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -11,8 +12,9 @@ export const metadata: Metadata = { title: "Reserva tu llamada", robots: { index
 
 const dia = (f: string) =>
   new Date(`${f}T12:00:00Z`).toLocaleDateString("es-ES", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" });
-const hora = (t: Date) => t.toLocaleTimeString("es-ES", { timeZone: ZONA, hour: "2-digit", minute: "2-digit" });
-const diaLargo = (t: Date) => t.toLocaleDateString("es-ES", { timeZone: ZONA, weekday: "long", day: "numeric", month: "long" });
+const hora = (t: Date, zona: string = ZONA) => t.toLocaleTimeString("es-ES", { timeZone: zona, hour: "2-digit", minute: "2-digit" });
+const diaLargo = (t: Date, zona: string = ZONA) => t.toLocaleDateString("es-ES", { timeZone: zona, weekday: "long", day: "numeric", month: "long" });
+const diaCorto = (t: Date, zona: string) => t.toLocaleDateString("es-ES", { timeZone: zona, weekday: "short", day: "numeric" });
 
 export default async function Reservar({
   params,
@@ -49,6 +51,8 @@ export default async function Reservar({
   }
 
   const nombre = e.nombre.split(" ")[0];
+  // Si la persona está en otra zona horaria, los horarios se le muestran en su hora, con la de España al lado.
+  const suZona = zonaPersona(e.zona);
   const duracion = REGLAS.duracionMin[e.tipo];
 
   if (e.reserva) {
@@ -65,8 +69,21 @@ export default async function Reservar({
         <section className="centro bienvenida" role="status">
           <h1>Tu llamada está reservada</h1>
           <p className="intro">
-            {diaLargo(e.reserva.inicio)} a las {hora(e.reserva.inicio)} (hora de España).
+            {suZona ? (
+              <>
+                {diaLargo(e.reserva.inicio, suZona)} a las {hora(e.reserva.inicio, suZona)} (hora de {nombreZona(suZona)}).
+              </>
+            ) : (
+              <>
+                {diaLargo(e.reserva.inicio)} a las {hora(e.reserva.inicio)} (hora de España).
+              </>
+            )}
           </p>
+          {suZona && (
+            <p className="ayuda">
+              En España: {diaLargo(e.reserva.inicio)} a las {hora(e.reserva.inicio)}.
+            </p>
+          )}
           {e.reserva.meet_url && (
             <p>
               <a href={e.reserva.meet_url} target="_blank" rel="noopener noreferrer">
@@ -97,7 +114,7 @@ export default async function Reservar({
         {e.tipo === "asesoria"
           ? `Elige el día y la hora de tu asesoría (${duracion === 60 ? "1 hora" : `${duracion} minutos`}).`
           : `Elige el día y la hora de tu llamada (${duracion} minutos).`}{" "}
-        Los horarios están en hora de España.
+        {suZona ? `Los horarios están en tu hora (${nombreZona(suZona)}). En España son otra hora: te lo indico en cada día.` : "Los horarios están en hora de España."}
       </p>
 
       {q.error && (
@@ -116,11 +133,18 @@ export default async function Reservar({
 
       {propuesta?.dias.map((d) => (
         <form key={d.fecha} method="post" action={`/reservar/${token}/confirmar`} className="dia-reserva">
-          <h2>{dia(d.fecha)}</h2>
+          <h2>{dia(d.fecha)}{suZona ? " (en España)" : ""}</h2>
           <div className="horas">
             {d.huecos.map((h) => (
               <button key={h.inicio.toISOString()} type="submit" name="inicio" value={h.inicio.toISOString()} className="hora">
-                {hora(h.inicio)}
+                {suZona ? (
+                  <>
+                    {hora(h.inicio, suZona)}
+                    {diaCorto(h.inicio, suZona) !== diaCorto(h.inicio, ZONA) && <small> · {diaCorto(h.inicio, suZona)}</small>}
+                  </>
+                ) : (
+                  hora(h.inicio)
+                )}
               </button>
             ))}
           </div>
