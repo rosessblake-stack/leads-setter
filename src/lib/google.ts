@@ -8,7 +8,7 @@ const OAUTH = () => process.env.GOOGLE_OAUTH_BASE ?? "https://oauth2.googleapis.
 const CUENTAS = () => process.env.GOOGLE_AUTH_URL ?? "https://accounts.google.com/o/oauth2/v2/auth";
 const API = () => process.env.GOOGLE_API_BASE ?? "https://www.googleapis.com";
 
-const SCOPES = ["openid", "email", "https://www.googleapis.com/auth/calendar.events", "https://www.googleapis.com/auth/calendar.freebusy"];
+const SCOPES = ["openid", "email", "https://www.googleapis.com/auth/calendar.events", "https://www.googleapis.com/auth/calendar.freebusy", "https://www.googleapis.com/auth/drive.readonly"];
 
 // Valores de Vercel sin espacios ni saltos de línea sobrantes al principio o al final (error típico al pegar).
 const clienteId = () => (process.env.GOOGLE_CLIENT_ID ?? "").trim();
@@ -156,4 +156,28 @@ export async function borrarEvento(id: string): Promise<void> {
     headers: { authorization: `Bearer ${token}` },
     signal: AbortSignal.timeout(10000),
   });
+}
+
+// ----- Notas de la llamada (Gemini en Meet) -----
+// Gemini adjunta al evento un documento «Notas de Gemini» con el resumen y la transcripción. Devuelve su texto o null
+// si todavía no existe. Necesita el permiso de lectura de Drive: si Google lo rechaza (403), hay que reconectar Google.
+export async function notasDeLlamada(eventoId: string): Promise<string | null> {
+  const { token, calendario } = await tokenAcceso();
+  const ev = await fetch(`${API()}/calendar/v3/calendars/${encodeURIComponent(calendario)}/events/${encodeURIComponent(eventoId)}`, {
+    headers: { authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!ev.ok) throw new Error(`Google API ${ev.status}`);
+  const j = (await ev.json()) as { attachments?: { fileUrl?: string; title?: string }[] };
+  const adjunto = (j.attachments ?? []).find((a) => /docs\.google\.com\/document\/d\//.test(a.fileUrl ?? "") && /gemini|notas/i.test(a.title ?? ""));
+  const id = /\/document\/d\/([A-Za-z0-9_-]+)/.exec(adjunto?.fileUrl ?? "")?.[1];
+  if (!id) return null;
+  const doc = await fetch(`${API()}/drive/v3/files/${id}/export?mimeType=text/plain`, {
+    headers: { authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(20000),
+  });
+  if (doc.status === 403) throw new Error("Google API 403: falta el permiso de lectura de Drive. Reconecta Google en Ajustes.");
+  if (!doc.ok) throw new Error(`Google API ${doc.status}`);
+  const texto = (await doc.text()).trim();
+  return texto.length > 200 ? texto : null;
 }

@@ -45,7 +45,7 @@ export default async function Ficha({
   const datos = await intentar(async () => {
     const [r] = await sql()`
       select fi.id as ficha_id, fi.nivel, fi.dolores, fi.oferta_recomendada, fi.encaje, fi.resumen, fi.puntuacion,
-             fi.estado, fi.fase, fi.origen, fi.caso_exito, fi.nota_exito, fi.propuesta_estado, fi.propuesta_at, fi.propuesta_mensaje, fi.propuesta_programada_at, fi.propuesta_error,
+             fi.estado, fi.fase, fi.origen, fi.caso_exito, fi.nota_exito, to_char(fi.cierre_posible_at, 'YYYY-MM-DD') as cierre_posible_at, fi.cierre_posible_nota, fi.propuesta_estado, fi.propuesta_at, fi.propuesta_mensaje, fi.propuesta_programada_at, fi.propuesta_error,
              to_char(fi.reserva_at at time zone 'Europe/Madrid', 'YYYY-MM-DD"T"HH24:MI') as reserva_input,
              p.id as persona_id, p.nombre, p.email, p.telefono, p.ig_username, p.pais,
              f.ruta, f.interes, f.como_nos_conociste, f.respuestas, f.signals, f.creado_at, f.iniciado_at,
@@ -137,6 +137,9 @@ export default async function Ficha({
           <span className="chip">{ruta ? NOMBRE_RUTA[ruta] : "Formulario antiguo"}</span>
           {r.origen === "historico" && <span className="chip">Cliente anterior</span>}
           {r.caso_exito && <span className="chip ok">Caso de éxito</span>}
+          {r.cierre_posible_at && fase !== "vendido" && fase !== "no_vendido" && (
+            <span className="chip av" title={r.cierre_posible_nota ?? undefined}>Posible cierre · {fechaCorta(`${r.cierre_posible_at}T12:00:00Z`).split(",")[0]}</span>
+          )}
           {r.video_codigo && <span className="chip">Vídeo {r.video_codigo}</span>}
           <span className="chip">{fechaCorta(r.creado_at)}</span>
         </p>

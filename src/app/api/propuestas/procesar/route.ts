@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { sql } from "@/lib/db";
 import { reanalizarPendientes } from "@/lib/proceso";
 import { procesarPropuestas } from "@/lib/propuestas";
+import { procesarLlamadas } from "@/lib/llamadas";
 import { recordarPreparaciones } from "@/lib/recordatorios";
 import { registrarError } from "@/lib/errores";
 
@@ -30,8 +31,12 @@ export async function POST(req: Request) {
       await registrarError("telegram", e, { paso: "recordatorios" });
       return 0;
     });
+    const llamadas = await procesarLlamadas().catch(async (e) => {
+      await registrarError("claude", e, { paso: "llamadas" });
+      return 0;
+    });
     const r = await procesarPropuestas();
-    return Response.json({ ok: true, ...r, reanalizadas, recordadas });
+    return Response.json({ ok: true, ...r, reanalizadas, recordadas, llamadas });
   } catch (e) {
     await registrarError("propuestas", e, { paso: "temporizador" });
     return Response.json({ ok: false }, { status: 500 });
