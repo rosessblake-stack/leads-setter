@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { sql } from "@/lib/db";
 import { reanalizarPendientes } from "@/lib/proceso";
 import { procesarPropuestas } from "@/lib/propuestas";
+import { recordarPreparaciones } from "@/lib/recordatorios";
 import { registrarError } from "@/lib/errores";
 
 export const dynamic = "force-dynamic";
@@ -25,8 +26,12 @@ export async function POST(req: Request) {
       await registrarError("claude", e, { paso: "reintento del análisis" });
       return 0;
     });
+    const recordadas = await recordarPreparaciones().catch(async (e) => {
+      await registrarError("telegram", e, { paso: "recordatorios" });
+      return 0;
+    });
     const r = await procesarPropuestas();
-    return Response.json({ ok: true, ...r, reanalizadas });
+    return Response.json({ ok: true, ...r, reanalizadas, recordadas });
   } catch (e) {
     await registrarError("propuestas", e, { paso: "temporizador" });
     return Response.json({ ok: false }, { status: 500 });

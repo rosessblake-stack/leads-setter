@@ -174,6 +174,7 @@ export const ETIQUETA_EVENTO: Record<string, string> = {
   nota_anadida: "Añadiste una nota",
   caso_exito_cambiado: "Cambiaste la marca de «caso de éxito»",
   preparacion_completada: "Rellenó la preparación de la asesoría",
+  recordatorio_preparacion: "Te avisé de que no había rellenado la preparación",
   resultado_registrado: "Registraste el resultado",
 };
 
