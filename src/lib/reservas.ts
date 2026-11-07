@@ -5,6 +5,7 @@ import { borrarEvento, crearEvento, ocupadosEntre } from "@/lib/google";
 import { huella, nuevoSecreto, FORMATO_SECRETO } from "@/lib/panel";
 import { enlacePreparacion } from "@/lib/preparacion";
 import { escaparHtml } from "@/lib/telegram";
+import { etiquetaLlamada, tituloLlamada } from "@/lib/etiquetas";
 import { fechaCorta } from "@/lib/panel-util";
 import { registrarError } from "@/lib/errores";
 
@@ -19,6 +20,7 @@ export type Enlace = {
   nombre: string;
   email: string;
   zona: string | null;
+  ruta: string | null;
   reserva: { inicio: Date; fin: Date; meet_url: string | null } | null;
 };
 
@@ -41,9 +43,10 @@ export async function crearEnlaceReserva(fichaId: string): Promise<string | null
 export async function cargarEnlace(token: string): Promise<Enlace | null> {
   if (!FORMATO_SECRETO.test(token)) return null;
   const [e] = await sql()`
-    select e.id, e.ficha_id, e.tipo, e.pago_at, e.expira_at, p.nombre, p.email, p.zona_horaria as zona
+    select e.id, e.ficha_id, e.tipo, e.pago_at, e.expira_at, p.nombre, p.email, p.zona_horaria as zona, fo.ruta
     from setter.enlaces_reserva e
     join setter.fichas fi on fi.id = e.ficha_id
+    join setter.formularios fo on fo.id = fi.formulario_id
     join setter.personas p on p.id = fi.persona_id
     where e.token_hash = ${huella(token)}`;
   if (!e) return null;
@@ -71,7 +74,6 @@ export async function confirmarReserva(token: string, inicioIso: string): Promis
   const hueco = propuesta.dias.flatMap((d) => d.huecos).find((h) => h.inicio.getTime() === inicio.getTime());
   if (!hueco) return { ok: false, error: "Ese horario ya no está disponible. Elige otro." };
 
-  const tipoTexto = e.tipo === "asesoria" ? "Asesoría 1:1" : "Llamada";
   // 1) Se reclama el hueco en la base de datos. Hay una restricción de exclusión sobre el rango que ocupa cada
   //    llamada (desde su inicio hasta 1 h después de acabar): si otra persona lo reservó a la vez, esto falla.
   let reservaId: string;
@@ -94,7 +96,8 @@ export async function confirmarReserva(token: string, inicioIso: string): Promis
   let ev: { id: string; meet: string | null };
   try {
     ev = await crearEvento({
-      titulo: `${tipoTexto} con ${e.nombre}`,
+      titulo: tituloLlamada(e.tipo, e.ruta, e.nombre),
+      colorId: etiquetaLlamada(e.tipo, e.ruta).colorId,
       descripcion: `Reservada desde el enlace personal. Ficha: ${urlPanel()}/panel/lead/${e.ficha_id}`,
       inicio: hueco.inicio,
       fin: hueco.fin,

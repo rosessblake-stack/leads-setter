@@ -131,13 +131,14 @@ export async function ocupadosEntre(desde: Date, hasta: Date): Promise<Ocupado[]
   return busy.map((b) => ({ inicio: new Date(b.start), fin: new Date(b.end) }));
 }
 
-export async function crearEvento(d: { titulo: string; descripcion: string; inicio: Date; fin: Date; invitado: string; peticion: string }) {
+export async function crearEvento(d: { titulo: string; descripcion: string; inicio: Date; fin: Date; invitado: string; peticion: string; colorId?: string }) {
   const { token, calendario } = await tokenAcceso();
   const j = (await api(
     `/calendar/v3/calendars/${encodeURIComponent(calendario)}/events?conferenceDataVersion=1&sendUpdates=all`,
     token,
     {
       summary: d.titulo,
+      ...(d.colorId ? { colorId: d.colorId } : {}),
       description: d.descripcion,
       start: { dateTime: d.inicio.toISOString(), timeZone: "Europe/Madrid" },
       end: { dateTime: d.fin.toISOString(), timeZone: "Europe/Madrid" },
