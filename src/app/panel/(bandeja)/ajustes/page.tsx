@@ -3,6 +3,7 @@ import { intentar } from "@/lib/db";
 import { conexion, googleConfigurado, ocupadosEntre } from "@/lib/google";
 import { diagnosticar, manychatConfigurado, type Diagnostico } from "@/lib/manychat";
 import { registrarError } from "@/lib/errores";
+import { urlPanel } from "@/lib/config";
 import { urlClientesAnteriores } from "@/lib/historico";
 import { CopiarTexto } from "../ajax";
 import { HORA_PRIMERA, HORA_ULTIMA, leerModo } from "@/lib/propuestas";
@@ -90,6 +91,16 @@ export default async function Ajustes({ searchParams }: { searchParams: Promise<
             {c ? "Volver a conectar" : "Conectar Google"}
           </button>
         </form>
+      </section>
+
+      <section className="bloque">
+        <h2>Enlace para quien lo pide por chat</h2>
+        <p className="ayuda">
+          Para personas que te escriben por chat y te piden el formulario, sin haber comentado un vídeo y sin ser clientes anteriores. Entran como un
+          lead normal: aviso en Telegram, análisis de Claude y su ficha. Si ya estás hablando con ellas, marca su propuesta como «Manual» en la ficha
+          para que no reciban además un mensaje automático.
+        </p>
+        <CopiarTexto texto={`${urlPanel()}/guia`} />
       </section>
 
       <section className="bloque">
