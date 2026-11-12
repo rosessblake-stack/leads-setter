@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { faseTrasLlamada, normalizarLlamada, textoNota } from "@/lib/llamadas";
+import { faseTrasLlamada, normalizarLlamada, notasLlamada } from "@/lib/llamadas";
 
 const base = {
   resultado: "posible_cierre" as const,
@@ -39,10 +39,16 @@ describe("análisis de la llamada", () => {
       expect(faseTrasLlamada(f, "cerrada")).toBeNull();
     }
   });
-  it("la nota recoge resultado, probabilidad y puntos", () => {
-    const t = textoNota(normalizarLlamada(base, hoy), 55);
-    expect(t).toContain("Posible cierre");
-    expect(t).toContain("55 % → 65 %");
-    expect(t).toContain("Explorar el dinero antes del precio");
+  it("las notas recogen resultado, probabilidad y puntos y nunca pasan de 2000 caracteres", () => {
+    const [n1, n2] = notasLlamada(normalizarLlamada(base, hoy), 55);
+    expect(n1).toContain("Posible cierre");
+    expect(n1).toContain("55 % → 65 %");
+    expect(n2).toContain("Explorar el dinero antes del precio");
+    const largo = "palabra ".repeat(60);
+    const grande = normalizarLlamada({ ...base, resumen: largo, acordado: largo, proximo_paso: largo, motivo_puntuacion: largo, bien: Array(9).fill(largo), mejorar: Array(9).fill(largo), falto: Array(9).fill(largo), objeciones: Array(9).fill(largo), contraste_formulario: largo }, hoy);
+    for (const n of notasLlamada(grande, 55)) {
+      expect(n.length).toBeLessThanOrEqual(2000);
+      expect(n.length).toBeGreaterThan(0);
+    }
   });
 });

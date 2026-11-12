@@ -116,15 +116,25 @@ const NOMBRE_RESULTADO: Record<ResultadoLlamada, string> = {
   no_celebrada: "No se llegó a hacer",
 };
 
-export function textoNota(a: AnalisisLlamada, antes: number | null): string {
+// Cada nota admite 2000 caracteres como máximo (límite de la base de datos). El análisis se guarda en dos notas:
+// el resultado y lo acordado, y lo que funcionó, qué cambiar y el contraste con el formulario.
+const MAX_NOTA = 1900;
+
+export function notasLlamada(a: AnalisisLlamada, antes: number | null): string[] {
   const l = (t: string, xs: string[]) => (xs.length ? `\n${t}\n${xs.map((x) => `- ${x}`).join("\n")}` : "");
-  return [
-    `ANÁLISIS DE LA LLAMADA (automático, a partir de las notas de Gemini)`,
+  const resultado = [
+    `ANÁLISIS DE LA LLAMADA (automático, a partir de las notas de Gemini) · 1/2`,
     `Resultado: ${NOMBRE_RESULTADO[a.resultado]}${a.fecha_seguimiento ? ` · seguimiento ${a.fecha_seguimiento}` : ""}`,
     `Probabilidad de compra: ${antes ?? "—"} % → ${a.puntuacion} %. ${a.motivo_puntuacion}`,
     `\n${a.resumen}`,
     a.acordado && `\nAcordado: ${a.acordado}`,
     a.proximo_paso && `Próximo paso: ${a.proximo_paso}`,
+  ]
+    .filter(Boolean)
+    .join("\n")
+    .slice(0, MAX_NOTA);
+  const detalle = [
+    `ANÁLISIS DE LA LLAMADA · 2/2`,
     l("Lo que funcionó:", a.bien),
     l("Qué cambiar:", a.mejorar),
     l("Qué faltó o no se tocó:", a.falto),
@@ -133,7 +143,8 @@ export function textoNota(a: AnalisisLlamada, antes: number | null): string {
   ]
     .filter(Boolean)
     .join("\n")
-    .slice(0, 6000);
+    .slice(0, MAX_NOTA);
+  return [resultado, detalle];
 }
 
 function resumenFicha(respuestas: Record<string, { pregunta: string; valor: unknown }>, extra: string): string {
@@ -181,7 +192,9 @@ export async function procesarLlamadas(): Promise<number> {
       }
       const fase = faseTrasLlamada(f.fase as string, a.resultado);
       await sql().begin(async (tx) => {
-        await tx`insert into setter.notas (ficha_id, texto) values (${r.ficha_id}, ${textoNota(a, (f.puntuacion as number | null) ?? null)})`;
+        for (const texto of notasLlamada(a, (f.puntuacion as number | null) ?? null)) {
+          await tx`insert into setter.notas (ficha_id, texto) values (${r.ficha_id}, ${texto})`;
+        }
         if (a.resultado !== "no_celebrada") {
           await tx`update setter.fichas set puntuacion = ${a.puntuacion},
                    cierre_posible_at = ${a.resultado === "posible_cierre" ? a.fecha_seguimiento : null},
