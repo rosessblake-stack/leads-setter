@@ -98,7 +98,8 @@ export async function confirmarReserva(token: string, inicioIso: string): Promis
     ev = await crearEvento({
       titulo: tituloLlamada(e.tipo, e.ruta, e.nombre),
       colorId: etiquetaLlamada(e.tipo, e.ruta).colorId,
-      descripcion: `Reservada desde el enlace personal. Ficha: ${urlPanel()}/panel/lead/${e.ficha_id}`,
+      // La descripción la ve también la persona invitada: nada interno (la ficha está en el aviso de Telegram).
+      descripcion: "Llamada reservada desde tu enlace personal.",
       inicio: hueco.inicio,
       fin: hueco.fin,
       invitado: e.email,
