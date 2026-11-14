@@ -40,10 +40,11 @@ describe("análisis de la llamada", () => {
     }
   });
   it("las notas recogen resultado, probabilidad y puntos y nunca pasan de 2000 caracteres", () => {
-    const [n1, n2] = notasLlamada(normalizarLlamada(base, hoy), 55);
+    const [n1, , n3] = notasLlamada(normalizarLlamada(base, hoy), 55);
     expect(n1).toContain("Posible cierre");
     expect(n1).toContain("55 % → 65 %");
-    expect(n2).toContain("Explorar el dinero antes del precio");
+    expect(notasLlamada(normalizarLlamada(base, hoy), 55)[1]).toContain("Explorar el dinero antes del precio");
+    expect(n3).toContain("Objeciones");
     const largo = "palabra ".repeat(60);
     const grande = normalizarLlamada({ ...base, resumen: largo, acordado: largo, proximo_paso: largo, motivo_puntuacion: largo, bien: Array(9).fill(largo), mejorar: Array(9).fill(largo), falto: Array(9).fill(largo), objeciones: Array(9).fill(largo), contraste_formulario: largo }, hoy);
     for (const n of notasLlamada(grande, 55)) {

@@ -42,7 +42,7 @@ export type AnalisisLlamada = {
 };
 
 const corto = (t: string, n: number) => t.replace(/\s+/g, " ").trim().slice(0, n);
-const lista = (l: string[], n = 5) => l.map((x) => corto(x, 220)).filter(Boolean).slice(0, n);
+const lista = (l: string[], n = 5) => l.map((x) => corto(x, 150)).filter(Boolean).slice(0, n);
 
 // Límites aplicados en código, no en el esquema. La fecha de seguimiento solo vale si es de hoy a 60 días.
 export function normalizarLlamada(b: z.infer<typeof Esquema>, hoy = new Date()): AnalisisLlamada {
@@ -54,17 +54,17 @@ export function normalizarLlamada(b: z.infer<typeof Esquema>, hoy = new Date()):
   }
   return {
     resultado: b.resultado,
-    resumen: corto(b.resumen, 600),
-    acordado: corto(b.acordado, 400),
-    proximo_paso: corto(b.proximo_paso, 300),
+    resumen: corto(b.resumen, 520),
+    acordado: corto(b.acordado, 380),
+    proximo_paso: corto(b.proximo_paso, 280),
     fecha_seguimiento: fecha,
     bien: lista(b.bien),
     mejorar: lista(b.mejorar),
     falto: lista(b.falto),
     objeciones: lista(b.objeciones),
-    contraste_formulario: corto(b.contraste_formulario, 500),
+    contraste_formulario: corto(b.contraste_formulario, 320),
     puntuacion: Math.min(100, Math.max(0, Math.round(b.puntuacion))),
-    motivo_puntuacion: corto(b.motivo_puntuacion, 400),
+    motivo_puntuacion: corto(b.motivo_puntuacion, 300),
   };
 }
 
@@ -83,7 +83,7 @@ Reglas:
 - resultado: "posible_cierre" si la llamada quedó abierta con intención real de comprar (por ejemplo, la persona va a confirmar, calcular o elegir fecha); "cerrada" solo si la persona aceptó comprar y se acordó el pago o la reserva; "no_interesa" si dijo que no o claramente no encaja; "no_celebrada" si la llamada no llegó a hacerse o no hay contenido de conversación.
 - acordado: lo que quedó acordado en la llamada (producto, fechas, forma de pago si se dijo). No incluyas comentarios sobre efectivo para evitar declarar ni cualquier tema fiscal sensible: di solo «parte en efectivo» si hace falta.
 - proximo_paso: qué hará Blake y qué hará la persona. fecha_seguimiento: fecha acordada para volver a hablar (AAAA-MM-DD, usando la fecha de hoy que se indica) o null.
-- bien: qué hizo bien Blake. mejorar: qué cambiar (cada punto concreto y accionable). falto: qué no se preguntó o no se tocó y habría ayudado, sobre todo si el formulario ya daba una pista. objeciones: las que salieron o se intuyen. Máximo 5 puntos cada lista.
+- bien: qué hizo bien Blake. mejorar: qué cambiar (cada punto concreto y accionable). falto: qué no se preguntó o no se tocó y habría ayudado, sobre todo si el formulario ya daba una pista. objeciones: las que salieron o se intuyen. Máximo 5 puntos cada lista y cada punto en una sola frase corta (menos de 150 caracteres).
 - contraste_formulario: en 2 o 3 frases, qué coincidió y qué no entre lo que dijo en el formulario y lo que dijo en la llamada.
 - puntuacion: probabilidad de compra de 0 a 100 DESPUÉS de la llamada, y motivo_puntuacion: en una o dos frases, por qué sube, baja o se mantiene respecto a la anterior.`;
 
@@ -116,35 +116,30 @@ const NOMBRE_RESULTADO: Record<ResultadoLlamada, string> = {
   no_celebrada: "No se llegó a hacer",
 };
 
-// Cada nota admite 2000 caracteres como máximo (límite de la base de datos). El análisis se guarda en dos notas:
-// el resultado y lo acordado, y lo que funcionó, qué cambiar y el contraste con el formulario.
+// Cada nota admite 2000 caracteres como máximo (límite de la base de datos). El análisis se guarda en tres notas:
+// el resultado y lo acordado; lo que funcionó y qué cambiar; y lo que faltó, las objeciones y el contraste con el formulario.
 const MAX_NOTA = 1900;
 
 export function notasLlamada(a: AnalisisLlamada, antes: number | null): string[] {
-  const l = (t: string, xs: string[]) => (xs.length ? `\n${t}\n${xs.map((x) => `- ${x}`).join("\n")}` : "");
-  const resultado = [
-    `ANÁLISIS DE LA LLAMADA (automático, a partir de las notas de Gemini) · 1/2`,
-    `Resultado: ${NOMBRE_RESULTADO[a.resultado]}${a.fecha_seguimiento ? ` · seguimiento ${a.fecha_seguimiento}` : ""}`,
-    `Probabilidad de compra: ${antes ?? "—"} % → ${a.puntuacion} %. ${a.motivo_puntuacion}`,
-    `\n${a.resumen}`,
-    a.acordado && `\nAcordado: ${a.acordado}`,
-    a.proximo_paso && `Próximo paso: ${a.proximo_paso}`,
-  ]
-    .filter(Boolean)
-    .join("\n")
-    .slice(0, MAX_NOTA);
-  const detalle = [
-    `ANÁLISIS DE LA LLAMADA · 2/2`,
-    l("Lo que funcionó:", a.bien),
-    l("Qué cambiar:", a.mejorar),
-    l("Qué faltó o no se tocó:", a.falto),
-    l("Objeciones:", a.objeciones),
-    a.contraste_formulario && `\nContraste con el formulario: ${a.contraste_formulario}`,
-  ]
-    .filter(Boolean)
-    .join("\n")
-    .slice(0, MAX_NOTA);
-  return [resultado, detalle];
+  const l = (t: string, xs: string[], n = 5) => (xs.length ? `\n${t}\n${xs.slice(0, n).map((x) => `- ${x}`).join("\n")}` : "");
+  const unir = (xs: (string | false | "")[]) => xs.filter(Boolean).join("\n").slice(0, MAX_NOTA);
+  return [
+    unir([
+      `ANÁLISIS DE LA LLAMADA (automático, a partir de las notas de Gemini) · 1/3`,
+      `Resultado: ${NOMBRE_RESULTADO[a.resultado]}${a.fecha_seguimiento ? ` · seguimiento ${a.fecha_seguimiento}` : ""}`,
+      `Probabilidad de compra: ${antes ?? "—"} % → ${a.puntuacion} %. ${a.motivo_puntuacion}`,
+      `\n${a.resumen}`,
+      a.acordado && `\nAcordado: ${a.acordado}`,
+      a.proximo_paso && `Próximo paso: ${a.proximo_paso}`,
+    ]),
+    unir([`ANÁLISIS DE LA LLAMADA · 2/3`, l("Lo que funcionó:", a.bien), l("Qué cambiar:", a.mejorar)]),
+    unir([
+      `ANÁLISIS DE LA LLAMADA · 3/3`,
+      l("Qué faltó o no se tocó:", a.falto, 4),
+      l("Objeciones:", a.objeciones, 4),
+      a.contraste_formulario && `\nContraste con el formulario: ${a.contraste_formulario}`,
+    ]),
+  ];
 }
 
 function resumenFicha(respuestas: Record<string, { pregunta: string; valor: unknown }>, extra: string): string {
