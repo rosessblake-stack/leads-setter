@@ -4,7 +4,9 @@ import { exigirSesion } from "@/lib/panel";
 import {
   FASES,
   NOMBRE_FASE,
+  NOMBRE_ORIGEN_LEAD,
   NOMBRE_RUTA,
+  ORIGENES_LEAD,
   NOMBRE_VISTA,
   POR_PAGINA,
   RUTAS,
@@ -38,17 +40,18 @@ type Fila = {
   creado_at: Date;
   sin_contactar: boolean;
   origen: "sistema" | "historico";
+  origen_lead: "video" | "chat" | "cliente_anterior";
   caso_exito: boolean;
 };
 
 const OFERTA: Record<string, string> = { online: "Online", presencial: "Presencial", asesoria: "Asesoría" };
 
-type Cambios = Partial<Record<"fase" | "ruta" | "vista" | "pagina", string | null>>;
+type Cambios = Partial<Record<"fase" | "ruta" | "origen" | "vista" | "pagina", string | null>>;
 
 function enlace(f: Filtros, cambios: Cambios) {
   const p = new URLSearchParams();
-  const v = (k: "fase" | "ruta" | "vista") => (k in cambios ? cambios[k] : f[k]);
-  for (const k of ["vista", "fase", "ruta"] as const) {
+  const v = (k: "fase" | "ruta" | "origen" | "vista") => (k in cambios ? cambios[k] : f[k]);
+  for (const k of ["vista", "fase", "ruta", "origen"] as const) {
     const val = v(k);
     if (val) p.set(k, val);
   }
@@ -80,18 +83,23 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
       or (${f.vista}::text = 'no_vendidos' and fi.fase = 'no_vendido')
     ))
   )`;
-  const filtrosSql = sql()`
+  // De dónde viene: cliente anterior, vídeo (por código del enlace o por su comentario) o chat directo.
+  const ORIGEN_LEAD = sql()`(case when fi.origen = 'historico' then 'cliente_anterior' when f.video_id is not null then 'video' else 'chat' end)`;
+  const baseSql = sql()`
     ${vistaSql}
     and (${f.fase}::text is null or fi.fase = ${f.fase})
-    and (${f.ruta}::text is null or f.ruta = ${f.ruta})
     and (${patron}::text is null or p.nombre ilike ${patron} or p.email ilike ${patron} or p.ig_username ilike ${patron})`;
+  const filtrosSql = sql()`
+    ${baseSql}
+    and (${f.ruta}::text is null or f.ruta = ${f.ruta})
+    and (${f.origen}::text is null or ${ORIGEN_LEAD} = ${f.origen})`;
 
   // Una consulta detrás de otra (no a la vez) y con límite de tiempo por si la conexión se cuelga.
-  const { filas, porVista } = await intentar(async () => {
+  const { filas, porVista, porRuta, porOrigen } = await intentar(async () => {
     const filas = await sql()`
       select fi.id as ficha_id, p.nombre, f.ruta, fi.encaje, fi.puntuacion, fi.oferta_recomendada, fi.fase,
              fi.propuesta_estado, fi.reserva_at, v.codigo as video_codigo, f.creado_at,
-             ${SIN_CONTACTAR} as sin_contactar, fi.origen, fi.caso_exito,
+             ${SIN_CONTACTAR} as sin_contactar, fi.origen, fi.caso_exito, ${ORIGEN_LEAD} as origen_lead,
              count(*) over()::int as total
       from setter.fichas fi
       join setter.formularios f on f.id = fi.formulario_id
@@ -103,7 +111,20 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
     // Contadores de fase para los filtros (los de la barra lateral los pide la propia barra).
     const [porVista] = await sql()`
       select (select coalesce(jsonb_object_agg(t.fase, t.n), '{}'::jsonb) from (select fase, count(*)::int as n from setter.fichas group by fase) t) as por_fase`;
-    return { filas, porVista };
+    // Cuántos hay en cada ruta y de cada origen con lo demás ya filtrado (vista, fase y búsqueda), para que los números cuadren.
+    const rutas = await sql()`
+      select f.ruta, count(*)::int as n from setter.fichas fi
+      join setter.formularios f on f.id = fi.formulario_id join setter.personas p on p.id = fi.persona_id
+      where ${baseSql} and (${f.origen}::text is null or ${ORIGEN_LEAD} = ${f.origen}) group by f.ruta`;
+    const origenes = await sql()`
+      select ${ORIGEN_LEAD} as origen, count(*)::int as n from setter.fichas fi
+      join setter.formularios f on f.id = fi.formulario_id join setter.personas p on p.id = fi.persona_id
+      where ${baseSql} and (${f.ruta}::text is null or f.ruta = ${f.ruta}) group by 1`;
+    const porRuta: Record<string, number> = {};
+    for (const r of rutas) porRuta[String(r.ruta)] = r.n as number;
+    const porOrigen: Record<string, number> = {};
+    for (const o of origenes) porOrigen[String(o.origen)] = o.n as number;
+    return { filas, porVista, porRuta, porOrigen };
   });
 
   const cuentasFase = (porVista?.por_fase ?? {}) as Record<string, number>;
@@ -123,10 +144,33 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
         </p>
       )}
 
-      <details className="desplegable filtros-lista" open={Boolean(f.fase || f.ruta || f.q)}>
+      <nav className="filtros" aria-label="Filtrar por ruta">
+        <span className="ayuda">Ruta</span>
+        <Link href={enlace(f, { ruta: null })} className={`ficha-chip${f.ruta ? "" : " activa"}`}>
+          Todas
+        </Link>
+        {RUTAS.map((r) => (
+          <Link key={r} href={enlace(f, { ruta: r })} className={`ficha-chip${f.ruta === r ? " activa" : ""}`}>
+            {NOMBRE_RUTA[r]} <span>{porRuta[r] ?? 0}</span>
+          </Link>
+        ))}
+      </nav>
+      <nav className="filtros" aria-label="Filtrar por origen">
+        <span className="ayuda">Origen</span>
+        <Link href={enlace(f, { origen: null })} className={`ficha-chip${f.origen ? "" : " activa"}`}>
+          Todos
+        </Link>
+        {ORIGENES_LEAD.map((o) => (
+          <Link key={o} href={enlace(f, { origen: o })} className={`ficha-chip${f.origen === o ? " activa" : ""}`}>
+            {NOMBRE_ORIGEN_LEAD[o]} <span>{porOrigen[o] ?? 0}</span>
+          </Link>
+        ))}
+      </nav>
+
+      <details className="desplegable filtros-lista" open={Boolean(f.fase || f.q)}>
         <summary>
-          <h2>Filtrar y buscar</h2>
-          {(f.fase || f.ruta || f.q) && <span className="chip">Filtros activos</span>}
+          <h2>Filtrar por fase y buscar</h2>
+          {(f.fase || f.q) && <span className="chip">Filtros activos</span>}
         </summary>
         <div className="desplegable-cuerpo">
           <nav className="filtros secundarios" aria-label="Filtrar por fase">
@@ -143,17 +187,8 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
           <form method="get" action="/panel" className="busqueda">
             {f.vista && <input type="hidden" name="vista" value={f.vista} />}
             {f.fase && <input type="hidden" name="fase" value={f.fase} />}
-            <label>
-              <span className="solo-lectores">Ruta</span>
-              <select name="ruta" defaultValue={f.ruta ?? ""}>
-                <option value="">Todas las rutas</option>
-                {RUTAS.map((r) => (
-                  <option key={r} value={r}>
-                    {NOMBRE_RUTA[r]}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {f.ruta && <input type="hidden" name="ruta" value={f.ruta} />}
+            {f.origen && <input type="hidden" name="origen" value={f.origen} />}
             <label>
               <span className="solo-lectores">Buscar</span>
               <input type="search" name="q" defaultValue={f.q ?? ""} placeholder="Nombre, email o Instagram" maxLength={60} />
@@ -183,7 +218,7 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
                 <span className="chips">
                   {l.sin_contactar && l.origen === "sistema" && <span className="chip urgente">Sin contactar +24 h</span>}
                   {l.caso_exito && <span className="chip ok">Caso de éxito</span>}
-                  {l.origen === "historico" && <span className="chip">Cliente anterior</span>}
+                  <span className="chip">{NOMBRE_ORIGEN_LEAD[l.origen_lead]}</span>
                   <span className={`fase fase-${l.fase}`}>{NOMBRE_FASE[l.fase]}</span>
                   <span className="chip">{l.ruta ? NOMBRE_RUTA[l.ruta] : "Formulario antiguo"}</span>
                   {l.reserva_at && <span className="chip reserva">Llamada {fechaCorta(l.reserva_at)}</span>}

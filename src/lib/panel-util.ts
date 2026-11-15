@@ -52,18 +52,30 @@ export const NOMBRE_VISTA: Record<Vista, string> = {
   casos_exito: "Casos de éxito",
 };
 
-export type Filtros = { fase: Fase | null; ruta: Ruta | null; vista: Vista | null; q: string | null; pagina: number };
+// De dónde viene cada lead: de un vídeo (por el código del enlace o por su comentario), de un chat directo (enlace pedido por mensaje
+// o enlace sin código) o de un cliente anterior.
+export const ORIGENES_LEAD = ["video", "chat", "cliente_anterior"] as const;
+export type OrigenLead = (typeof ORIGENES_LEAD)[number];
+export const NOMBRE_ORIGEN_LEAD: Record<OrigenLead, string> = {
+  video: "Vídeo",
+  chat: "Chat directo",
+  cliente_anterior: "Cliente anterior",
+};
+
+export type Filtros = { fase: Fase | null; ruta: Ruta | null; origen: OrigenLead | null; vista: Vista | null; q: string | null; pagina: number };
 
 // Solo se aceptan valores conocidos: lo demás se ignora.
 export function leerFiltros(sp: Params): Filtros {
   const fase = uno(sp.fase);
   const ruta = uno(sp.ruta);
+  const origen = uno(sp.origen);
   const vista = uno(sp.vista);
   const q = (uno(sp.q) ?? "").trim().slice(0, 60);
   const pagina = Number.parseInt(uno(sp.pagina) ?? "1", 10);
   return {
     fase: (FASES as readonly string[]).includes(fase ?? "") ? (fase as Fase) : null,
     ruta: (RUTAS as string[]).includes(ruta ?? "") ? (ruta as Ruta) : null,
+    origen: (ORIGENES_LEAD as readonly string[]).includes(origen ?? "") ? (origen as OrigenLead) : null,
     vista: (VISTAS as readonly string[]).includes(vista ?? "") ? (vista as Vista) : null,
     q: q === "" ? null : q,
     pagina: Number.isFinite(pagina) && pagina >= 1 && pagina <= 1000 ? pagina : 1,
