@@ -14,15 +14,16 @@ import { parsearComando } from "@/lib/comandos";
 
 describe("filtros del panel", () => {
   it("solo acepta valores conocidos", () => {
-    expect(leerFiltros({ fase: "vendido", ruta: "online", origen: "video", vista: "agendadas", q: " ana ", pagina: "3" })).toEqual({
+    expect(leerFiltros({ fase: "vendido", ruta: "online", origen: "video", video: "reel-001", vista: "agendadas", q: " ana ", pagina: "3" })).toEqual({
       fase: "vendido",
       ruta: "online",
       origen: "video",
+      video: "reel-001",
       vista: "agendadas",
       q: "ana",
       pagina: 3,
     });
-    expect(leerFiltros({ fase: "x'; drop", ruta: "otra", origen: "raro", vista: "todo", pagina: "-4" })).toEqual({ fase: null, ruta: null, origen: null, vista: null, q: null, pagina: 1 });
+    expect(leerFiltros({ fase: "x'; drop", ruta: "otra", origen: "raro", video: "no válido!", vista: "todo", pagina: "-4" })).toEqual({ fase: null, ruta: null, origen: null, video: null, vista: null, q: null, pagina: 1 });
     expect(leerFiltros({ pagina: "99999" }).pagina).toBe(1);
     expect(leerFiltros({ q: "x".repeat(200) }).q?.length).toBe(60);
   });

@@ -46,12 +46,12 @@ type Fila = {
 
 const OFERTA: Record<string, string> = { online: "Online", presencial: "Presencial", asesoria: "Asesoría" };
 
-type Cambios = Partial<Record<"fase" | "ruta" | "origen" | "vista" | "pagina", string | null>>;
+type Cambios = Partial<Record<"fase" | "ruta" | "origen" | "video" | "vista" | "pagina", string | null>>;
 
 function enlace(f: Filtros, cambios: Cambios) {
   const p = new URLSearchParams();
-  const v = (k: "fase" | "ruta" | "origen" | "vista") => (k in cambios ? cambios[k] : f[k]);
-  for (const k of ["vista", "fase", "ruta", "origen"] as const) {
+  const v = (k: "fase" | "ruta" | "origen" | "video" | "vista") => (k in cambios ? cambios[k] : f[k]);
+  for (const k of ["vista", "fase", "ruta", "origen", "video"] as const) {
     const val = v(k);
     if (val) p.set(k, val);
   }
@@ -89,13 +89,15 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
     ${vistaSql}
     and (${f.fase}::text is null or fi.fase = ${f.fase})
     and (${patron}::text is null or p.nombre ilike ${patron} or p.email ilike ${patron} or p.ig_username ilike ${patron})`;
+  const videoSql = sql()`(${f.video}::text is null or v.codigo = ${f.video})`;
   const filtrosSql = sql()`
     ${baseSql}
     and (${f.ruta}::text is null or f.ruta = ${f.ruta})
-    and (${f.origen}::text is null or ${ORIGEN_LEAD} = ${f.origen})`;
+    and (${f.origen}::text is null or ${ORIGEN_LEAD} = ${f.origen})
+    and ${videoSql}`;
 
   // Una consulta detrás de otra (no a la vez) y con límite de tiempo por si la conexión se cuelga.
-  const { filas, porVista, porRuta, porOrigen } = await intentar(async () => {
+  const { filas, porVista, porRuta, porOrigen, videos } = await intentar(async () => {
     const filas = await sql()`
       select fi.id as ficha_id, p.nombre, f.ruta, fi.encaje, fi.puntuacion, fi.oferta_recomendada, fi.fase,
              fi.propuesta_estado, fi.reserva_at, v.codigo as video_codigo, f.creado_at,
@@ -115,16 +117,23 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
     const rutas = await sql()`
       select f.ruta, count(*)::int as n from setter.fichas fi
       join setter.formularios f on f.id = fi.formulario_id join setter.personas p on p.id = fi.persona_id
-      where ${baseSql} and (${f.origen}::text is null or ${ORIGEN_LEAD} = ${f.origen}) group by f.ruta`;
+      left join setter.videos v on v.id = f.video_id
+      where ${baseSql} and (${f.origen}::text is null or ${ORIGEN_LEAD} = ${f.origen}) and ${videoSql} group by f.ruta`;
     const origenes = await sql()`
       select ${ORIGEN_LEAD} as origen, count(*)::int as n from setter.fichas fi
       join setter.formularios f on f.id = fi.formulario_id join setter.personas p on p.id = fi.persona_id
-      where ${baseSql} and (${f.ruta}::text is null or f.ruta = ${f.ruta}) group by 1`;
+      left join setter.videos v on v.id = f.video_id
+      where ${baseSql} and (${f.ruta}::text is null or f.ruta = ${f.ruta}) and ${videoSql} group by 1`;
+    // Vídeos con leads, para elegir uno y ver solo los que vinieron de él.
+    const videos = await sql()`
+      select v.codigo, coalesce(nullif(left(v.descripcion, 45), ''), v.codigo) as etiqueta, count(*)::int as n
+      from setter.formularios f join setter.videos v on v.id = f.video_id
+      group by v.codigo, v.descripcion, v.creado_at order by max(f.creado_at) desc limit 60`;
     const porRuta: Record<string, number> = {};
     for (const r of rutas) porRuta[String(r.ruta)] = r.n as number;
     const porOrigen: Record<string, number> = {};
     for (const o of origenes) porOrigen[String(o.origen)] = o.n as number;
-    return { filas, porVista, porRuta, porOrigen };
+    return { filas, porVista, porRuta, porOrigen, videos };
   });
 
   const cuentasFase = (porVista?.por_fase ?? {}) as Record<string, number>;
@@ -167,6 +176,28 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
         ))}
       </nav>
 
+      {videos.length > 0 && (
+        <form method="get" action="/panel" className="busqueda" aria-label="Filtrar por vídeo">
+          {f.vista && <input type="hidden" name="vista" value={f.vista} />}
+          {f.fase && <input type="hidden" name="fase" value={f.fase} />}
+          {f.ruta && <input type="hidden" name="ruta" value={f.ruta} />}
+          {f.origen && <input type="hidden" name="origen" value={f.origen} />}
+          {f.q && <input type="hidden" name="q" value={f.q} />}
+          <label>
+            <span className="solo-lectores">Vídeo</span>
+            <select name="video" defaultValue={f.video ?? ""}>
+              <option value="">Todos los vídeos</option>
+              {videos.map((v) => (
+                <option key={String(v.codigo)} value={String(v.codigo)}>
+                  {String(v.etiqueta)} ({v.n as number})
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="submit" className="secundario">Ver vídeo</button>
+        </form>
+      )}
+
       <details className="desplegable filtros-lista" open={Boolean(f.fase || f.q)}>
         <summary>
           <h2>Filtrar por fase y buscar</h2>
@@ -189,6 +220,7 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
             {f.fase && <input type="hidden" name="fase" value={f.fase} />}
             {f.ruta && <input type="hidden" name="ruta" value={f.ruta} />}
             {f.origen && <input type="hidden" name="origen" value={f.origen} />}
+            {f.video && <input type="hidden" name="video" value={f.video} />}
             <label>
               <span className="solo-lectores">Buscar</span>
               <input type="search" name="q" defaultValue={f.q ?? ""} placeholder="Nombre, email o Instagram" maxLength={60} />
