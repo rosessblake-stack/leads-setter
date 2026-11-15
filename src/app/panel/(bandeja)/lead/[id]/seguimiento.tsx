@@ -11,7 +11,7 @@ import {
   PROPUESTAS,
   type Propuesta,
 } from "@/lib/seguimiento-util";
-import { NOMBRE_FASE, fechaCorta, type Fase } from "@/lib/panel-util";
+import { NOMBRE_FASE, enlaceWhatsApp, fechaCorta, type Fase } from "@/lib/panel-util";
 
 export type DatosSeguimiento = {
   id: string;
@@ -20,6 +20,7 @@ export type DatosSeguimiento = {
   propuesta_estado: Propuesta;
   propuesta_at: Date | null;
   propuesta_mensaje: string | null;
+  telefono: string | null;
   propuesta_programada_at: Date | null;
   propuesta_error: string | null;
   reserva_input: string | null;
@@ -123,8 +124,17 @@ export function Seguimiento({ d, aviso }: { d: DatosSeguimiento; aviso: { tipo: 
         {d.propuesta_error && <p className="error">{d.propuesta_error}</p>}
         {d.propuesta_mensaje && (
           <>
-            <p className="ayuda">Mensaje preparado. Cópialo y envíalo por Instagram si no se ha enviado solo:</p>
+            <p className="ayuda">Mensaje preparado. Cópialo y envíalo por el chat donde te escribió (Instagram, WhatsApp…) si no se ha enviado solo:</p>
             <CopiarTexto texto={d.propuesta_mensaje} />
+            {enlaceWhatsApp(d.telefono) ? (
+              <p>
+                <a href={`${enlaceWhatsApp(d.telefono)}?text=${encodeURIComponent(d.propuesta_mensaje)}`} target="_blank" rel="noopener noreferrer">
+                  Abrir WhatsApp con este mensaje
+                </a>
+              </p>
+            ) : (
+              <p className="ayuda">Si te escribió por WhatsApp, añade su teléfono en «Contacto» y aquí saldrá un enlace para abrirlo con el mensaje ya puesto.</p>
+            )}
           </>
         )}
         <p className="ayuda">

@@ -190,6 +190,7 @@ export const ETIQUETA_EVENTO: Record<string, string> = {
   preparacion_completada: "Rellenó la preparación de la asesoría",
   pago_recibido: "Stripe: pago recibido",
   llamada_analizada: "Claude analizó la llamada",
+  telefono_cambiado: "Cambiaste el teléfono",
   recordatorio_preparacion: "Te avisé de que no había rellenado la preparación",
   resultado_registrado: "Registraste el resultado",
 };

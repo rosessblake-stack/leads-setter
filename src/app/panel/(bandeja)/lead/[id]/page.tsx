@@ -91,6 +91,7 @@ export default async function Ficha({
     reserva_input: r.reserva_input,
     caso_exito: r.caso_exito === true,
     nota_exito: r.nota_exito ?? null,
+    telefono: r.telefono ?? null,
     resultado: resultado ?? null,
     notas,
   } as DatosSeguimiento;
@@ -175,6 +176,16 @@ export default async function Ficha({
               <dd><a href={web} target="_blank" rel="noopener noreferrer">{web}</a></dd>
             </div>
           )}
+          <div>
+            <dt>{r.telefono ? "Cambiar teléfono" : "Añadir teléfono"}</dt>
+            <dd>
+              <form method="post" action={`/panel/lead/${id}/accion`} className="formulario-seg">
+                <input type="hidden" name="accion" value="telefono" />
+                <input type="tel" name="telefono" defaultValue={r.telefono ?? ""} placeholder="+34 600 000 000" maxLength={25} aria-label="Teléfono" />
+                <button type="submit" className="secundario">Guardar</button>
+              </form>
+            </dd>
+          </div>
           {r.pais && <div><dt>Ubicación</dt><dd>{r.pais}</dd></div>}
           {r.como_nos_conociste && <div><dt>Nos conoció por</dt><dd>{r.como_nos_conociste}</dd></div>}
         </dl>

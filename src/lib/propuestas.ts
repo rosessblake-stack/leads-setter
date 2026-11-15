@@ -106,7 +106,11 @@ export async function programarPropuesta(fichaId: string, personaId: string, rut
     await sql()`insert into setter.eventos (persona_id, tipo, datos) values (${personaId}, 'propuesta_omitida', ${sql().json({ motivo: "ya tiene propuesta o llamada" })})`;
     return;
   }
-  await sql()`update setter.fichas set propuesta_programada_at = ${momentoDeEnvio(new Date())} where id = ${fichaId}`;
+  // Quien no viene de ManyChat (por ejemplo, escribió por WhatsApp) no puede recibir el envío automático: el mensaje se le prepara
+  // enseguida para que Blake lo envíe a mano, sin la espera de 1 a 3 horas.
+  const [pe] = await sql()`select manychat_id from setter.personas where id = ${personaId}`;
+  const cuando = pe?.manychat_id ? momentoDeEnvio(new Date()) : new Date();
+  await sql()`update setter.fichas set propuesta_programada_at = ${cuando} where id = ${fichaId}`;
 }
 
 // ----- Procesar las que ya toca enviar -----
@@ -176,7 +180,7 @@ async function preparada(f: Fila, p: Propuesta, nota: string, restantesTexto: st
     where id = ${f.id}`;
   await sql()`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'propuesta_preparada', ${sql().json({ nota })})`;
   await avisarAdmin(
-    `✍️ <b>Propuesta preparada para ${escaparHtml(f.nombre.slice(0, 60))}</b> (${escaparHtml(restantesTexto)})\n\n${escaparHtml(p.manual)}\n\nEnvíala por Instagram y márcala en la ficha:\n${urlPanel()}/panel/lead/${f.id}`,
+    `✍️ <b>Propuesta preparada para ${escaparHtml(f.nombre.slice(0, 60))}</b> (${escaparHtml(restantesTexto)})\n\n${escaparHtml(p.manual)}\n\nEnvíala por el chat donde te escribió (Instagram, WhatsApp…) y márcala en la ficha:\n${urlPanel()}/panel/lead/${f.id}`,
   ).catch(() => false);
 }
 
@@ -203,6 +207,13 @@ async function procesarUna(f: Fila, ahora: Date): Promise<"enviada" | "preparada
     return "espera";
   }
   const p = redactar({ nombre: f.nombre, ruta: f.ruta, temas: asesoria ? temasDe(f.a01) : [], enlace });
+
+  // Sin identificador de ManyChat no hay envío automático posible: se deja el mensaje listo para enviarlo a mano y no cuenta
+  // para la calibración.
+  if (!f.manychat_id) {
+    await preparada(f, p, "No viene de ManyChat: envíala tú por el chat donde te escribió (WhatsApp, Instagram…).", "para enviar a mano");
+    return "preparada";
+  }
 
   if (ajustes.modo === "calibracion") {
     const restantes = Math.max(0, ajustes.restantes - 1);

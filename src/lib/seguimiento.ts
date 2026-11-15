@@ -106,3 +106,14 @@ export async function registrarResultado(fichaId: string, r: Resultado): Promise
 }
 
 export const esFaseFinal = (f: string) => (FASES_FINALES as string[]).includes(f);
+
+// Teléfono de la persona (por ejemplo, el de WhatsApp si no escribió por Instagram). Vacío lo borra.
+export async function guardarTelefono(fichaId: string, telefono: string | null): Promise<boolean> {
+  return sql().begin(async (tx) => {
+    const [f] = await tx`select persona_id from setter.fichas where id = ${fichaId}`;
+    if (!f) return false;
+    await tx`update setter.personas set telefono = ${telefono} where id = ${f.persona_id}`;
+    await tx`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'telefono_cambiado', ${tx.json({ tiene: telefono !== null })})`;
+    return true;
+  });
+}

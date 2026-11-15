@@ -6,6 +6,7 @@ import {
   leerPropuesta,
   leerReserva,
   leerResultado,
+  leerTelefono,
 } from "@/lib/seguimiento-util";
 
 const form = (o: Record<string, string>) => (k: string) => o[k] ?? null;
@@ -69,5 +70,18 @@ describe("lectura de formularios del seguimiento", () => {
     expect(leerResultado(form({ resultado: "no_vendido" })).ok).toBe(false);
     expect(leerResultado(form({ resultado: "otra" })).ok).toBe(false);
     expect(leerResultado(form({ resultado: "no_vendido", motivo: "precio", nota: "x".repeat(501) })).ok).toBe(false);
+  });
+});
+
+describe("teléfono", () => {
+  it("acepta números con prefijo y espacios, y vacío lo borra", () => {
+    expect(leerTelefono("+58 412 123 4567")).toEqual({ ok: true, valor: "+58 412 123 4567" });
+    expect(leerTelefono("  ")).toEqual({ ok: true, valor: null });
+    expect(leerTelefono(null)).toEqual({ ok: true, valor: null });
+  });
+  it("rechaza letras, textos peligrosos y longitudes raras", () => {
+    for (const malo of ["abc", "612345678; drop", "123", "+1234567890123456789"]) {
+      expect(leerTelefono(malo).ok).toBe(false);
+    }
   });
 });

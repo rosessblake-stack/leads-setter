@@ -132,3 +132,13 @@ export function leerResultado(get: Get): Leer<Resultado> {
   }
   return { ok: false, error: "Elige si ha comprado o no." };
 }
+
+// Teléfono para localizar a la persona (WhatsApp): solo dígitos, espacios, +, guiones y paréntesis; vacío lo borra.
+export function leerTelefono(v: string | null | undefined): Leer<string | null> {
+  const t = (v ?? "").trim();
+  if (t === "") return { ok: true, valor: null };
+  if (!/^[0-9+\-()\s.]{7,25}$/.test(t)) return { ok: false, error: "El teléfono solo puede llevar números, +, espacios y guiones." };
+  const digitos = t.replace(/\D/g, "");
+  if (digitos.length < 7 || digitos.length > 15) return { ok: false, error: "El teléfono debe tener entre 7 y 15 cifras." };
+  return { ok: true, valor: t.replace(/\s+/g, " ") };
+}
