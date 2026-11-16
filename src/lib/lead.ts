@@ -7,6 +7,8 @@ export type LeadGuardado = {
   formularioId: string;
   fichaId: string;
   videoCodigo: string | null;
+  // Si ya había una venta cerrada a este email, la ficha nace vendida: aquí van sus datos para avisar a Blake.
+  ventaAplicada: { producto: string; importe_cents: number | null } | null;
 };
 
 // Guarda persona, formulario, ficha vacía y evento en una sola transacción.
@@ -91,11 +93,29 @@ export async function guardarLead(s: Solicitud, opciones: { historico?: boolean 
           cliente_anterior: Boolean(opciones.historico),
         })})`;
 
+    // Venta cerrada de antemano con este email: se registra como vendida nada más llegar su ficha.
+    let ventaAplicada: LeadGuardado["ventaAplicada"] = null;
+    const [prevista] = await tx`
+      select id, producto, importe_cents, forma_pago, edicion, nota from setter.ventas_previstas
+      where lower(email) = ${s.email.toLowerCase()} and aplicada_at is null for update`;
+    if (prevista) {
+      await tx`
+        insert into setter.resultados (ficha_id, resultado, producto, importe_cents, forma_pago, edicion, motivo, nota)
+        values (${ficha.id}, 'vendido', ${prevista.producto}, ${prevista.importe_cents}, ${prevista.forma_pago}, ${prevista.edicion}, null, ${prevista.nota})
+        on conflict (ficha_id) do nothing`;
+      await tx`update setter.fichas set fase = 'vendido' where id = ${ficha.id}`;
+      await tx`update setter.ventas_previstas set aplicada_at = now() where id = ${prevista.id}`;
+      await tx`insert into setter.eventos (persona_id, tipo, datos)
+               values (${persona.id}, 'resultado_registrado', ${tx.json({ resultado: "vendido", producto: prevista.producto, importe_cents: prevista.importe_cents, automatico: true })})`;
+      ventaAplicada = { producto: String(prevista.producto), importe_cents: (prevista.importe_cents as number | null) ?? null };
+    }
+
     return {
       personaId: persona.id,
       formularioId: formulario.id,
       fichaId: ficha.id,
       videoCodigo,
+      ventaAplicada,
     };
   });
 }

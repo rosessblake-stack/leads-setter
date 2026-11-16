@@ -76,6 +76,13 @@ export async function procesarLead(s: Solicitud, g: LeadGuardado, opciones: { hi
     await registrarError("formulario", e, { paso: "guardar ficha o avisar", ficha: g.fichaId });
   }
 
+  // Si su venta ya estaba cerrada de antemano, la ficha ha nacido como vendida: se avisa y no se prepara ninguna propuesta.
+  if (g.ventaAplicada) {
+    const euros = g.ventaAplicada.importe_cents != null ? ` · ${(g.ventaAplicada.importe_cents / 100).toLocaleString("es-ES")} €` : "";
+    await avisarAdmin(`✅ La ficha de <b>${escaparHtml(s.nombre.slice(0, 60))}</b> ha llegado y su venta ya queda registrada: ${escaparHtml(g.ventaAplicada.producto)}${euros}.`).catch(() => false);
+    return;
+  }
+
   // La propuesta se envía más tarde (entre 1 y 3 horas), no ahora. A un cliente anterior no se le manda ninguna.
   if (opciones.historico) return;
   try {
