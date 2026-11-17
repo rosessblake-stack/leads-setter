@@ -94,6 +94,29 @@ export async function infoContacto(subscriberId: string): Promise<InfoContacto> 
   };
 }
 
+// Flujo de seguimiento tras descargar la guía: se busca por su nombre («Seguimiento guía»). Si hay 0 o varios, no se adivina.
+export async function buscarFlujoSeguimiento(): Promise<string | null> {
+  if (process.env.MANYCHAT_FLOW_SEGUIMIENTO) return process.env.MANYCHAT_FLOW_SEGUIMIENTO;
+  if (!cacheFlujos || cacheFlujos.hasta < Date.now()) cacheFlujos = { hasta: Date.now() + 10 * 60_000, flujos: await listarFlujos() };
+  const coinciden = cacheFlujos.flujos.filter((f) => {
+    const n = normal(f.name);
+    return n.includes("seguimiento") && n.includes("guia");
+  });
+  return coinciden.length === 1 ? coinciden[0].ns : null;
+}
+
+// Deja el enlace de pago de la asesoría en el campo del contacto (el flujo lo muestra en su botón) y lanza el flujo.
+export async function lanzarSeguimientoGuia(subscriberId: string, enlacePagoAsesoria: string): Promise<void> {
+  const flow = await buscarFlujoSeguimiento();
+  if (!flow) throw new Error("No encuentro en ManyChat un único flujo llamado «Seguimiento guía»");
+  await llamar("/fb/subscriber/setCustomFields", "POST", {
+    subscriber_id: Number(subscriberId) || subscriberId,
+    fields: [{ field_name: CAMPO_ENLACE(), field_value: enlacePagoAsesoria }],
+  });
+  // Como en las propuestas: si esta llamada no contesta, no se sabe si salió; no se reintenta sola.
+  await llamar("/fb/sending/sendFlow", "POST", { subscriber_id: Number(subscriberId) || subscriberId, flow_ns: flow });
+}
+
 export async function enviarPropuesta(subscriberId: string, tipo: TipoFlujo, texto: string, enlace: string): Promise<void> {
   const flow = await buscarFlujo(tipo);
   if (!flow) throw new Error(`No encuentro en ManyChat un único flujo llamado «Propuesta ${tipo === "asesoria" ? "asesoría" : "llamada"}»`);

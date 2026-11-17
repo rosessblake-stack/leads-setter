@@ -14,6 +14,8 @@ export const PayloadSchema = z.object({
   consentimiento: z.literal(true),
   // Identificadores que vienen en el enlace de ManyChat.
   v: z.string().trim().regex(/^[A-Za-z0-9_-]{1,40}$/).optional(),
+  // Identificador aleatorio de la visita: sirve para saber si esta persona descargó el regalo.
+  s: z.string().regex(/^[A-Za-z0-9-]{16,40}$/).optional(),
   mc: z.string().trim().regex(/^[A-Za-z0-9_-]{1,64}$/).optional(),
   // Código del enlace para clientes anteriores (se comprueba en el servidor; si no vale, se ignora).
   c: z.string().trim().regex(/^[A-Za-z0-9_-]{20,64}$/).optional(),

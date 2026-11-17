@@ -254,6 +254,7 @@ export function Formulario({ definicion, video, manychat, cliente, campana, text
                 zona_horaria: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 consentimiento: true,
                 v: video || undefined,
+                s: sesionId(),
                 mc: manychat || undefined,
                 c: cliente || undefined,
                 web,

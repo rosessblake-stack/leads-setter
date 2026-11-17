@@ -58,7 +58,7 @@ export async function POST(req: Request) {
 
   try {
     const historico = esTokenHistorico(parsed.data.c);
-    const guardado = await guardarLead(solicitud, { historico });
+    const guardado = await guardarLead(solicitud, { historico, sesion: parsed.data.s });
     // El análisis y el aviso se hacen después de responder a la persona.
     after(() => procesarLead(solicitud, guardado, { historico }));
     return json({ ok: true });
