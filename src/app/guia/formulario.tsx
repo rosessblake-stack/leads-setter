@@ -22,8 +22,84 @@ type Props = {
 };
 
 const CLAVE = "leads-setter:formulario";
+const CLAVE_SESION = "leads-setter:sesion";
 const BIENVENIDA = "bienvenida";
 const CONSENTIMIENTO = "consentimiento";
+
+// Identificador aleatorio de la visita (sin datos personales) para contar hasta dónde llega la gente.
+function sesionId(): string {
+  try {
+    let s = localStorage.getItem(CLAVE_SESION);
+    if (!s || !/^[A-Za-z0-9-]{16,40}$/.test(s)) {
+      s = crypto.randomUUID();
+      localStorage.setItem(CLAVE_SESION, s);
+    }
+    return s;
+  } catch {
+    return crypto.randomUUID();
+  }
+}
+
+function rastrear(campana: string, paso: string, n: number) {
+  try {
+    const cuerpo = JSON.stringify({ s: sesionId(), p: paso, n, c: campana });
+    if (navigator.sendBeacon) navigator.sendBeacon("/api/embudo", new Blob([cuerpo], { type: "application/json" }));
+    else void fetch("/api/embudo", { method: "POST", body: cuerpo, keepalive: true });
+  } catch {
+    /* contar nunca debe molestar */
+  }
+}
+
+// Botón de descarga del regalo: mientras baja pide no salir de la página y, al terminar, muestra un check.
+function DescargaRegalo({ regalo, alEvento }: { regalo: NonNullable<Campana["regalo"]>; alEvento: (paso: string) => void }) {
+  const [estado, setEstado] = useState<"reposo" | "bajando" | "listo" | "fallo">("reposo");
+  async function descargar() {
+    if (estado === "bajando") return;
+    setEstado("bajando");
+    alEvento("pdf_inicio");
+    try {
+      const [r] = await Promise.all([fetch(regalo.url), new Promise((x) => setTimeout(x, 1200))]);
+      if (!r.ok) throw new Error("descarga");
+      const url = URL.createObjectURL(await r.blob());
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = regalo.url.split("/").pop() || "regalo.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 15000);
+      setEstado("listo");
+      alEvento("pdf_ok");
+    } catch {
+      setEstado("fallo");
+    }
+  }
+  return (
+    <div className="descarga">
+      <p className="descarga-titulo">{regalo.titulo}</p>
+      <button type="button" className="principal" onClick={() => void descargar()} disabled={estado === "bajando"}>
+        {estado === "bajando" ? "Descargando…" : estado === "listo" ? "Descargar otra vez" : regalo.boton}
+      </button>
+      <p className="descarga-estado" role="status" aria-live="polite">
+        {estado === "bajando" && "Descargando… no cierres esta página hasta que termine."}
+        {estado === "listo" && (
+          <>
+            <span className="descarga-check" aria-hidden="true">✔</span> Descargada. La encontrarás en tus descargas.
+          </>
+        )}
+        {estado === "fallo" && (
+          <>
+            No se ha podido descargar.{" "}
+            <a href={regalo.url} target="_blank" rel="noopener noreferrer">
+              Ábrela aquí
+            </a>
+            .
+          </>
+        )}
+      </p>
+    </div>
+  );
+}
 
 export function Formulario({ definicion, video, manychat, cliente, campana, textoConsentimiento, privacidad, modo = "inicial", ruta, token }: Props) {
   const anterior = Boolean(cliente) && modo === "inicial";
@@ -87,6 +163,12 @@ export function Formulario({ definicion, video, manychat, cliente, campana, text
   const pasoActual = secuencia[idx];
   const pregunta = lista.find((q) => q.id === pasoActual);
   const progreso = Math.round((idx / (secuencia.length - 1)) * 100);
+
+  // Cuenta en qué pantalla está cada visita (sin guardar respuestas ni datos personales).
+  useEffect(() => {
+    if (!cargado || prep || fase === "listo") return;
+    rastrear(video, pasoActual, idx);
+  }, [cargado, prep, fase, pasoActual, idx, video]);
 
   // Lleva el foco al primer campo de cada pantalla.
   useEffect(() => {
@@ -173,6 +255,7 @@ export function Formulario({ definicion, video, manychat, cliente, campana, text
         } catch {
           /* ignorar */
         }
+        if (!prep) rastrear(video, "enviado", secuencia.length);
         setFase("listo");
         return;
       }
@@ -213,13 +296,7 @@ export function Formulario({ definicion, video, manychat, cliente, campana, text
       <div className="pantalla">
         <section className="gracias centro" role="status">
           {campana?.regalo?.url && !prep && !anterior && (
-            <p>
-              <strong>{campana.regalo.titulo}</strong>
-              <br />
-              <a className="principal" href={campana.regalo.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", textDecoration: "none", padding: "12px 20px", marginTop: 12 }}>
-                {campana.regalo.boton}
-              </a>
-            </p>
+            <DescargaRegalo regalo={campana.regalo} alEvento={(paso) => rastrear(video, paso, secuencia.length + 1)} />
           )}
           <h2>{prep ? "Gracias. Ya tengo tus respuestas: me ayudarán a preparar tu asesoría. Si quieres cambiar algo, vuelve a abrir este enlace." : anterior ? "Gracias por contarme tu caso. Me ayuda mucho a conocer mejor a quienes ya habéis trabajado conmigo." : textoFinal(definicion, respuestas)}</h2>
         </section>

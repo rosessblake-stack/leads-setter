@@ -21,7 +21,7 @@ export const CAMPANAS: Record<string, Campana> = {
       texto:
         "Responde unas preguntas rápidas y, al terminar, te paso el PDF. Así te conozco un poco y puedo ayudarte mejor con tus precios.",
     },
-    regalo: undefined, // { titulo: "Aquí tienes tu PDF", boton: "Descargar el PDF", url: "https://…" } cuando esté listo
+    regalo: { titulo: "Aquí tienes tu guía", boton: "Descargar la guía", url: "/guia-cobrar-y-datos.pdf" },
   },
 };
 
