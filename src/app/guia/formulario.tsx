@@ -182,7 +182,19 @@ export function Formulario({ definicion, video, manychat, cliente, campana, text
   }, [pasoActual, cargado, fase]);
 
   function poner(id: string, valor: unknown) {
-    setRespuestas((prev) => limpiar(definicion, { ...prev, [id]: valor }, etapa, rutaFija));
+    setRespuestas((prev) => {
+      const siguiente: Respuestas = { ...prev, [id]: valor };
+      // Si la pregunta del enlace lleva «instagram.com/», se rellena sola con el usuario de Instagram que acaba de escribir
+      // (mientras la persona no la haya cambiado a mano).
+      const enlace = definicion.preguntas.find((q) => q.prefijo);
+      if (enlace && id === "C03" && typeof valor === "string") {
+        const usuario = (v: unknown) => (typeof v === "string" ? v.trim().replace(/^@/, "") : "");
+        const automatico = (v: unknown) => (usuario(v) ? `${enlace.prefijo}${usuario(v)}` : "");
+        const actual = prev[enlace.id];
+        if (actual === undefined || actual === "" || actual === automatico(prev[id])) siguiente[enlace.id] = automatico(valor);
+      }
+      return limpiar(definicion, siguiente, etapa, rutaFija);
+    });
     setErrores({});
   }
   function ponerExtra(id: string, valor: string) {
@@ -471,6 +483,38 @@ function Campo({ q, respuestas, error, poner, ponerExtra }: CampoProps) {
     case "email":
     case "telefono":
     case "instagram":
+      if (q.prefijo) {
+        // Campo con texto fijo delante: se escribe solo el usuario y se guarda el enlace completo.
+        const prefijo = q.prefijo;
+        const completo = texto.startsWith(prefijo) || texto === "";
+        return (
+          <label className="pregunta">
+            <span className="titulo">{titulo}</span>
+            <span className="con-prefijo">
+              {completo && <span className="prefijo" aria-hidden="true">{prefijo}</span>}
+              <input
+                type="text"
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                aria-label={`${q.texto} (${prefijo}…)`}
+                maxLength={q.maxCaracteres ?? 300}
+                value={completo ? texto.slice(prefijo.length) : texto}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/^https?:\/\/(www\.)?/i, "").replace(/^@/, "");
+                  if (v === "") return poner(q.id, "");
+                  if (v.toLowerCase().startsWith(prefijo)) return poner(q.id, prefijo + v.slice(prefijo.length));
+                  // Otro sitio (web, TikTok…): se guarda tal cual, sin el texto fijo.
+                  return poner(q.id, /[./]/.test(v) ? v : prefijo + v);
+                }}
+                aria-invalid={Boolean(error)}
+                aria-describedby={descr}
+              />
+            </span>
+          </label>
+        );
+      }
       return (
         <label className="pregunta">
           <span className="titulo">{titulo}</span>

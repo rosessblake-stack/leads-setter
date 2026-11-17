@@ -366,3 +366,10 @@ ul.lista-diag li { overflow-wrap: anywhere; }
 .embudo-form-cifras strong { color: var(--ink); }
 .embudo-form-barra { display: block; height: 5px; border-radius: 99px; background: var(--bg); overflow: hidden; }
 .embudo-form-barra span { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+
+/* Campo con texto fijo delante (instagram.com/) */
+.con-prefijo { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-2); overflow: hidden; }
+.con-prefijo:focus-within { border-color: var(--accent-ink); }
+.con-prefijo .prefijo { display: flex; align-items: center; padding: 0 0 0 14px; color: var(--ink-dim); white-space: nowrap; }
+.con-prefijo input { border: 0; background: transparent; flex: 1; min-width: 0; padding-left: 2px; }
+.con-prefijo input:focus { outline: none; }

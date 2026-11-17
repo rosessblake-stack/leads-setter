@@ -1,5 +1,5 @@
 {
- "version": "2026-11-07",
+ "version": "2026-11-17",
  "bienvenida": {
   "titulo": "No es lo mismo trenzar que ser profesional. Demuéstralo.",
   "texto": "Completa este formulario para entender tu nivel, tu momento de negocio y si esta formación es adecuada para ti. Si encajas, la llamada será directa, honesta y muy práctica."
@@ -41,9 +41,10 @@
   },
   {
    "id": "C04",
-   "texto": "Enlace a tu Instagram o al sitio donde muestras tu trabajo",
+   "texto": "Tu perfil de Instagram, o el sitio donde muestras tu trabajo",
    "tipo": "texto",
-   "obligatoria": true
+   "obligatoria": true,
+   "prefijo": "instagram.com/"
   },
   {
    "id": "C05",

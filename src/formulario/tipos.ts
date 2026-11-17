@@ -37,6 +37,8 @@ export type Pregunta = {
   texto: string;
   tipo: TipoPregunta;
   obligatoria?: boolean;
+  // Texto fijo delante del campo (por ejemplo «instagram.com/»): la persona escribe solo lo que sigue y se guarda completo.
+  prefijo?: string;
   // "__pendiente__" = las opciones aún no están confirmadas: se pide como texto libre.
   opciones?: string[] | "__pendiente__";
   maxSelecciones?: number;
