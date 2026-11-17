@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Definicion, Pregunta, Respuestas, Ruta } from "@/formulario/tipos";
+import type { Campana } from "@/formulario/campanas";
 import { PENDIENTE, claveExtra, extraAplica, limpiar, textoFinal, validarRespuesta, visibles } from "@/formulario/motor";
 
 type Props = {
@@ -10,6 +11,8 @@ type Props = {
   manychat: string;
   // Código del enlace para clientes anteriores: cambia los textos y se envía con el formulario.
   cliente?: string;
+  // Campaña (por el código del enlace): fija la ruta y puede traer textos y un regalo.
+  campana?: Campana;
   textoConsentimiento: string;
   privacidad: string;
   // «preparacion»: el formulario largo que se rellena tras reservar la asesoría (sin ruta que elegir ni consentimiento).
@@ -22,7 +25,7 @@ const CLAVE = "leads-setter:formulario";
 const BIENVENIDA = "bienvenida";
 const CONSENTIMIENTO = "consentimiento";
 
-export function Formulario({ definicion, video, manychat, cliente, textoConsentimiento, privacidad, modo = "inicial", ruta, token }: Props) {
+export function Formulario({ definicion, video, manychat, cliente, campana, textoConsentimiento, privacidad, modo = "inicial", ruta, token }: Props) {
   const anterior = Boolean(cliente) && modo === "inicial";
   const prep = modo === "preparacion";
   const etapa = prep ? "preparacion" : "inicial";
@@ -66,7 +69,19 @@ export function Formulario({ definicion, video, manychat, cliente, textoConsenti
     }
   }, [cargado, fase, definicion.version, respuestas, paso, iniciado, clave]);
 
-  const lista = useMemo(() => visibles(definicion, respuestas, etapa, rutaFija), [definicion, respuestas, etapa, rutaFija]);
+  // En una campaña la ruta ya viene dada: se contesta «¿Qué te interesa?» sola y no se pregunta.
+  const opcionRutaCampana = useMemo(
+    () => (campana ? Object.entries(definicion.rutas).find(([, r]) => r === campana.ruta)?.[0] : undefined),
+    [campana, definicion.rutas],
+  );
+  useEffect(() => {
+    if (!cargado || !opcionRutaCampana || prep) return;
+    setRespuestas((prev) => (prev[definicion.pregunta_de_ruta] === opcionRutaCampana ? prev : { ...prev, [definicion.pregunta_de_ruta]: opcionRutaCampana }));
+  }, [cargado, opcionRutaCampana, prep, definicion.pregunta_de_ruta]);
+  const lista = useMemo(
+    () => visibles(definicion, respuestas, etapa, rutaFija).filter((q) => !(opcionRutaCampana && q.id === definicion.pregunta_de_ruta)),
+    [definicion, respuestas, etapa, rutaFija, opcionRutaCampana],
+  );
   const secuencia = useMemo(() => [BIENVENIDA, ...lista.map((q) => q.id), ...(prep ? [] : [CONSENTIMIENTO])], [lista, prep]);
   const idx = Math.max(0, secuencia.indexOf(paso));
   const pasoActual = secuencia[idx];
@@ -197,6 +212,15 @@ export function Formulario({ definicion, video, manychat, cliente, textoConsenti
     return (
       <div className="pantalla">
         <section className="gracias centro" role="status">
+          {campana?.regalo?.url && !prep && !anterior && (
+            <p>
+              <strong>{campana.regalo.titulo}</strong>
+              <br />
+              <a className="principal" href={campana.regalo.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", textDecoration: "none", padding: "12px 20px", marginTop: 12 }}>
+                {campana.regalo.boton}
+              </a>
+            </p>
+          )}
           <h2>{prep ? "Gracias. Ya tengo tus respuestas: me ayudarán a preparar tu asesoría. Si quieres cambiar algo, vuelve a abrir este enlace." : anterior ? "Gracias por contarme tu caso. Me ayuda mucho a conocer mejor a quienes ya habéis trabajado conmigo." : textoFinal(definicion, respuestas)}</h2>
         </section>
       </div>
@@ -230,13 +254,13 @@ export function Formulario({ definicion, video, manychat, cliente, textoConsenti
       >
         {pasoActual === BIENVENIDA && (
           <section className="bienvenida">
-            <h1>{prep ? "Prepara tu asesoría" : anterior ? "Cuéntame tu caso" : definicion.bienvenida.titulo}</h1>
+            <h1>{prep ? "Prepara tu asesoría" : anterior ? "Cuéntame tu caso" : (campana?.bienvenida?.titulo ?? definicion.bienvenida.titulo)}</h1>
             <p className="intro">
               {prep
                 ? "Estas preguntas me ayudan a preparar tu caso antes de la llamada. Tardas unos 15 minutos y puedes dejarlo a medias y volver: se guarda en este navegador."
                 : anterior
                   ? "Gracias por ayudarme. Este formulario me sirve para conocer mejor tu situación y la de quienes ya habéis trabajado conmigo. Responde con sinceridad y con tus palabras."
-                  : definicion.bienvenida.texto}
+                  : (campana?.bienvenida?.texto ?? definicion.bienvenida.texto)}
             </p>
             <button type="submit" className="principal">
               Empezar

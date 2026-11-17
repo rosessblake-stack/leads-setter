@@ -1,6 +1,7 @@
 import { sql } from "./db";
 import { CONSENT_TEXT } from "./consent";
 import type { Solicitud } from "@/formulario/solicitud";
+import { campanaDe } from "@/formulario/campanas";
 
 export type LeadGuardado = {
   personaId: string;
@@ -16,7 +17,14 @@ export async function guardarLead(s: Solicitud, opciones: { historico?: boolean 
     let videoCodigo: string | null = s.v;
     let videoOrigen: "enlace" | "comentario" | null = null;
     if (s.v) {
-      const [video] = await tx`select id from setter.videos where codigo = ${s.v}`;
+      let [video] = await tx`select id from setter.videos where codigo = ${s.v}`;
+      // Una campaña conocida (por su código) se da de alta sola la primera vez, con su descripción.
+      const campana = campanaDe(s.v);
+      if (!video && campana) {
+        [video] = await tx`
+          insert into setter.videos (codigo, descripcion, formato, tema) values (${s.v}, ${campana.descripcion.slice(0, 500)}, 'historia', 'Campaña de lead magnet')
+          on conflict (codigo) do update set codigo = excluded.codigo returning id`;
+      }
       videoId = video?.id ?? null;
       if (videoId) videoOrigen = "enlace";
     }

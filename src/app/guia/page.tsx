@@ -1,6 +1,7 @@
 import { Formulario } from "./formulario";
 import { CONSENT_TEXT } from "@/lib/consent";
 import { definicion } from "@/formulario/datos";
+import { campanaDe } from "@/formulario/campanas";
 
 type Params = { v?: string | string[]; mc?: string | string[]; c?: string | string[] };
 
@@ -8,6 +9,7 @@ const uno = (x?: string | string[]) => (Array.isArray(x) ? x[0] : x);
 
 export default async function Guia({ searchParams }: { searchParams: Promise<Params> }) {
   const p = await searchParams;
+  const campana = campanaDe(uno(p.v));
   return (
     <main className="envoltorio">
       <Formulario
@@ -15,6 +17,7 @@ export default async function Guia({ searchParams }: { searchParams: Promise<Par
         video={uno(p.v) ?? ""}
         manychat={uno(p.mc) ?? ""}
         cliente={uno(p.c) ?? ""}
+        campana={campana ?? undefined}
         textoConsentimiento={CONSENT_TEXT}
         privacidad={process.env.PRIVACY_URL || "/privacidad"}
       />
