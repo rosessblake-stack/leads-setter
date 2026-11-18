@@ -94,6 +94,14 @@ export default async function Ajustes({ searchParams }: { searchParams: Promise<
       </section>
 
       <section className="bloque">
+        <h2>Generar una clave aleatoria</h2>
+        <p className="ayuda">Para claves como la de ManyChat. Se crea en tu navegador y no se guarda en ningún sitio.</p>
+        <p>
+          <Link href="/panel/clave">Abrir el generador de claves</Link>
+        </p>
+      </section>
+
+      <section className="bloque">
         <h2>Enlace para quien lo pide por chat</h2>
         <p className="ayuda">
           Para personas que te escriben por chat y te piden el formulario, sin haber comentado un vídeo y sin ser clientes anteriores. Entran como un
