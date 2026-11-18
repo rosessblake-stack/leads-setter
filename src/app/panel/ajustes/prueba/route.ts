@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { registrarError } from "@/lib/errores";
 import { ir } from "@/lib/http";
-import { enviarPropuesta, manychatConfigurado, type TipoFlujo } from "@/lib/manychat";
+import { enviarPropuesta, lanzarSeguimientoGuia, manychatConfigurado, type TipoFlujo } from "@/lib/manychat";
 import { COOKIE_PANEL, sesionValida } from "@/lib/panel";
 import { urlPanel } from "@/lib/config";
 
@@ -18,8 +18,19 @@ export async function POST(req: Request) {
 
   const datos = await req.formData().catch(() => null);
   const contacto = String(datos?.get("contacto") ?? "").trim();
+  const seguimiento = datos?.get("tipo") === "seguimiento";
   const tipo: TipoFlujo = datos?.get("tipo") === "asesoria" ? "asesoria" : "llamada";
   if (!/^\d{3,20}$/.test(contacto)) return ir("/panel/ajustes?prueba=contacto");
+  if (seguimiento) {
+    // Lanza el flujo «Seguimiento guía» a tu contacto, con tu enlace de pago de la asesoría (o uno de prueba si no está puesto).
+    try {
+      await lanzarSeguimientoGuia(contacto, process.env.STRIPE_LINK_ASESORIA || `${urlPanel()}/guia?prueba=1`);
+      return ir("/panel/ajustes?prueba=ok");
+    } catch (e) {
+      await registrarError("manychat", e, { paso: "prueba del seguimiento de la guía desde Ajustes" });
+      return ir(`/panel/ajustes?prueba=error&detalle=${encodeURIComponent((e instanceof Error ? e.message : "error").slice(0, 200))}`);
+    }
+  }
 
   const texto =
     tipo === "asesoria"
