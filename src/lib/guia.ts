@@ -9,7 +9,7 @@ import { avisarAdmin, escaparHtml } from "@/lib/telegram";
 // Cuántas horas después de descargar la guía se lanza el mensaje de seguimiento. Debe ser menor que la ventana de 24 h de Instagram.
 export const HORAS_ESPERA_GUIA = 18;
 
-export const PASOS_SEGUIMIENTO = ["leyo", "problema", "opinion", "aprendio", "asesoria"] as const;
+export const PASOS_SEGUIMIENTO = ["leyo", "problema", "opinion", "aprendio", "asesoria", "motivo"] as const;
 export type PasoSeguimiento = (typeof PASOS_SEGUIMIENTO)[number];
 export const ETIQUETA_PASO: Record<PasoSeguimiento, string> = {
   leyo: "¿Pudo abrir y leer la guía?",
@@ -17,6 +17,7 @@ export const ETIQUETA_PASO: Record<PasoSeguimiento, string> = {
   opinion: "Qué le pareció la guía",
   aprendio: "Qué aprendió",
   asesoria: "¿Quiere trabajarlo en una asesoría?",
+  motivo: "Por qué no quiere la asesoría",
 };
 
 // «Sí», «si, me interesa», «Sí, quiero»… (también tal cual el texto de un botón).
@@ -47,8 +48,8 @@ export function leerCuerpoManychat(t: string): { mc?: unknown; paso?: unknown; t
 }
 
 // Lo que puede mandar ManyChat: un solo paso (`paso` + `texto`) o varias respuestas a la vez (`opinion`, `aprendio`, `asesoria`).
-export type PeticionManychat = { mc?: unknown; paso?: unknown; texto?: unknown; leyo?: unknown; problema?: unknown; opinion?: unknown; aprendio?: unknown; asesoria?: unknown };
-const CLAVES_PETICION = ["mc", "paso", "texto", "leyo", "problema", "opinion", "aprendio", "asesoria"] as const;
+export type PeticionManychat = { mc?: unknown; paso?: unknown; texto?: unknown; leyo?: unknown; problema?: unknown; opinion?: unknown; aprendio?: unknown; asesoria?: unknown; motivo?: unknown };
+const CLAVES_PETICION = ["mc", "paso", "texto", "leyo", "problema", "opinion", "aprendio", "asesoria", "motivo"] as const;
 
 // Acepta el cuerpo como JSON, como formulario (clave=valor&clave=valor) o, en último caso, como parámetros de la dirección.
 export function leerPeticionManychat(t: string, tipo: string | null, busqueda: URLSearchParams): PeticionManychat | null {
@@ -194,6 +195,13 @@ export async function guardarRespuestaSeguimiento(mc: string, paso: PasoSeguimie
   if ((paso === "leyo" && !esAfirmativo(limpio)) || paso === "problema") {
     await avisarAdmin(
       `⚠️ <b>${escaparHtml(String(f.nombre).slice(0, 60))}</b> ${paso === "problema" ? `cuenta qué le pasó con la guía: «${escaparHtml(limpio.slice(0, 200))}»` : "dice que no pudo abrir o leer la guía"}.\n${urlPanel()}/panel/lead/${f.ficha_id}`,
+    ).catch(() => false);
+  }
+  if (paso === "motivo") {
+    // Si ya figura como «No vendido», el motivo se añade a la nota del resultado.
+    await sql()`update setter.resultados set nota = left(${`Dijo que no a la asesoría: ${limpio}`}, 500) where ficha_id = ${f.ficha_id} and resultado = 'no_vendido'`;
+    await avisarAdmin(
+      `ℹ️ <b>${escaparHtml(String(f.nombre).slice(0, 60))}</b> explica por qué no quiere la asesoría: «${escaparHtml(limpio.slice(0, 200))}»\n${urlPanel()}/panel/lead/${f.ficha_id}`,
     ).catch(() => false);
   }
   if (paso === "asesoria") {

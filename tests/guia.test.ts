@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { respuestaGenerica, textoAceptable } from "@/lib/respuesta-personal";
 import { esAfirmativo, esNegativo, leerCuerpoManychat, leerPeticionManychat, respuestasDe, secretoValido } from "@/lib/guia";
 
 describe("seguimiento de la guía", () => {
@@ -35,7 +36,7 @@ describe("cuerpo que manda ManyChat", () => {
 describe("petición de ManyChat en varios formatos", () => {
   const vacia = new URLSearchParams();
   it("JSON, formulario y parámetros de la dirección dan lo mismo", () => {
-    const esperado = { mc: "123", paso: "opinion", texto: "Genial", leyo: undefined, problema: undefined, opinion: undefined, aprendio: undefined, asesoria: undefined };
+    const esperado = { mc: "123", paso: "opinion", texto: "Genial", leyo: undefined, problema: undefined, opinion: undefined, aprendio: undefined, asesoria: undefined, motivo: undefined };
     expect(leerPeticionManychat('{"mc":"123","paso":"opinion","texto":"Genial"}', "application/json", vacia)).toEqual(esperado);
     expect(leerPeticionManychat("mc=123&paso=opinion&texto=Genial", "application/x-www-form-urlencoded", vacia)).toEqual(esperado);
     expect(leerPeticionManychat("", null, new URLSearchParams("mc=123&paso=opinion&texto=Genial"))).toEqual(esperado);
@@ -73,5 +74,20 @@ describe("«no» claro a la asesoría", () => {
   it("solo un no claro cuenta", () => {
     for (const t of ["No", "no", " NO ", "No.", "no gracias", "No, gracias", "No quiero"]) expect(esNegativo(t)).toBe(true);
     for (const t of ["Ahora no", "Sí", "no sé", "no, pero quizá más adelante", "tal vez", ""]) expect(esNegativo(t)).toBe(false);
+  });
+});
+
+describe("respuesta personal del seguimiento", () => {
+  it("el texto genérico agradece y nombra los temas marcados", () => {
+    const t = respuestaGenerica("Ana López", ["precios", "marca personal"]);
+    expect(t).toContain("Ana");
+    expect(t).toContain("precios y marca personal");
+    expect(textoAceptable(t)).toBe(true);
+  });
+  it("rechaza textos con enlaces, dinero o que hablan de asesoría", () => {
+    expect(textoAceptable("Gracias por contármelo, me alegra que te haya servido la guía.")).toBe(true);
+    expect(textoAceptable("Gracias, entra en https://x.com y mira esto con calma por favor.")).toBe(false);
+    expect(textoAceptable("Gracias por contármelo, la asesoría cuesta 100 € y te ayudará mucho.")).toBe(false);
+    expect(textoAceptable("Hola")).toBe(false);
   });
 });

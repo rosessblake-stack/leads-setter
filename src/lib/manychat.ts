@@ -117,6 +117,14 @@ export async function lanzarSeguimientoGuia(subscriberId: string, enlacePagoAses
   await llamar("/fb/sending/sendFlow", "POST", { subscriber_id: Number(subscriberId) || subscriberId, flow_ns: flow });
 }
 
+// Deja un valor en un campo personalizado del contacto (por ejemplo, el texto que luego muestra un mensaje del flujo).
+export async function guardarCampo(subscriberId: string, campo: string, valor: string): Promise<void> {
+  await llamar("/fb/subscriber/setCustomFields", "POST", {
+    subscriber_id: Number(subscriberId) || subscriberId,
+    fields: [{ field_name: campo, field_value: valor }],
+  });
+}
+
 export async function enviarPropuesta(subscriberId: string, tipo: TipoFlujo, texto: string, enlace: string): Promise<void> {
   const flow = await buscarFlujo(tipo);
   if (!flow) throw new Error(`No encuentro en ManyChat un único flujo llamado «Propuesta ${tipo === "asesoria" ? "asesoría" : "llamada"}»`);

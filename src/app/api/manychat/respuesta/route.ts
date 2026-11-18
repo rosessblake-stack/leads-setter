@@ -1,5 +1,6 @@
 import { ETIQUETA_PASO, guardarRespuestaSeguimiento, leerPeticionManychat, PASOS_SEGUIMIENTO, respuestasDe, secretoValido, type PasoSeguimiento } from "@/lib/guia";
 import { registrarError } from "@/lib/errores";
+import { prepararRespuestaPersonal } from "@/lib/respuesta-personal";
 import { permitido } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,11 @@ async function tratar(req: Request) {
   try {
     let guardada = true;
     for (const r of lista) guardada = (await guardarRespuestaSeguimiento(mc, r.paso as PasoSeguimiento, r.texto)) && guardada;
-    return Response.json({ ok: guardada, ...(guardada ? {} : { error: "contacto_desconocido" }) }, { status: guardada ? 200 : 404 });
+    // Con «qué aprendió» se prepara la respuesta personal que el flujo muestra antes de preguntar por la asesoría.
+    const aprendio = lista.find((x) => x.paso === "aprendio")?.texto;
+    const opinion = lista.find((x) => x.paso === "opinion")?.texto ?? "";
+    const respuesta = guardada && aprendio ? await prepararRespuestaPersonal(mc, opinion, aprendio) : null;
+    return Response.json({ ok: guardada, ...(respuesta ? { respuesta } : {}), ...(guardada ? {} : { error: "contacto_desconocido" }) }, { status: guardada ? 200 : 404 });
   } catch (e) {
     await registrarError("manychat", e, { paso: "guardar respuesta del seguimiento" });
     return Response.json({ ok: false, error: "servidor" }, { status: 500 });

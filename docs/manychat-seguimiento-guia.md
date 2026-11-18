@@ -32,3 +32,18 @@ N1 Mensaje con botones: «Hola {nombre}, soy Blake 🙌 ¿Pudiste abrir y leer l
 
 ## Respuestas de la petición
 200 `{"ok":true}`; 404 `contacto_desconocido` (la clave y el formato están bien, falta ficha); 401 con motivo (`falta_la_cabecera_x-manychat-secret`, `clave_incorrecta`, `servidor_sin_clave_valida`); 400 con `mc`, `texto_vacio`, `paso` o `json`.
+
+## Dos pasos nuevos en el flujo «Seguimiento guía»
+
+### 1. Respuesta personal entre «qué aprendiste» y la pregunta de la asesoría
+
+1. En ManyChat crea un **campo de usuario** de tipo texto llamado `guia_respuesta` (Ajustes → Campos). Si prefieres otro nombre, avísame o pon la variable `MANYCHAT_CAMPO_RESPUESTA` en Vercel.
+2. La petición externa que ya envía `opinion` y `aprendio` (`…/api/manychat/respuesta?mc={{user_id}}&opinion={{…}}&aprendio={{…}}`) ahora, además de guardarlas, **escribe en `guia_respuesta`** un mensaje corto y personal: agradece lo que contó, lo comenta con sus palabras y menciona los temas que marcó en el formulario. Tarda unos segundos.
+3. Justo **después de esa petición y antes de «¿Quieres trabajarlo en una asesoría?»**, añade un mensaje de Instagram cuyo texto sea solo la variable `{{guia_respuesta}}` (insértala con el botón de variables).
+4. Si algo falla (Claude no responde, el texto no es aceptable), el campo se rellena con un agradecimiento genérico y el flujo sigue igual.
+
+### 2. «¿Por qué no?» para quien dice que no
+
+1. En la rama **No** de la pregunta de la asesoría, después de la petición `asesoria=No`, añade un mensaje que pregunte, por ejemplo: «Gracias por decírmelo. ¿Me cuentas por qué? Quizá todavía no es el momento o no lo necesitas ahora mismo» y espera su respuesta de texto (guárdala en un campo, por ejemplo `guia_motivo`).
+2. Después añade una petición externa: `…/api/manychat/respuesta?mc={{user_id}}&motivo={{cuf_…}}` (con el campo insertado como variable) y la misma cabecera `x-manychat-secret`.
+3. El motivo queda como nota de la ficha («Por qué no quiere la asesoría: …»), se añade a la nota de «No vendido» y te llega un aviso a Telegram.
