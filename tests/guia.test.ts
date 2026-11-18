@@ -35,7 +35,7 @@ describe("cuerpo que manda ManyChat", () => {
 describe("petición de ManyChat en varios formatos", () => {
   const vacia = new URLSearchParams();
   it("JSON, formulario y parámetros de la dirección dan lo mismo", () => {
-    const esperado = { mc: "123", paso: "opinion", texto: "Genial", opinion: undefined, aprendio: undefined, asesoria: undefined };
+    const esperado = { mc: "123", paso: "opinion", texto: "Genial", leyo: undefined, problema: undefined, opinion: undefined, aprendio: undefined, asesoria: undefined };
     expect(leerPeticionManychat('{"mc":"123","paso":"opinion","texto":"Genial"}', "application/json", vacia)).toEqual(esperado);
     expect(leerPeticionManychat("mc=123&paso=opinion&texto=Genial", "application/x-www-form-urlencoded", vacia)).toEqual(esperado);
     expect(leerPeticionManychat("", null, new URLSearchParams("mc=123&paso=opinion&texto=Genial"))).toEqual(esperado);
@@ -56,5 +56,15 @@ describe("varias respuestas en una sola petición", () => {
   it("un solo paso sigue funcionando", () => {
     const d = leerPeticionManychat('{"mc":"1","paso":"aprendio","texto":"Mucho"}', "application/json", new URLSearchParams())!;
     expect(respuestasDe(d)).toEqual([{ paso: "aprendio", texto: "Mucho" }]);
+  });
+});
+
+describe("pasos nuevos: pudo abrir la guía", () => {
+  it("«leyo» y «problema» se reconocen y van primero", () => {
+    const d = leerPeticionManychat('{"mc":"1","leyo":"No","problema":"No me abre el PDF","opinion":""}', "application/json", new URLSearchParams())!;
+    expect(respuestasDe(d)).toEqual([
+      { paso: "leyo", texto: "No" },
+      { paso: "problema", texto: "No me abre el PDF" },
+    ]);
   });
 });

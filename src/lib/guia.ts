@@ -9,9 +9,11 @@ import { avisarAdmin, escaparHtml } from "@/lib/telegram";
 // Cuántas horas después de descargar la guía se lanza el mensaje de seguimiento. Debe ser menor que la ventana de 24 h de Instagram.
 export const HORAS_ESPERA_GUIA = 18;
 
-export const PASOS_SEGUIMIENTO = ["opinion", "aprendio", "asesoria"] as const;
+export const PASOS_SEGUIMIENTO = ["leyo", "problema", "opinion", "aprendio", "asesoria"] as const;
 export type PasoSeguimiento = (typeof PASOS_SEGUIMIENTO)[number];
 export const ETIQUETA_PASO: Record<PasoSeguimiento, string> = {
+  leyo: "¿Pudo abrir y leer la guía?",
+  problema: "Qué le pasó al abrir la guía",
   opinion: "Qué le pareció la guía",
   aprendio: "Qué aprendió",
   asesoria: "¿Quiere trabajarlo en una asesoría?",
@@ -39,8 +41,8 @@ export function leerCuerpoManychat(t: string): { mc?: unknown; paso?: unknown; t
 }
 
 // Lo que puede mandar ManyChat: un solo paso (`paso` + `texto`) o varias respuestas a la vez (`opinion`, `aprendio`, `asesoria`).
-export type PeticionManychat = { mc?: unknown; paso?: unknown; texto?: unknown; opinion?: unknown; aprendio?: unknown; asesoria?: unknown };
-const CLAVES_PETICION = ["mc", "paso", "texto", "opinion", "aprendio", "asesoria"] as const;
+export type PeticionManychat = { mc?: unknown; paso?: unknown; texto?: unknown; leyo?: unknown; problema?: unknown; opinion?: unknown; aprendio?: unknown; asesoria?: unknown };
+const CLAVES_PETICION = ["mc", "paso", "texto", "leyo", "problema", "opinion", "aprendio", "asesoria"] as const;
 
 // Acepta el cuerpo como JSON, como formulario (clave=valor&clave=valor) o, en último caso, como parámetros de la dirección.
 export function leerPeticionManychat(t: string, tipo: string | null, busqueda: URLSearchParams): PeticionManychat | null {
@@ -175,8 +177,14 @@ export async function guardarRespuestaSeguimiento(mc: string, paso: PasoSeguimie
   const limpio = texto.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 1500);
   await sql().begin(async (tx) => {
     await tx`insert into setter.notas (ficha_id, texto) values (${f.ficha_id}, ${`Seguimiento de la guía · ${ETIQUETA_PASO[paso]}: ${limpio}`.slice(0, 2000)})`;
-    await tx`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'seguimiento_respuesta', ${tx.json({ paso, afirmativo: paso === "asesoria" ? esAfirmativo(limpio) : null })})`;
+    await tx`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'seguimiento_respuesta', ${tx.json({ paso, afirmativo: paso === "asesoria" || paso === "leyo" ? esAfirmativo(limpio) : null })})`;
   });
+  // Si no pudo abrir la guía o cuenta qué le pasó, es fricción de verdad: se avisa a Blake para que le escriba.
+  if ((paso === "leyo" && !esAfirmativo(limpio)) || paso === "problema") {
+    await avisarAdmin(
+      `⚠️ <b>${escaparHtml(String(f.nombre).slice(0, 60))}</b> ${paso === "problema" ? `cuenta qué le pasó con la guía: «${escaparHtml(limpio.slice(0, 200))}»` : "dice que no pudo abrir o leer la guía"}.\n${urlPanel()}/panel/lead/${f.ficha_id}`,
+    ).catch(() => false);
+  }
   if (paso === "asesoria") {
     const si = esAfirmativo(limpio);
     await avisarAdmin(
