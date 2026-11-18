@@ -8,6 +8,14 @@ import { nombreSeguro, temasDe, unir } from "@/lib/propuestas";
 // lo comenta con sus palabras y recuerda los temas que marcó. Se guarda en un campo del contacto en ManyChat y el flujo lo muestra.
 export const CAMPO_RESPUESTA = () => process.env.MANYCHAT_CAMPO_RESPUESTA ?? "guia_respuesta";
 
+// Pausa mínima antes de contestar a ManyChat (que no pasa al mensaje hasta recibir la respuesta): así el mensaje no llega al instante
+// y parece escrito por una persona. Debe quedar por debajo de los 10 s que ManyChat espera como máximo a una petición externa.
+export const PAUSA_MINIMA_MS = () => {
+  const v = Number(process.env.RESPUESTA_PAUSA_MS);
+  return Number.isFinite(v) && v >= 0 && v <= 8000 ? v : 7000;
+};
+const dormir = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 const SISTEMA = `Eres Blake Braider, trenzador profesional y educador. Una persona acaba de leer tu guía sobre cómo cobrar lo que vale su trabajo y te ha contado, por Instagram, qué le ha parecido y qué ha aprendido. Escribes TÚ, en primera persona, un mensaje corto de respuesta.
 
 Reglas:
@@ -41,7 +49,7 @@ export async function redactarRespuesta(d: { nombre: string; opinion: string; ap
   const generica = respuestaGenerica(d.nombre, d.temas);
   if (!process.env.ANTHROPIC_API_KEY) return generica;
   try {
-    const client = new Anthropic({ timeout: 9000, maxRetries: 0 });
+    const client = new Anthropic({ timeout: 6000, maxRetries: 0 });
     const r = await client.messages.create({
       model: process.env.RESPUESTA_MODEL ?? "claude-sonnet-5-5",
       max_tokens: 400,
@@ -70,6 +78,7 @@ export async function redactarRespuesta(d: { nombre: string; opinion: string; ap
 
 // Prepara la respuesta personal, la deja en el campo del contacto y la devuelve. Nunca lanza: si algo falla, sale el texto genérico.
 export async function prepararRespuestaPersonal(mc: string, opinion: string, aprendio: string): Promise<string | null> {
+  const inicio = Date.now();
   try {
     const [f] = await sql()`
       select p.nombre, fo.respuestas -> 'A01' -> 'valor' as a01
@@ -84,6 +93,8 @@ export async function prepararRespuestaPersonal(mc: string, opinion: string, apr
     } catch (e) {
       await registrarError("manychat", e, { paso: "guardar la respuesta personal en el contacto" });
     }
+    // Si Claude ha tardado menos que la pausa, se espera lo que falta.
+    await dormir(Math.max(0, PAUSA_MINIMA_MS() - (Date.now() - inicio)));
     return texto;
   } catch (e) {
     await registrarError("servidor", e, { paso: "preparar la respuesta personal" }).catch(() => undefined);
