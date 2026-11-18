@@ -58,16 +58,16 @@ function DescargaRegalo({ regalo, alEvento }: { regalo: NonNullable<Campana["reg
     setEstado("bajando");
     alEvento("pdf_inicio");
     try {
-      const [r] = await Promise.all([fetch(regalo.url), new Promise((x) => setTimeout(x, 1200))]);
+      // Se comprueba que el archivo responde y se descarga desde su propia dirección (el servidor lo manda como descarga):
+      // con un «blob» los navegadores internos (Instagram) lo abrían en vez de guardarlo.
+      const [r] = await Promise.all([fetch(regalo.url, { cache: "no-store" }), new Promise((x) => setTimeout(x, 1200))]);
       if (!r.ok) throw new Error("descarga");
-      const url = URL.createObjectURL(await r.blob());
       const a = document.createElement("a");
-      a.href = url;
+      a.href = regalo.url;
       a.download = regalo.url.split("/").pop() || "regalo.pdf";
       document.body.appendChild(a);
       a.click();
       a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 15000);
       setEstado("listo");
       alEvento("pdf_ok");
     } catch {
