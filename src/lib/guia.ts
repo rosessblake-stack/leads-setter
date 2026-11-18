@@ -38,6 +38,22 @@ export function leerCuerpoManychat(t: string): { mc?: unknown; paso?: unknown; t
   }
 }
 
+// Acepta el cuerpo como JSON, como formulario (clave=valor&clave=valor) o, en último caso, como parámetros de la dirección.
+export function leerPeticionManychat(t: string, tipo: string | null, busqueda: URLSearchParams): { mc?: unknown; paso?: unknown; texto?: unknown } | null {
+  let d: { mc?: unknown; paso?: unknown; texto?: unknown } | null = null;
+  if (t.trim() !== "") {
+    if ((tipo ?? "").includes("application/x-www-form-urlencoded")) {
+      const f = new URLSearchParams(t);
+      d = { mc: f.get("mc") ?? undefined, paso: f.get("paso") ?? undefined, texto: f.get("texto") ?? undefined };
+    } else {
+      d = leerCuerpoManychat(t);
+    }
+  }
+  const de = (k: "mc" | "paso" | "texto") => d?.[k] ?? busqueda.get(k) ?? undefined;
+  const salida = { mc: de("mc"), paso: de("paso"), texto: de("texto") };
+  return salida.mc === undefined && salida.paso === undefined && salida.texto === undefined ? null : salida;
+}
+
 export function secretoValido(recibido: string | null, esperado: string): boolean {
   if (!recibido || esperado.length < 16) return false;
   const a = Buffer.from(recibido);

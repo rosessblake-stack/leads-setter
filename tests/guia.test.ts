@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { esAfirmativo, leerCuerpoManychat, secretoValido } from "@/lib/guia";
+import { esAfirmativo, leerCuerpoManychat, leerPeticionManychat, secretoValido } from "@/lib/guia";
 
 describe("seguimiento de la guía", () => {
   it("reconoce respuestas afirmativas, con o sin tilde", () => {
@@ -29,5 +29,18 @@ describe("cuerpo que manda ManyChat", () => {
   it("devuelve null si no hay forma de leerlo", () => {
     expect(leerCuerpoManychat("basura")).toBeNull();
     expect(leerCuerpoManychat('{"mc":"1"')).toBeNull();
+  });
+});
+
+describe("petición de ManyChat en varios formatos", () => {
+  const vacia = new URLSearchParams();
+  it("JSON, formulario y parámetros de la dirección dan lo mismo", () => {
+    const esperado = { mc: "123", paso: "opinion", texto: "Genial" };
+    expect(leerPeticionManychat('{"mc":"123","paso":"opinion","texto":"Genial"}', "application/json", vacia)).toEqual(esperado);
+    expect(leerPeticionManychat("mc=123&paso=opinion&texto=Genial", "application/x-www-form-urlencoded", vacia)).toEqual(esperado);
+    expect(leerPeticionManychat("", null, new URLSearchParams("mc=123&paso=opinion&texto=Genial"))).toEqual(esperado);
+  });
+  it("sin nada que leer devuelve null", () => {
+    expect(leerPeticionManychat("", null, vacia)).toBeNull();
   });
 });

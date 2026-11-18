@@ -1,4 +1,4 @@
-import { ETIQUETA_PASO, guardarRespuestaSeguimiento, leerCuerpoManychat, PASOS_SEGUIMIENTO, secretoValido, type PasoSeguimiento } from "@/lib/guia";
+import { ETIQUETA_PASO, guardarRespuestaSeguimiento, leerPeticionManychat, PASOS_SEGUIMIENTO, secretoValido, type PasoSeguimiento } from "@/lib/guia";
 import { registrarError } from "@/lib/errores";
 import { permitido } from "@/lib/ratelimit";
 
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   if (!(await permitido(`manychat-respuesta:${ip}`, 120, 10 * 60 * 1000))) return Response.json({ ok: false, error: "demasiadas_peticiones" }, { status: 429 });
   const t = await req.text().catch(() => "");
   if (t.length > 4000) return Response.json({ ok: false, error: "demasiado_grande" }, { status: 413 });
-  const d = leerCuerpoManychat(t);
+  const d = leerPeticionManychat(t, req.headers.get("content-type"), new URL(req.url).searchParams);
   if (!d) return Response.json({ ok: false, error: "json" }, { status: 400 });
   const mc = String(d.mc ?? "").trim();
   const paso = String(d.paso ?? "") as PasoSeguimiento;
