@@ -35,7 +35,7 @@ const GRUPOS: { titulo: string | null; items: Item[] }[] = [
     titulo: "Sistema",
     items: [
       { clave: "estadisticas", texto: "Estadísticas", href: "/panel/estadisticas" },
-      { clave: "videos", texto: "Vídeos", href: "/panel/videos" },
+      { clave: "videos", texto: "Vídeos e historias", href: "/panel/videos" },
       { clave: "embudo", texto: "Embudo del formulario", href: "/panel/embudo" },
       { clave: "errores", texto: "Errores", href: "/panel/errores", cuenta: "errores", urgente: true },
       { clave: "ajustes", texto: "Ajustes", href: "/panel/ajustes" },

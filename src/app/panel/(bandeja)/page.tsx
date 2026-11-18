@@ -18,6 +18,7 @@ import {
   type Filtros,
 } from "@/lib/panel-util";
 import { NOMBRE_PROPUESTA, type Propuesta } from "@/lib/seguimiento-util";
+import { etiquetaOrigen } from "@/formulario/campanas";
 import type { Ruta } from "@/formulario/tipos";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,7 @@ type Fila = {
   propuesta_estado: Propuesta;
   reserva_at: Date | null;
   video_codigo: string | null;
+  video_formato: string | null;
   creado_at: Date;
   sin_contactar: boolean;
   origen: "sistema" | "historico";
@@ -100,7 +102,7 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
   const { filas, porVista, porRuta, porOrigen, videos } = await intentar(async () => {
     const filas = await sql()`
       select fi.id as ficha_id, p.nombre, f.ruta, fi.encaje, fi.puntuacion, fi.oferta_recomendada, fi.fase,
-             fi.propuesta_estado, fi.reserva_at, v.codigo as video_codigo, f.creado_at,
+             fi.propuesta_estado, fi.reserva_at, v.codigo as video_codigo, v.formato as video_formato, f.creado_at,
              ${SIN_CONTACTAR} as sin_contactar, fi.origen, fi.caso_exito, ${ORIGEN_LEAD} as origen_lead,
              count(*) over()::int as total
       from setter.fichas fi
@@ -177,16 +179,16 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
       </nav>
 
       {videos.length > 0 && (
-        <form method="get" action="/panel" className="busqueda" aria-label="Filtrar por vídeo">
+        <form method="get" action="/panel" className="busqueda" aria-label="Filtrar por vídeo o historia">
           {f.vista && <input type="hidden" name="vista" value={f.vista} />}
           {f.fase && <input type="hidden" name="fase" value={f.fase} />}
           {f.ruta && <input type="hidden" name="ruta" value={f.ruta} />}
           {f.origen && <input type="hidden" name="origen" value={f.origen} />}
           {f.q && <input type="hidden" name="q" value={f.q} />}
           <label>
-            <span className="solo-lectores">Vídeo</span>
+            <span className="solo-lectores">Vídeo o historia</span>
             <select name="video" defaultValue={f.video ?? ""}>
-              <option value="">Todos los vídeos</option>
+              <option value="">Todos los vídeos e historias</option>
               {videos.map((v) => (
                 <option key={String(v.codigo)} value={String(v.codigo)}>
                   {String(v.etiqueta)} ({v.n as number})
@@ -194,7 +196,7 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
               ))}
             </select>
           </label>
-          <button type="submit" className="secundario">Ver vídeo</button>
+          <button type="submit" className="secundario">Filtrar</button>
         </form>
       )}
 
@@ -261,7 +263,7 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
                     l.encaje ? `Encaje ${l.encaje}` : null,
                     l.puntuacion !== null ? `${l.puntuacion}%` : null,
                     l.oferta_recomendada ? `Recomendado: ${OFERTA[l.oferta_recomendada]}` : null,
-                    l.video_codigo ? `Vídeo ${l.video_codigo}` : null,
+                    l.video_codigo ? `${etiquetaOrigen(l.video_codigo, l.video_formato)} ${l.video_codigo}` : null,
                   ]
                     .filter(Boolean)
                     .join(" · ")}

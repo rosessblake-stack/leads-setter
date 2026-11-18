@@ -20,6 +20,7 @@ import {
   type Fase,
 } from "@/lib/panel-util";
 import { definicion } from "@/formulario/datos";
+import { etiquetaOrigen } from "@/formulario/campanas";
 import { Seguimiento, type DatosSeguimiento } from "./seguimiento";
 import { EnlacePreparacion, HerramientasFicha } from "../../ajax";
 import type { Almacenada, Ruta } from "@/formulario/tipos";
@@ -49,7 +50,7 @@ export default async function Ficha({
              to_char(fi.reserva_at at time zone 'Europe/Madrid', 'YYYY-MM-DD"T"HH24:MI') as reserva_input,
              p.id as persona_id, p.nombre, p.email, p.telefono, p.ig_username, p.pais,
              f.ruta, f.interes, f.como_nos_conociste, f.respuestas, f.signals, f.creado_at, f.iniciado_at,
-             v.codigo as video_codigo
+             v.codigo as video_codigo, v.formato as video_formato
       from setter.fichas fi
       join setter.formularios f on f.id = fi.formulario_id
       join setter.personas p on p.id = fi.persona_id
@@ -141,7 +142,7 @@ export default async function Ficha({
           {r.cierre_posible_at && fase !== "vendido" && fase !== "no_vendido" && (
             <span className="chip av" title={r.cierre_posible_nota ?? undefined}>Posible cierre · {fechaCorta(`${r.cierre_posible_at}T12:00:00Z`).split(",")[0]}</span>
           )}
-          {r.video_codigo && <span className="chip">Vídeo {r.video_codigo}</span>}
+          {r.video_codigo && <span className="chip">{etiquetaOrigen(r.video_codigo, r.video_formato)} {r.video_codigo}</span>}
           <span className="chip">{fechaCorta(r.creado_at)}</span>
         </p>
       </header>

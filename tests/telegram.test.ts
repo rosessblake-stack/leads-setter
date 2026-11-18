@@ -17,6 +17,12 @@ describe("telegram", () => {
     expect(escaparHtml("<a>&")).toBe("&lt;a&gt;&amp;");
   });
 
+  it("dice «Historia» (no «Vídeo») cuando el lead viene de una campaña de historia", () => {
+    const m = construirMensaje(resumenDe(solicitudDePrueba({ C01: "Ana" }, { v: "cobrar-historia-01" })), ficha);
+    expect(m).toContain("Historia: cobrar-historia-01");
+    expect(m).not.toContain("Vídeo: cobrar-historia-01");
+  });
+
   it("construye el aviso con contacto, ruta, señales y ficha", () => {
     const m = construirMensaje(resumenDe(solicitudDePrueba({ C01: "<b>Ana</b>" }, { v: "reel-1" })), ficha);
     expect(m).toContain("&lt;b&gt;Ana&lt;/b&gt;");

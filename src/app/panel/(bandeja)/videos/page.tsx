@@ -5,7 +5,7 @@ import { CATEGORIAS_VIDEO, NOMBRE_CATEGORIA_VIDEO, NOMBRE_TIPO_VIDEO, TIPOS_VIDE
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
-export const metadata = { title: "Vídeos" };
+export const metadata = { title: "Vídeos e historias" };
 
 type Fila = {
   id: string;
@@ -40,13 +40,13 @@ export default async function Videos({ searchParams }: { searchParams: Promise<{
       <p>
         <Link href="/panel">← Volver a la lista</Link>
       </p>
-      <h1>Vídeos</h1>
+      <h1>Vídeos e historias</h1>
       <p className="ayuda">
-        Cada reel que alguien comenta aparece aquí solo, con su fecha. Dime de qué trata cada uno: Claude lo usará para cruzarlo con lo
+        Cada reel que alguien comenta aparece aquí solo, con su fecha; las campañas de historia (como COBRAR) se dan de alta solas al entrar el primer lead. Dime de qué trata cada uno: Claude lo usará para cruzarlo con lo
         que la persona escribe en el formulario. {sinDescribir > 0 ? `${sinDescribir} sin describir (arriba).` : "Todos descritos."}
       </p>
       {q.guardado && <p role="status">Guardado.</p>}
-      {filas.length === 0 && <p className="vacio">Todavía no hay vídeos. Aparecerán cuando alguien comente un reel con Instagram conectado.</p>}
+      {filas.length === 0 && <p className="vacio">Todavía no hay vídeos ni historias. Aparecerán cuando alguien comente un reel con Instagram conectado.</p>}
       {filas.map((v) => {
         const enlace = urlSegura(v.enlace);
         return (

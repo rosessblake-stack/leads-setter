@@ -2,6 +2,7 @@ import type { FichaAnalizada } from "./analysis";
 import { urlPanel } from "./config";
 import type { Signals } from "@/formulario/signals";
 import type { Solicitud } from "@/formulario/solicitud";
+import { etiquetaOrigen } from "@/formulario/campanas";
 import type { Ruta } from "@/formulario/tipos";
 import { registrarError } from "@/lib/errores";
 
@@ -74,7 +75,7 @@ export function construirMensaje(r: ResumenLead, ficha: FichaAnalizada | null, n
   if (r.ig_username) l.push(`Escríbele por Instagram: https://ig.me/m/${escaparHtml(r.ig_username)}`);
   l.push("");
   l.push(`Ruta: ${escaparHtml(r.ruta ? RUTA[r.ruta] : "formulario antiguo")}`);
-  if (r.v) l.push(`Vídeo: ${escaparHtml(r.v)}`);
+  if (r.v) l.push(`${etiquetaOrigen(r.v)}: ${escaparHtml(r.v)}`);
   if (r.como_nos_conociste) l.push(`Nos conoció por: ${escaparHtml(r.como_nos_conociste)}`);
   if (r.signals) l.push(...lineasSignals(r.signals));
   l.push("");

@@ -25,6 +25,11 @@ export const CAMPANAS: Record<string, Campana> = {
   },
 };
 
+// «Historia» si viene de una campaña de historia; «Vídeo» si viene de un reel o vídeo.
+export function etiquetaOrigen(codigo: string | null | undefined, formato?: string | null): string {
+  return formato === "historia" || campanaDe(codigo) ? "Historia" : "Vídeo";
+}
+
 export function campanaDe(codigo: string | null | undefined): Campana | null {
   return codigo && Object.prototype.hasOwnProperty.call(CAMPANAS, codigo) ? CAMPANAS[codigo] : null;
 }

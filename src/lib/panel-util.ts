@@ -57,7 +57,7 @@ export const NOMBRE_VISTA: Record<Vista, string> = {
 export const ORIGENES_LEAD = ["video", "chat", "cliente_anterior"] as const;
 export type OrigenLead = (typeof ORIGENES_LEAD)[number];
 export const NOMBRE_ORIGEN_LEAD: Record<OrigenLead, string> = {
-  video: "Vídeo",
+  video: "Vídeo o historia",
   chat: "Chat directo",
   cliente_anterior: "Cliente anterior",
 };

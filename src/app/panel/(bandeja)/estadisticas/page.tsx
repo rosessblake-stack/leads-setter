@@ -32,7 +32,7 @@ export default async function Estadisticas() {
       where fi.origen = 'sistema'
       group by f.ruta order by leads desc`;
     const porVideo = await sql()`
-      select v.codigo as clave,
+      select case when v.codigo is null then null when v.formato = 'historia' then 'Historia ' || v.codigo else 'Vídeo ' || v.codigo end as clave,
              count(*)::int as leads,
              count(*) filter (where fi.propuesta_estado in ('enviada', 'manual'))::int as contactados,
              count(*) filter (where fi.reserva_at is not null)::int as con_llamada,
@@ -44,7 +44,7 @@ export default async function Estadisticas() {
       left join setter.videos v on v.id = f.video_id
       left join setter.resultados r on r.ficha_id = fi.id
       where fi.origen = 'sistema'
-      group by v.codigo order by vendidos desc, leads desc limit 50`;
+      group by v.codigo, v.formato order by vendidos desc, leads desc limit 50`;
     return { porRuta: porRuta as unknown as Fila[], porVideo: porVideo as unknown as Fila[] };
   });
 
@@ -113,7 +113,7 @@ export default async function Estadisticas() {
       </section>
 
       {tabla("Por ruta", porRuta, (c) => (c ? NOMBRE_RUTA[c as Ruta] : "Formulario antiguo"))}
-      {tabla("Por vídeo", porVideo, (c) => (c ? `Vídeo ${c}` : "Sin vídeo"))}
+      {tabla("Por vídeo o historia", porVideo, (c) => c ?? "Sin vídeo ni historia")}
     </main>
   );
 }
