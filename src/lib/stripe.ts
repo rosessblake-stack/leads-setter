@@ -2,6 +2,8 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { urlPanel } from "@/lib/config";
 import { sql } from "@/lib/db";
 import { registrarError } from "@/lib/errores";
+import { ErrorManyChat, enviarPropuesta, infoContacto, manychatConfigurado } from "@/lib/manychat";
+import { nombreSeguro, VENTANA_SEGURA_H } from "@/lib/propuestas";
 import { crearEnlaceReserva } from "@/lib/reservas";
 import { avisarAdmin, escaparHtml } from "@/lib/telegram";
 
@@ -84,6 +86,35 @@ export function pagoDe(evento: { type?: string; data?: { object?: Record<string,
 
 const euros = (c: number, moneda: string) => `${(c / 100).toLocaleString("es-ES", { minimumFractionDigits: c % 100 ? 2 : 0 })} ${moneda === "EUR" ? "€" : moneda}`;
 
+// Intenta mandar el enlace de reserva a la persona por ManyChat. Devuelve el texto para el aviso de Telegram.
+async function enviarReservaTrasPago(persona: { id: string; nombre: string }, fichaId: string, url: string): Promise<string> {
+  const aMano = (motivo: string) => `\n⚠️ ${motivo} Envíale tú este enlace para que reserve su hora: ${url}`;
+  const [pe] = await sql()`select manychat_id from setter.personas where id = ${persona.id}`;
+  const mc = pe?.manychat_id as string | null | undefined;
+  if (!mc) return aMano("No viene de ManyChat, así que no se le ha podido mandar solo.");
+  if (!manychatConfigurado()) return aMano("ManyChat no está configurado.");
+  try {
+    const info = await infoContacto(mc);
+    const horas = info.ultimaInteraccion ? (Date.now() - info.ultimaInteraccion.getTime()) / 3600_000 : null;
+    if (horas !== null && horas > VENTANA_SEGURA_H) {
+      return aMano(`Han pasado más de ${VENTANA_SEGURA_H} h desde su última interacción y Instagram no deja escribir primero.`);
+    }
+    const nombre = nombreSeguro(persona.nombre);
+    const texto = `Hola${nombre ? ` ${nombre}` : ""}, soy Blake. ¡Pago recibido, gracias! 🙌
+
+Ahora elige el día y la hora de tu llamada de asesoría: se agenda una semana después, para poder analizar y preparar tu caso.
+
+Pulsa el botón para reservarla.`;
+    await enviarPropuesta(mc, "llamada", texto, url);
+    await sql()`insert into setter.eventos (persona_id, tipo, datos) values (${persona.id}, 'reserva_enviada_tras_pago', ${sql().json({ ficha: fichaId })})`;
+    return "\n✅ Se le ha mandado solo, por Instagram, el enlace para reservar su hora.";
+  } catch (e) {
+    const incierto = e instanceof ErrorManyChat && !e.definitivo;
+    await registrarError("manychat", e, { paso: "enviar enlace de reserva tras el pago", ficha: fichaId, incierto });
+    return aMano(incierto ? "No sé si el mensaje con el enlace salió; mira su chat antes de repetirlo." : "No se le pudo mandar el enlace por ManyChat.");
+  }
+}
+
 // Registra el pago una sola vez, lo apunta en el historial y avisa por Telegram. No cambia la fase ni marca ninguna venta:
 // eso lo decides tú en la ficha. Si es el pago de una asesoría, deja listo el enlace de reserva.
 export async function registrarPago(p: Pago): Promise<"nuevo" | "repetido"> {
@@ -111,11 +142,13 @@ export async function registrarPago(p: Pago): Promise<"nuevo" | "repetido"> {
     await sql()`insert into setter.eventos (persona_id, tipo, datos) values (${persona.id}, 'pago_recibido', ${sql().json({ importe_cents: p.importeCents, moneda: p.moneda })})`;
   }
 
+  // Pago de una asesoría: se le manda solo, por ManyChat, el enlace para elegir día y hora (con el flujo de «Propuesta llamada», que
+  // ya existe). Si no se puede (sin ManyChat, ventana de 24 h cerrada, error), el enlace llega a Telegram para enviárselo a mano.
   let reserva = "";
   if (persona && ficha && ficha.ruta === "asesoria" && p.unico) {
     try {
       const url = await crearEnlaceReserva(ficha.id as string);
-      if (url) reserva = `\nEnlace para que reserve su hora (envíaselo): ${url}`;
+      if (url) reserva = await enviarReservaTrasPago(persona, ficha.id as string, url);
     } catch (e) {
       await registrarError("reservas", e, { paso: "crear enlace de reserva tras el pago", ficha: ficha.id as string });
     }
