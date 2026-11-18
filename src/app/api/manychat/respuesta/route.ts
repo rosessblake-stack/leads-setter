@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 20;
 
 // ManyChat manda aquí cada respuesta del flujo «Seguimiento guía» (petición externa). Sin la clave correcta, no hace nada.
-export async function POST(req: Request) {
+async function tratar(req: Request) {
   const esperado = (process.env.MANYCHAT_WEBHOOK_SECRET ?? "").trim();
   if (!secretoValido(req.headers.get("x-manychat-secret"), esperado)) return new Response("No autorizado", { status: 401 });
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "desconocida";
@@ -30,3 +30,7 @@ export async function POST(req: Request) {
     return Response.json({ ok: false, error: "servidor" }, { status: 500 });
   }
 }
+
+// ManyChat puede mandarlo como POST (con cuerpo) o como GET (todo en la dirección, sin cuerpo).
+export const POST = tratar;
+export const GET = tratar;
