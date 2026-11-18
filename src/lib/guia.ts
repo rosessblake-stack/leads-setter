@@ -25,6 +25,12 @@ export function esAfirmativo(texto: string): boolean {
   return /^(si|claro|vale|quiero|me interesa|por supuesto|dale|ok)\b/.test(t);
 }
 
+// Un «no» claro («No», «no gracias»…). Cualquier otra respuesta que no sea un sí (por ejemplo «ahora no» o «lo pienso») no cuenta.
+export function esNegativo(texto: string): boolean {
+  const t = texto.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase().replace(/[.!¡]+$/g, "");
+  return /^(no|nop|no gracias|no, gracias|no quiero)$/.test(t);
+}
+
 // ManyChat puede meter el texto de la persona sin escapar las comillas y romper el JSON: si no se puede leer, se intenta sacar
 // los tres campos a mano (el texto es lo último del cuerpo).
 export function leerCuerpoManychat(t: string): { mc?: unknown; paso?: unknown; texto?: unknown } | null {
@@ -170,6 +176,19 @@ export async function guardarRespuestaSeguimiento(mc: string, paso: PasoSeguimie
   await sql().begin(async (tx) => {
     await tx`insert into setter.notas (ficha_id, texto) values (${f.ficha_id}, ${`Seguimiento de la guía · ${ETIQUETA_PASO[paso]}: ${limpio}`.slice(0, 2000)})`;
     await tx`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'seguimiento_respuesta', ${tx.json({ paso, afirmativo: paso === "asesoria" || paso === "leyo" ? esAfirmativo(limpio) : null })})`;
+    // Quien dice que no a la asesoría queda como «No vendido» (salvo que su ficha ya esté cerrada).
+    if (paso === "asesoria" && esNegativo(limpio)) {
+      const [fi] = await tx`select fase from setter.fichas where id = ${f.ficha_id} for update`;
+      if (fi && fi.fase !== "vendido" && fi.fase !== "no_vendido") {
+        await tx`
+          insert into setter.resultados (ficha_id, resultado, motivo, nota)
+          values (${f.ficha_id}, 'no_vendido', 'otro', 'Dijo que no a la asesoría en el seguimiento de la guía.')
+          on conflict (ficha_id) do nothing`;
+        await tx`update setter.fichas set fase = 'no_vendido' where id = ${f.ficha_id}`;
+        await tx`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'fase_cambiada', ${tx.json({ de: fi.fase, a: "no_vendido", automatico: true })})`;
+        await tx`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'resultado_registrado', ${tx.json({ resultado: "no_vendido", motivo: "otro", automatico: true })})`;
+      }
+    }
   });
   // Si no pudo abrir la guía o cuenta qué le pasó, es fricción de verdad: se avisa a Blake para que le escriba.
   if ((paso === "leyo" && !esAfirmativo(limpio)) || paso === "problema") {

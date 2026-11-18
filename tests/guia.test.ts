@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { esAfirmativo, leerCuerpoManychat, leerPeticionManychat, respuestasDe, secretoValido } from "@/lib/guia";
+import { esAfirmativo, esNegativo, leerCuerpoManychat, leerPeticionManychat, respuestasDe, secretoValido } from "@/lib/guia";
 
 describe("seguimiento de la guía", () => {
   it("reconoce respuestas afirmativas, con o sin tilde", () => {
@@ -66,5 +66,12 @@ describe("pasos nuevos: pudo abrir la guía", () => {
       { paso: "leyo", texto: "No" },
       { paso: "problema", texto: "No me abre el PDF" },
     ]);
+  });
+});
+
+describe("«no» claro a la asesoría", () => {
+  it("solo un no claro cuenta", () => {
+    for (const t of ["No", "no", " NO ", "No.", "no gracias", "No, gracias", "No quiero"]) expect(esNegativo(t)).toBe(true);
+    for (const t of ["Ahora no", "Sí", "no sé", "no, pero quizá más adelante", "tal vez", ""]) expect(esNegativo(t)).toBe(false);
   });
 });
