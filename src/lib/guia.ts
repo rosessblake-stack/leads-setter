@@ -38,20 +38,29 @@ export function leerCuerpoManychat(t: string): { mc?: unknown; paso?: unknown; t
   }
 }
 
+// Lo que puede mandar ManyChat: un solo paso (`paso` + `texto`) o varias respuestas a la vez (`opinion`, `aprendio`, `asesoria`).
+export type PeticionManychat = { mc?: unknown; paso?: unknown; texto?: unknown; opinion?: unknown; aprendio?: unknown; asesoria?: unknown };
+const CLAVES_PETICION = ["mc", "paso", "texto", "opinion", "aprendio", "asesoria"] as const;
+
 // Acepta el cuerpo como JSON, como formulario (clave=valor&clave=valor) o, en último caso, como parámetros de la dirección.
-export function leerPeticionManychat(t: string, tipo: string | null, busqueda: URLSearchParams): { mc?: unknown; paso?: unknown; texto?: unknown } | null {
-  let d: { mc?: unknown; paso?: unknown; texto?: unknown } | null = null;
+export function leerPeticionManychat(t: string, tipo: string | null, busqueda: URLSearchParams): PeticionManychat | null {
+  let d: PeticionManychat | null = null;
   if (t.trim() !== "") {
     if ((tipo ?? "").includes("application/x-www-form-urlencoded")) {
       const f = new URLSearchParams(t);
-      d = { mc: f.get("mc") ?? undefined, paso: f.get("paso") ?? undefined, texto: f.get("texto") ?? undefined };
+      d = Object.fromEntries(CLAVES_PETICION.map((k) => [k, f.get(k) ?? undefined]));
     } else {
       d = leerCuerpoManychat(t);
     }
   }
-  const de = (k: "mc" | "paso" | "texto") => d?.[k] ?? busqueda.get(k) ?? undefined;
-  const salida = { mc: de("mc"), paso: de("paso"), texto: de("texto") };
-  return salida.mc === undefined && salida.paso === undefined && salida.texto === undefined ? null : salida;
+  const salida: PeticionManychat = Object.fromEntries(CLAVES_PETICION.map((k) => [k, (d as Record<string, unknown> | null)?.[k] ?? busqueda.get(k) ?? undefined]));
+  return CLAVES_PETICION.every((k) => salida[k] === undefined) ? null : salida;
+}
+
+// Las respuestas que trae la petición, en orden: o un solo paso, o todas las que vengan rellenas.
+export function respuestasDe(d: PeticionManychat): { paso: string; texto: string }[] {
+  if (d.paso !== undefined) return [{ paso: String(d.paso), texto: String(d.texto ?? "").trim() }];
+  return PASOS_SEGUIMIENTO.map((paso) => ({ paso: paso as string, texto: String(d[paso] ?? "").trim() })).filter((r) => r.texto !== "");
 }
 
 export function secretoValido(recibido: string | null, esperado: string): boolean {

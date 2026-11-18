@@ -1,4 +1,4 @@
-import { ETIQUETA_PASO, guardarRespuestaSeguimiento, leerPeticionManychat, PASOS_SEGUIMIENTO, secretoValido, type PasoSeguimiento } from "@/lib/guia";
+import { ETIQUETA_PASO, guardarRespuestaSeguimiento, leerPeticionManychat, PASOS_SEGUIMIENTO, respuestasDe, secretoValido, type PasoSeguimiento } from "@/lib/guia";
 import { registrarError } from "@/lib/errores";
 import { permitido } from "@/lib/ratelimit";
 
@@ -16,13 +16,14 @@ export async function POST(req: Request) {
   const d = leerPeticionManychat(t, req.headers.get("content-type"), new URL(req.url).searchParams);
   if (!d) return Response.json({ ok: false, error: "json" }, { status: 400 });
   const mc = String(d.mc ?? "").trim();
-  const paso = String(d.paso ?? "") as PasoSeguimiento;
-  const texto = String(d.texto ?? "").trim();
   if (!/^\d{3,20}$/.test(mc)) return Response.json({ ok: false, error: "mc" }, { status: 400 });
-  if (!(PASOS_SEGUIMIENTO as readonly string[]).includes(paso)) return Response.json({ ok: false, error: "paso", validos: Object.keys(ETIQUETA_PASO) }, { status: 400 });
-  if (texto === "") return Response.json({ ok: false, error: "texto_vacio" }, { status: 400 });
+  const lista = respuestasDe(d);
+  if (lista.length === 0) return Response.json({ ok: false, error: "texto_vacio" }, { status: 400 });
+  if (lista.some((r) => !(PASOS_SEGUIMIENTO as readonly string[]).includes(r.paso))) return Response.json({ ok: false, error: "paso", validos: Object.keys(ETIQUETA_PASO) }, { status: 400 });
+  if (lista.some((r) => r.texto === "")) return Response.json({ ok: false, error: "texto_vacio" }, { status: 400 });
   try {
-    const guardada = await guardarRespuestaSeguimiento(mc, paso, texto);
+    let guardada = true;
+    for (const r of lista) guardada = (await guardarRespuestaSeguimiento(mc, r.paso as PasoSeguimiento, r.texto)) && guardada;
     return Response.json({ ok: guardada, ...(guardada ? {} : { error: "contacto_desconocido" }) }, { status: guardada ? 200 : 404 });
   } catch (e) {
     await registrarError("manychat", e, { paso: "guardar respuesta del seguimiento" });

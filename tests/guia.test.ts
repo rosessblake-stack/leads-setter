@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { esAfirmativo, leerCuerpoManychat, leerPeticionManychat, secretoValido } from "@/lib/guia";
+import { esAfirmativo, leerCuerpoManychat, leerPeticionManychat, respuestasDe, secretoValido } from "@/lib/guia";
 
 describe("seguimiento de la guía", () => {
   it("reconoce respuestas afirmativas, con o sin tilde", () => {
@@ -35,12 +35,26 @@ describe("cuerpo que manda ManyChat", () => {
 describe("petición de ManyChat en varios formatos", () => {
   const vacia = new URLSearchParams();
   it("JSON, formulario y parámetros de la dirección dan lo mismo", () => {
-    const esperado = { mc: "123", paso: "opinion", texto: "Genial" };
+    const esperado = { mc: "123", paso: "opinion", texto: "Genial", opinion: undefined, aprendio: undefined, asesoria: undefined };
     expect(leerPeticionManychat('{"mc":"123","paso":"opinion","texto":"Genial"}', "application/json", vacia)).toEqual(esperado);
     expect(leerPeticionManychat("mc=123&paso=opinion&texto=Genial", "application/x-www-form-urlencoded", vacia)).toEqual(esperado);
     expect(leerPeticionManychat("", null, new URLSearchParams("mc=123&paso=opinion&texto=Genial"))).toEqual(esperado);
   });
   it("sin nada que leer devuelve null", () => {
     expect(leerPeticionManychat("", null, vacia)).toBeNull();
+  });
+});
+
+describe("varias respuestas en una sola petición", () => {
+  it("saca las que vengan rellenas, en orden", () => {
+    const d = leerPeticionManychat('{"mc":"1","opinion":"Genial","aprendio":"","asesoria":"Sí, me interesa"}', "application/json", new URLSearchParams())!;
+    expect(respuestasDe(d)).toEqual([
+      { paso: "opinion", texto: "Genial" },
+      { paso: "asesoria", texto: "Sí, me interesa" },
+    ]);
+  });
+  it("un solo paso sigue funcionando", () => {
+    const d = leerPeticionManychat('{"mc":"1","paso":"aprendio","texto":"Mucho"}', "application/json", new URLSearchParams())!;
+    expect(respuestasDe(d)).toEqual([{ paso: "aprendio", texto: "Mucho" }]);
   });
 });
