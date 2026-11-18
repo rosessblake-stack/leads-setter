@@ -159,17 +159,22 @@ export async function diagnosticar(): Promise<Diagnostico> {
     const falta: string[] = [];
     if (llamada.length !== 1) falta.push(llamada.length === 0 ? "«Propuesta llamada» no aparece" : "«Propuesta llamada» está repetido");
     if (asesoria.length !== 1) falta.push(asesoria.length === 0 ? "«Propuesta asesoría» no aparece" : "«Propuesta asesoría» está repetido");
+    const seguimiento = lista.filter((f) => {
+      const n = normal(f.name);
+      return n.includes("seguimiento") && n.includes("guia");
+    });
+    if (seguimiento.length !== 1) falta.push(seguimiento.length === 0 ? "«Seguimiento guía» no aparece" : "«Seguimiento guía» está repetido");
     d.flujos.ok = falta.length === 0;
-    d.flujos.detalle = falta.length === 0 ? `Encuentra los dos flujos entre ${lista.length} automatizaciones` : `${falta.join("; ")} (hay ${lista.length} automatizaciones)`;
+    d.flujos.detalle = falta.length === 0 ? `Encuentra los tres flujos entre ${lista.length} automatizaciones` : `${falta.join("; ")} (hay ${lista.length} automatizaciones)`;
   } catch (e) {
     d.flujos.detalle = e instanceof Error ? e.message : "Sin respuesta";
   }
   try {
     const campos = ((await llamar("/fb/page/getCustomFields", "GET")) ?? []) as { name?: string }[];
     const nombres = campos.map((c) => String(c.name ?? ""));
-    const faltan = [CAMPO_TEXTO(), CAMPO_ENLACE()].filter((n) => !nombres.includes(n));
+    const faltan = [CAMPO_TEXTO(), CAMPO_ENLACE(), "guia_opinion", "guia_aprendio"].filter((n) => !nombres.includes(n));
     d.campos.ok = faltan.length === 0;
-    d.campos.detalle = faltan.length === 0 ? `Existen «${CAMPO_TEXTO()}» y «${CAMPO_ENLACE()}»` : `Faltan los campos: ${faltan.join(", ")}`;
+    d.campos.detalle = faltan.length === 0 ? `Existen «${CAMPO_TEXTO()}», «${CAMPO_ENLACE()}», «guia_opinion» y «guia_aprendio»` : `Faltan los campos: ${faltan.join(", ")}`;
   } catch (e) {
     d.campos.detalle = e instanceof Error ? e.message : "Sin respuesta";
   }

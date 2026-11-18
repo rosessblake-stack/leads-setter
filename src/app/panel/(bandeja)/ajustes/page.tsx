@@ -126,7 +126,7 @@ export default async function Ajustes({ searchParams }: { searchParams: Promise<
           <ul className="lista-diag">
             {([
               ["Conexión", diag.conexion],
-              ["Flujos de propuesta", diag.flujos],
+              ["Flujos (propuestas y seguimiento de la guía)", diag.flujos],
               ["Campos personalizados", diag.campos],
             ] as const).map(([titulo, r]) => (
               <li key={titulo}>
