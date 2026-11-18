@@ -2,6 +2,7 @@ import { sql } from "./db";
 import { PROMPT_VERSION, analizarFormulario, type FichaAnalizada } from "./analysis";
 import { avisarAdmin, construirMensaje, escaparHtml, resumenDe } from "./telegram";
 import type { LeadGuardado } from "./lead";
+import { campanaDe } from "@/formulario/campanas";
 import { programarPropuesta } from "./propuestas";
 import type { Solicitud } from "@/formulario/solicitud";
 import { registrarError } from "./errores";
@@ -78,6 +79,11 @@ export async function procesarLead(s: Solicitud, g: LeadGuardado, opciones: { hi
 
   // La propuesta se envía más tarde (entre 1 y 3 horas), no ahora. A un cliente anterior no se le manda ninguna.
   if (opciones.historico) return;
+  // Las campañas con regalo (como COBRAR) siguen su propio recorrido: la asesoría se ofrece en el seguimiento de la guía.
+  if (campanaDe(g.videoCodigo ?? s.v)?.sinPropuestaAutomatica) {
+    await sql()`insert into setter.eventos (persona_id, tipo, datos) values (${g.personaId}, 'propuesta_omitida', ${sql().json({ motivo: "campaña con su propio seguimiento" })})`.catch(() => undefined);
+    return;
+  }
   try {
     await programarPropuesta(g.fichaId, g.personaId, s.ruta);
   } catch (e) {

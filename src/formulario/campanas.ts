@@ -9,6 +9,8 @@ export type Campana = {
   bienvenida?: { titulo: string; texto: string };
   // Regalo para la pantalla final. Si no hay url, solo sale el texto de agradecimiento normal.
   regalo?: { titulo: string; boton: string; url: string };
+  // La campaña tiene su propio recorrido (guía → seguimiento → asesoría): no sale la propuesta automática de 1 a 3 h.
+  sinPropuestaAutomatica?: boolean;
 };
 
 export const CAMPANAS: Record<string, Campana> = {
@@ -22,6 +24,7 @@ export const CAMPANAS: Record<string, Campana> = {
         "Responde unas preguntas rápidas y, al terminar, te paso el PDF. Así te conozco un poco y puedo ayudarte mejor con tus precios.",
     },
     regalo: { titulo: "Aquí tienes tu guía", boton: "Descargar la guía", url: "/guia-cobrar-y-datos.pdf" },
+    sinPropuestaAutomatica: true,
   },
 };
 
