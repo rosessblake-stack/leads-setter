@@ -12,6 +12,8 @@ const config: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },
+      // Si alguien abre el PDF directamente, que se descargue en vez de verse dentro del navegador.
+      { source: "/guia-cobrar-y-datos.pdf", headers: [{ key: "Content-Disposition", value: 'attachment; filename="guia-cobrar-y-datos.pdf"' }] },
     ];
   },
 };
