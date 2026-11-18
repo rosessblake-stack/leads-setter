@@ -8,7 +8,12 @@ export const maxDuration = 20;
 // ManyChat manda aquí cada respuesta del flujo «Seguimiento guía» (petición externa). Sin la clave correcta, no hace nada.
 async function tratar(req: Request) {
   const esperado = (process.env.MANYCHAT_WEBHOOK_SECRET ?? "").trim();
-  if (!secretoValido(req.headers.get("x-manychat-secret"), esperado)) return new Response("No autorizado", { status: 401 });
+  const recibido = req.headers.get("x-manychat-secret");
+  if (!secretoValido(recibido, esperado)) {
+    // El motivo ayuda a configurar ManyChat y no revela ninguna clave.
+    const motivo = esperado.length < 16 ? "servidor_sin_clave_valida" : !recibido ? "falta_la_cabecera_x-manychat-secret" : "clave_incorrecta";
+    return Response.json({ ok: false, error: motivo }, { status: 401 });
+  }
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "desconocida";
   if (!(await permitido(`manychat-respuesta:${ip}`, 120, 10 * 60 * 1000))) return Response.json({ ok: false, error: "demasiadas_peticiones" }, { status: 429 });
   const t = await req.text().catch(() => "");
