@@ -1,4 +1,4 @@
-import { ETIQUETA_PASO, guardarRespuestaSeguimiento, PASOS_SEGUIMIENTO, secretoValido, type PasoSeguimiento } from "@/lib/guia";
+import { ETIQUETA_PASO, guardarRespuestaSeguimiento, leerCuerpoManychat, PASOS_SEGUIMIENTO, secretoValido, type PasoSeguimiento } from "@/lib/guia";
 import { registrarError } from "@/lib/errores";
 import { permitido } from "@/lib/ratelimit";
 
@@ -11,14 +11,10 @@ export async function POST(req: Request) {
   if (!secretoValido(req.headers.get("x-manychat-secret"), esperado)) return new Response("No autorizado", { status: 401 });
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "desconocida";
   if (!(await permitido(`manychat-respuesta:${ip}`, 120, 10 * 60 * 1000))) return Response.json({ ok: false, error: "demasiadas_peticiones" }, { status: 429 });
-  let d: { mc?: unknown; paso?: unknown; texto?: unknown };
-  try {
-    const t = await req.text();
-    if (t.length > 4000) return Response.json({ ok: false, error: "demasiado_grande" }, { status: 413 });
-    d = JSON.parse(t);
-  } catch {
-    return Response.json({ ok: false, error: "json" }, { status: 400 });
-  }
+  const t = await req.text().catch(() => "");
+  if (t.length > 4000) return Response.json({ ok: false, error: "demasiado_grande" }, { status: 413 });
+  const d = leerCuerpoManychat(t);
+  if (!d) return Response.json({ ok: false, error: "json" }, { status: 400 });
   const mc = String(d.mc ?? "").trim();
   const paso = String(d.paso ?? "") as PasoSeguimiento;
   const texto = String(d.texto ?? "").trim();

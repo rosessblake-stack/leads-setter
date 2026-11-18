@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { esAfirmativo, secretoValido } from "@/lib/guia";
+import { esAfirmativo, leerCuerpoManychat, secretoValido } from "@/lib/guia";
 
 describe("seguimiento de la guía", () => {
   it("reconoce respuestas afirmativas, con o sin tilde", () => {
@@ -15,5 +15,19 @@ describe("seguimiento de la guía", () => {
     expect(secretoValido(null, clave)).toBe(false);
     expect(secretoValido("corta", "corta")).toBe(false);
     expect(secretoValido("", "")).toBe(false);
+  });
+});
+
+describe("cuerpo que manda ManyChat", () => {
+  it("lee JSON normal", () => {
+    expect(leerCuerpoManychat('{"mc":"123","paso":"opinion","texto":"Genial"}')).toEqual({ mc: "123", paso: "opinion", texto: "Genial" });
+  });
+  it("rescata los campos si el texto trae comillas sin escapar", () => {
+    const d = leerCuerpoManychat('{"mc":"123","paso":"aprendio","texto":"Aprendí que "cobrar" es un oficio"}');
+    expect(d).toEqual({ mc: "123", paso: "aprendio", texto: 'Aprendí que "cobrar" es un oficio' });
+  });
+  it("devuelve null si no hay forma de leerlo", () => {
+    expect(leerCuerpoManychat("basura")).toBeNull();
+    expect(leerCuerpoManychat('{"mc":"1"')).toBeNull();
   });
 });

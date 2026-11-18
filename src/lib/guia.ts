@@ -23,6 +23,21 @@ export function esAfirmativo(texto: string): boolean {
   return /^(si|claro|vale|quiero|me interesa|por supuesto|dale|ok)\b/.test(t);
 }
 
+// ManyChat puede meter el texto de la persona sin escapar las comillas y romper el JSON: si no se puede leer, se intenta sacar
+// los tres campos a mano (el texto es lo último del cuerpo).
+export function leerCuerpoManychat(t: string): { mc?: unknown; paso?: unknown; texto?: unknown } | null {
+  try {
+    const d = JSON.parse(t);
+    return d && typeof d === "object" ? d : null;
+  } catch {
+    const campo = (k: string) => new RegExp(`"${k}"\\s*:\\s*"([^"]*)"`).exec(t)?.[1];
+    const texto = /"texto"\s*:\s*"([\s\S]*)"\s*}\s*$/.exec(t)?.[1];
+    const mc = campo("mc");
+    const paso = campo("paso");
+    return mc !== undefined && paso !== undefined && texto !== undefined ? { mc, paso, texto } : null;
+  }
+}
+
 export function secretoValido(recibido: string | null, esperado: string): boolean {
   if (!recibido || esperado.length < 16) return false;
   const a = Buffer.from(recibido);
