@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeAll } from "vitest";
-import { enHorarioDeEnvio, enlacePago, horaLocal, nombreSeguro, redactar } from "@/lib/propuestas";
+import { enHorarioDeEnvio, enlacePago, horaLocal, nombreSeguro, puedeEnviarAhora, redactar } from "@/lib/propuestas";
 
 describe("nombre dentro de un mensaje que se envía solo", () => {
   it("deja un nombre de pila normal", () => {
@@ -40,12 +40,23 @@ describe("enlace de pago con la persona identificada", () => {
 });
 
 describe("horario de envío en la zona de la persona", () => {
-  it("de 9:00 a 21:59", () => {
-    const t = new Date("2026-11-02T13:00:00Z"); // 14:00 en Madrid, 08:00 en México (UTC-5)
+  it("de 6:00 a 22:59", () => {
+    const t = new Date("2026-11-02T13:00:00Z"); // 14:00 en Madrid, 08:00 en Bogotá (UTC-5)
     expect(horaLocal(t, "Europe/Madrid")).toBe(14);
     expect(enHorarioDeEnvio(t, "Europe/Madrid")).toBe(true);
-    expect(enHorarioDeEnvio(t, "America/Bogota")).toBe(false); // 08:00
+    expect(enHorarioDeEnvio(t, "America/Bogota")).toBe(true); // 08:00
     expect(enHorarioDeEnvio(new Date("2026-11-02T03:00:00Z"), "Europe/Madrid")).toBe(false); // 04:00
+    expect(enHorarioDeEnvio(new Date("2026-11-02T04:59:00Z"), "Europe/Madrid")).toBe(false); // 05:59
+    expect(enHorarioDeEnvio(new Date("2026-11-02T05:00:00Z"), "Europe/Madrid")).toBe(true); // 06:00
+    expect(enHorarioDeEnvio(new Date("2026-11-02T21:59:00Z"), "Europe/Madrid")).toBe(true); // 22:59
+    expect(enHorarioDeEnvio(new Date("2026-11-02T22:00:00Z"), "Europe/Madrid")).toBe(false); // 23:00
+  });
+  it("de noche espera a las 6:00, salvo que la ventana de 24 h se cierre antes", () => {
+    const noche = new Date("2026-11-02T02:00:00Z"); // 03:00 en Madrid: faltan 3 h para las 6:00
+    expect(puedeEnviarAhora(noche, "Europe/Madrid", 1)).toBe(false); // 1 h + 3 h de espera: sobra margen
+    expect(puedeEnviarAhora(noche, "Europe/Madrid", 19)).toBe(false); // 19 + 3 = 22 h: aún cabe
+    expect(puedeEnviarAhora(noche, "Europe/Madrid", 20.5)).toBe(true); // 20,5 + 3 > 22,75 h: se envía ya, de noche
+    expect(puedeEnviarAhora(new Date("2026-11-02T14:00:00Z"), "Europe/Madrid", 22.9)).toBe(true); // de día siempre
   });
   it("una zona inválida usa la de España", () => {
     expect(horaLocal(new Date("2026-11-02T13:00:00Z"), "Marte/Olimpo")).toBe(14);

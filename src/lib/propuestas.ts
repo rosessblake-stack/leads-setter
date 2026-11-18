@@ -117,8 +117,8 @@ export async function programarPropuesta(fichaId: string, personaId: string, rut
 export type Modo = { modo: "calibracion" | "automatico"; restantes: number; pausa: boolean; tope: number };
 export const TOPE_DIARIO_POR_DEFECTO = 30;
 // Solo se escribe a la persona entre estas horas (en su zona horaria).
-export const HORA_PRIMERA = 9;
-export const HORA_ULTIMA = 21;
+export const HORA_PRIMERA = 6;
+export const HORA_ULTIMA = 22;
 
 export async function leerModo(): Promise<Modo> {
   const [a] = await sql()`select valor from setter.ajustes where clave = 'propuestas'`;
@@ -160,6 +160,18 @@ export const enHorarioDeEnvio = (ahora: Date, zona: string | null) => {
   return h >= HORA_PRIMERA && h <= HORA_ULTIMA;
 };
 
+// El temporizador pasa cada 5 minutos: se deja ese margen para no quedarse a las puertas del cierre de la ventana.
+const MARGEN_CICLO_H = 0.25;
+
+// ¿Se le puede escribir ahora? De 6:00 a 22:59 en su zona, sí. De noche, solo si esperar hasta las 6:00 haría que la ventana de 24 h
+// de Instagram se cerrase antes: entonces se envía igualmente, porque es mejor de noche que no llegar nunca.
+export function puedeEnviarAhora(ahora: Date, zona: string | null, horasDesdeInteraccion: number): boolean {
+  if (enHorarioDeEnvio(ahora, zona)) return true;
+  const h = horaLocal(ahora, zona);
+  const hastaLaPrimera = ((HORA_PRIMERA - h + 24) % 24) - ahora.getUTCMinutes() / 60;
+  return horasDesdeInteraccion + hastaLaPrimera > VENTANA_SEGURA_H - MARGEN_CICLO_H;
+}
+
 type Fila = {
   id: string;
   persona_id: string;
@@ -188,8 +200,6 @@ async function preparada(f: Fila, p: Propuesta, nota: string, restantesTexto: st
 async function aplazar(f: Fila) {
   await sql()`update setter.fichas set propuesta_estado = 'pendiente', propuesta_at = null, propuesta_programada_at = now() where id = ${f.id}`;
 }
-
-const norm = (x: string | null) => (x ?? "").trim().replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/\/.*$/, "").toLowerCase();
 
 async function procesarUna(f: Fila, ahora: Date): Promise<"enviada" | "preparada" | "espera"> {
   const ajustes = await leerModo();
@@ -237,20 +247,14 @@ async function procesarUna(f: Fila, ahora: Date): Promise<"enviada" | "preparada
     return "preparada";
   }
 
-  // El identificador de ManyChat viene de un enlace público: se comprueba que el contacto es de verdad esta persona
-  // (su usuario de Instagram coincide con el del formulario) y se mira cuándo interactuó por última vez.
+  // La identidad la da el ID de ManyChat (viene del enlace que le mandó ManyChat): no se exige que escriba bien su usuario.
+  // Aquí solo se mira cuándo interactuó por última vez.
   let info;
   try {
     info = await infoContacto(f.manychat_id);
   } catch (e) {
     await registrarError("manychat", e, { paso: "consultar contacto", ficha: f.id });
     await preparada(f, p, "No se pudo consultar el contacto en ManyChat: envíala a mano.", "no se pudo verificar el contacto");
-    return "preparada";
-  }
-  if (!info.instagram || norm(f.instagram) === "" || info.instagram !== norm(f.instagram)) {
-    const motivo = !info.instagram ? "ManyChat no dice el Instagram de este contacto" : "el Instagram del contacto de ManyChat no coincide con el del formulario";
-    await registrarError("manychat", `No se envía: ${motivo}`, { ficha: f.id });
-    await preparada(f, p, `No se ha enviado sola: ${motivo}. Compruébalo y envíala a mano.`, "no se pudo verificar que es la misma persona");
     return "preparada";
   }
   // Instagram cuenta las 24 h desde la última interacción de la persona (un mensaje o tocar un botón de respuesta),
@@ -261,12 +265,8 @@ async function procesarUna(f: Fila, ahora: Date): Promise<"enviada" | "preparada
     await preparada(f, p, `Han pasado más de ${VENTANA_SEGURA_H} h desde su última interacción: Instagram no deja escribir primero. Envíala a mano.`, "ventana de 24 h cerrada");
     return "preparada";
   }
-  // Solo de día en su zona horaria; si la ventana está a punto de cerrarse, se prepara a mano en vez de esperar.
-  if (!enHorarioDeEnvio(ahora, f.zona)) {
-    if (VENTANA_SEGURA_H - horas < 3) {
-      await preparada(f, p, "Es de noche para esta persona y la ventana de 24 h se cierra pronto: envíala a mano mañana.", "fuera de horario");
-      return "preparada";
-    }
+  // De 6:00 a 22:59 en su zona horaria; de noche solo se espera si todavía da tiempo a enviarla antes de que se cierre la ventana.
+  if (!puedeEnviarAhora(ahora, f.zona, horas)) {
     await aplazar(f);
     return "espera";
   }

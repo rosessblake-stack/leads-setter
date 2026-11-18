@@ -189,7 +189,7 @@ export default async function Ajustes({ searchParams }: { searchParams: Promise<
             : `calibración (te llegan a Telegram para revisarlas; faltan ${modo.restantes} para pasar a automático)`}
         </p>
         <p className="resumen">
-          Envío: {modo.pausa ? "PAUSADO (no sale ninguna propuesta)" : `activo · máximo ${modo.tope} al día · de ${HORA_PRIMERA}:00 a ${HORA_ULTIMA}:59 en la zona horaria de la persona`}
+          Envío: {modo.pausa ? "PAUSADO (no sale ninguna propuesta)" : `activo · máximo ${modo.tope} al día · de ${HORA_PRIMERA}:00 a ${HORA_ULTIMA}:59 en la zona horaria de la persona (de noche solo si la ventana de 24 h de Instagram se cerraría antes de las ${HORA_PRIMERA}:00)`}
         </p>
         <form method="post" action="/panel/propuestas/modo">
           <input type="hidden" name="modo" value={modo.pausa ? "reanudar" : "pausar"} />

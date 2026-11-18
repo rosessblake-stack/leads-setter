@@ -3,7 +3,7 @@ import { urlPanel } from "@/lib/config";
 import { sql } from "@/lib/db";
 import { registrarError } from "@/lib/errores";
 import { buscarFlujoSeguimiento, ErrorManyChat, infoContacto, lanzarSeguimientoGuia, manychatConfigurado } from "@/lib/manychat";
-import { enHorarioDeEnvio, enlacePago, VENTANA_SEGURA_H } from "@/lib/propuestas";
+import { enlacePago, puedeEnviarAhora, VENTANA_SEGURA_H } from "@/lib/propuestas";
 import { avisarAdmin, escaparHtml } from "@/lib/telegram";
 
 // Cuántas horas después de descargar la guía se lanza el mensaje de seguimiento. Debe ser menor que la ventana de 24 h de Instagram.
@@ -128,11 +128,8 @@ export async function procesarSeguimientoGuia(ahora = new Date()): Promise<numbe
         await omitir("la ventana de 24 h de Instagram ya está cerrada");
         continue;
       }
-      if (!enHorarioDeEnvio(ahora, c.zona)) {
-        // De noche en su zona: se espera al siguiente ciclo, salvo que la ventana esté a punto de cerrarse.
-        if (VENTANA_SEGURA_H - horas < 3) await omitir("es de noche para esta persona y la ventana de 24 h se cierra pronto");
-        continue;
-      }
+      // De 6:00 a 22:59 en su zona; de noche solo se espera si aún da tiempo antes de que se cierre la ventana de 24 h.
+      if (!puedeEnviarAhora(ahora, c.zona, horas)) continue;
       const pagoBase = process.env.STRIPE_LINK_ASESORIA ?? "";
       if (!pagoBase) {
         await registrarError("propuestas", "Falta el enlace de pago de la asesoría para el seguimiento de la guía", { ficha: c.ficha_id });
