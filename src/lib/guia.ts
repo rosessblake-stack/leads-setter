@@ -83,10 +83,8 @@ type Candidato = {
   descargo_at: Date;
 };
 
-const norm = (x: string | null) => (x ?? "").trim().replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/\/.*$/, "").toLowerCase();
-
 // Lo llama el temporizador. A quien descargó la guía hace entre 18 y 23 h, le lanza el flujo «Seguimiento guía» de ManyChat,
-// con el enlace de pago de la asesoría ya puesto. Solo si se puede comprobar que es de verdad esa persona y que la ventana de
+// con el enlace de pago de la asesoría ya puesto. Solo si la ventana de
 // 24 h de Instagram sigue abierta; si no, se avisa a Blake para que escriba a mano.
 export async function procesarSeguimientoGuia(ahora = new Date()): Promise<number> {
   if (!manychatConfigurado()) return 0;
@@ -123,10 +121,7 @@ export async function procesarSeguimientoGuia(ahora = new Date()): Promise<numbe
         await avisarAdmin(`⚠️ No se lanzó el seguimiento de la guía a <b>${escaparHtml(c.nombre.slice(0, 60))}</b>: ${escaparHtml(motivo)}. Escríbele tú si quieres.\n${urlPanel()}/panel/lead/${c.ficha_id}`).catch(() => false);
       };
       const info = await infoContacto(c.manychat_id);
-      if (!info.instagram || norm(c.instagram) === "" || info.instagram !== norm(c.instagram)) {
-        await omitir("no se pudo comprobar que el contacto de ManyChat es la misma persona");
-        continue;
-      }
+      // La identidad la da el ID de ManyChat (viene del enlace que le mandó ManyChat): no se exige que escriba bien su usuario.
       const desde = info.ultimaInteraccion ?? new Date(c.descargo_at);
       const horas = (ahora.getTime() - desde.getTime()) / 3600_000;
       if (horas > VENTANA_SEGURA_H) {
