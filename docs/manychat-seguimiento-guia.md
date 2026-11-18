@@ -4,7 +4,7 @@ Flujo «Seguimiento guía»: lo lanza el sistema 18 horas después de que alguie
 
 ## Antes de empezar
 1. Vercel: variable `MANYCHAT_WEBHOOK_SECRET` (clave del generador de Ajustes, 30+ caracteres, Sensitive) y Redeploy.
-2. ManyChat: campos de texto `guia_opinion`, `guia_aprendio`, `guia_problema` (`propuesta_enlace` ya existe).
+2. ManyChat: campos de texto para las respuestas libres (por ejemplo `guia_opinion`, `guia_aprendido`, `guia_problema`; el nombre es libre, mi sistema solo recibe su valor por la dirección). `propuesta_enlace` ya existe y ese sí tiene que llamarse así.
 3. Cada petición externa: método GET, sin cuerpo, cabecera `x-manychat-secret` con la clave.
 4. Base de todas las direcciones: `https://leads-setter.vercel.app/api/manychat/respuesta`
 5. Variable del ID del contacto: la misma que va en el enlace del formulario (`mc=`). Insertar siempre las variables con el botón `{ }`.

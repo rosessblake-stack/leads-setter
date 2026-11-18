@@ -172,9 +172,9 @@ export async function diagnosticar(): Promise<Diagnostico> {
   try {
     const campos = ((await llamar("/fb/page/getCustomFields", "GET")) ?? []) as { name?: string }[];
     const nombres = campos.map((c) => String(c.name ?? ""));
-    const faltan = [CAMPO_TEXTO(), CAMPO_ENLACE(), "guia_opinion", "guia_aprendio", "guia_problema"].filter((n) => !nombres.includes(n));
+    const faltan = [CAMPO_TEXTO(), CAMPO_ENLACE()].filter((n) => !nombres.includes(n));
     d.campos.ok = faltan.length === 0;
-    d.campos.detalle = faltan.length === 0 ? `Existen «${CAMPO_TEXTO()}», «${CAMPO_ENLACE()}», «guia_opinion», «guia_aprendio» y «guia_problema»` : `Faltan los campos: ${faltan.join(", ")}`;
+    d.campos.detalle = faltan.length === 0 ? `Existen «${CAMPO_TEXTO()}» y «${CAMPO_ENLACE()}»` : `Faltan los campos: ${faltan.join(", ")}`;
   } catch (e) {
     d.campos.detalle = e instanceof Error ? e.message : "Sin respuesta";
   }
