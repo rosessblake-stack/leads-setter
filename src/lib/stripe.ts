@@ -5,6 +5,7 @@ import { registrarError } from "@/lib/errores";
 import { ErrorManyChat, enviarPropuesta, infoContacto, manychatConfigurado } from "@/lib/manychat";
 import { nombreSeguro, VENTANA_SEGURA_H } from "@/lib/propuestas";
 import { crearEnlaceReserva } from "@/lib/reservas";
+import { registrarResultado } from "@/lib/seguimiento";
 import { avisarAdmin, escaparHtml } from "@/lib/telegram";
 
 const TOLERANCIA_S = 5 * 60;
@@ -87,7 +88,7 @@ export function pagoDe(evento: { type?: string; data?: { object?: Record<string,
 const euros = (c: number, moneda: string) => `${(c / 100).toLocaleString("es-ES", { minimumFractionDigits: c % 100 ? 2 : 0 })} ${moneda === "EUR" ? "€" : moneda}`;
 
 // Intenta mandar el enlace de reserva a la persona por ManyChat. Devuelve el texto para el aviso de Telegram.
-async function enviarReservaTrasPago(persona: { id: string; nombre: string }, fichaId: string, url: string): Promise<string> {
+export async function enviarReservaTrasPago(persona: { id: string; nombre: string }, fichaId: string, url: string): Promise<string> {
   const aMano = (motivo: string) => `\n⚠️ ${motivo} Envíale tú este enlace para que reserve su hora: ${url}`;
   const [pe] = await sql()`select manychat_id from setter.personas where id = ${persona.id}`;
   const mc = pe?.manychat_id as string | null | undefined;
@@ -113,6 +114,44 @@ Pulsa el botón para reservarla.`;
     await registrarError("manychat", e, { paso: "enviar enlace de reserva tras el pago", ficha: fichaId, incierto });
     return aMano(incierto ? "No sé si el mensaje con el enlace salió; mira su chat antes de repetirlo." : "No se le pudo mandar el enlace por ManyChat.");
   }
+}
+
+// Pago recibido fuera de Stripe (Bizum, efectivo…): lo marca Blake en la ficha. Registra la venta y, si es una asesoría, manda sola
+// la persona el enlace para elegir día y hora (o lo deja en Telegram si no se puede).
+export async function registrarPagoManual(fichaId: string, importeCents: number | null): Promise<boolean> {
+  const [f] = await sql()`
+    select fi.persona_id, p.nombre, fo.ruta from setter.fichas fi
+    join setter.personas p on p.id = fi.persona_id join setter.formularios fo on fo.id = fi.formulario_id where fi.id = ${fichaId}`;
+  if (!f) return false;
+  const producto = f.ruta === "online" || f.ruta === "presencial" ? (f.ruta as "online" | "presencial") : "asesoria";
+  await registrarResultado(fichaId, {
+    resultado: "vendido",
+    producto,
+    importe_cents: importeCents,
+    forma_pago: "otra",
+    edicion: null,
+    nota: "Pago recibido por otra vía (fuera de Stripe).",
+  });
+  await sql()`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'pago_manual', ${sql().json({ importe_cents: importeCents })})`;
+  let reserva = "";
+  if (f.ruta === "asesoria") {
+    const [ya] = await sql()`select 1 as x from setter.eventos where persona_id = ${f.persona_id} and tipo = 'reserva_enviada_tras_pago' and creado_at > now() - interval '10 minutes'`;
+    if (ya) {
+      reserva = "\nEl enlace de reserva ya se le había mandado hace un momento.";
+    } else {
+      try {
+        const url = await crearEnlaceReserva(fichaId);
+        if (url) reserva = await enviarReservaTrasPago({ id: f.persona_id as string, nombre: String(f.nombre) }, fichaId, url);
+      } catch (e) {
+        await registrarError("reservas", e, { paso: "enlace de reserva tras un pago manual", ficha: fichaId });
+        reserva = "\n⚠️ No se pudo crear el enlace de reserva; créalo desde la ficha.";
+      }
+    }
+  }
+  await avisarAdmin(
+    `💳 Pago por otra vía registrado: <b>${escaparHtml(String(f.nombre).slice(0, 60))}</b>${importeCents !== null ? ` · ${escaparHtml(euros(importeCents, "EUR"))}` : ""}${reserva}\n${urlPanel()}/panel/lead/${fichaId}`,
+  ).catch(() => false);
+  return true;
 }
 
 // Registra el pago una sola vez, lo apunta en el historial y avisa por Telegram. No cambia la fase ni marca ninguna venta:

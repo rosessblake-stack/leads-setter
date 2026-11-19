@@ -156,6 +156,22 @@ export function Seguimiento({ d, aviso }: { d: DatosSeguimiento; aviso: { tipo: 
         <p className="ayuda">Hora de España. Para quitar la reserva, borra la fecha y guarda.</p>
       </Sub>
 
+      {d.ruta === "asesoria" && (
+        <Sub id="pago-manual" titulo="Pago recibido por otra vía (Bizum, efectivo)">
+          <p className="ayuda">
+            Úsalo cuando ya te ha pagado fuera de Stripe. Registra la venta de la asesoría y le manda sola, por Instagram, el enlace para elegir día y hora (si no se puede, te
+            lo deja en Telegram).
+          </p>
+          <FormularioAjax action={accion} className="formulario-seg">
+            <input type="hidden" name="accion" value="pago_manual" />
+            <label>Importe (€, opcional)
+              <input type="text" inputMode="decimal" name="importe" placeholder="Por ejemplo, 100" />
+            </label>
+            <button type="submit" className="principal">Registrar pago y enviar enlace de reserva</button>
+          </FormularioAjax>
+        </Sub>
+      )}
+
       <Sub id="resultado" titulo="Resultado de la venta" resumen={resumenResultado}>
         {r && (
           <p className="resumen">

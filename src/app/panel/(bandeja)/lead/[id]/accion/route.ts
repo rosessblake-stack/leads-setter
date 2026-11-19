@@ -10,8 +10,9 @@ import {
   marcarCasoExito,
   registrarResultado,
 } from "@/lib/seguimiento";
-import { leerExito, leerFaseManual, leerNota, leerPropuesta, leerReserva, leerResultado, leerTelefono } from "@/lib/seguimiento-util";
+import { aCentimos, leerExito, leerFaseManual, leerNota, leerPropuesta, leerReserva, leerResultado, leerTelefono } from "@/lib/seguimiento-util";
 import { registrarError } from "@/lib/errores";
+import { registrarPagoManual } from "@/lib/stripe";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -67,6 +68,13 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         const r = leerResultado(get);
         if (!r.ok) return fallo(r.error);
         existe = await registrarResultado(id, r.valor);
+        break;
+      }
+      case "pago_manual": {
+        const bruto = String(get("importe") ?? "").trim();
+        const importe = bruto === "" ? null : aCentimos(bruto);
+        if (importe !== null && Number.isNaN(importe)) return fallo("El importe no es válido.");
+        existe = await registrarPagoManual(id, importe);
         break;
       }
       case "telefono": {
