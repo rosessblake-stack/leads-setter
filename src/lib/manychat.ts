@@ -131,7 +131,8 @@ export async function enviarPropuesta(subscriberId: string, tipo: TipoFlujo, tex
   await llamar("/fb/subscriber/setCustomFields", "POST", {
     subscriber_id: Number(subscriberId) || subscriberId,
     fields: [
-      { field_name: CAMPO_TEXTO(), field_value: texto },
+      // El enlace va también escrito en el texto: si el botón no se abre (pasa en algunos móviles), se puede tocar desde ahí.
+      { field_name: CAMPO_TEXTO(), field_value: `${texto}\n\nSi el botón no te abre, entra aquí: ${enlace}` },
       { field_name: CAMPO_ENLACE(), field_value: enlace },
     ],
   });
