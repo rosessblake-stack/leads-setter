@@ -1,7 +1,7 @@
 import { urlPanel } from "@/lib/config";
 import { sql } from "@/lib/db";
 import { registrarError } from "@/lib/errores";
-import { ErrorManyChat, enviarPropuesta, infoContacto, manychatConfigurado } from "@/lib/manychat";
+import { ErrorManyChat, enviarMensaje, infoContacto, manychatConfigurado } from "@/lib/manychat";
 import { enlacePago, temasDe, VENTANA_SEGURA_H } from "@/lib/propuestas";
 import { redactarRespuesta } from "@/lib/respuesta-personal";
 import { avisarAdmin, escaparHtml } from "@/lib/telegram";
@@ -12,7 +12,7 @@ const dePaso = (notas: { texto: string }[], etiqueta: string) => {
 };
 
 // Para quien contó qué le pareció y qué aprendió y no recibió nada después: se redacta la respuesta personal y se le manda,
-// junto con la invitación a la asesoría (con el flujo «Propuesta asesoría», cuyo botón lleva al pago). `pegado` es lo que
+// junto con la invitación a la asesoría, en un mensaje directo con un botón al pago. `pegado` es lo que
 // contó, si no quedó guardado (por ejemplo, si la petición de ManyChat falló).
 export async function forzarRespuestaSeguimiento(fichaId: string, pegado: string | null): Promise<boolean> {
   const [f] = await sql()`
@@ -34,7 +34,7 @@ export async function forzarRespuestaSeguimiento(fichaId: string, pegado: string
   const pagoBase = process.env.STRIPE_LINK_ASESORIA ?? "";
   const enlace = pagoBase ? enlacePago(pagoBase, fichaId, String(f.email ?? "")) : "";
   const invitacion = "Si quieres trabajarlo conmigo en una asesoría de 1 hora, el primer paso para reservarla es el pago.";
-  const cuerpo = `${respuesta}\n\n${invitacion} Pulsa el botón para hacerlo.`;
+  const cuerpo = `${respuesta}\n\n${invitacion} Pulsa el botón para hacerlo.${enlace ? `\n\nSi el botón no te abre, entra aquí: ${enlace}` : ""}`;
   const intento = (enviado: boolean) =>
     sql()`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'respuesta_seguimiento_forzada', ${sql().json({ enviado })})`.catch(() => undefined);
   const aMano = async (motivo: string) => {
@@ -53,7 +53,8 @@ export async function forzarRespuestaSeguimiento(fichaId: string, pegado: string
       await aMano(`Han pasado más de ${VENTANA_SEGURA_H} h desde su última interacción y Instagram no deja escribir primero.`);
       return true;
     }
-    await enviarPropuesta(mc, "asesoria", cuerpo, enlace);
+    // Mensaje directo (sin flujos «Propuesta…»): la campaña solo usa «Cobrar Historia» y «Seguimiento guía».
+    await enviarMensaje(mc, cuerpo, { caption: "Reservar mi asesoría", url: enlace });
   } catch (e) {
     const incierto = e instanceof ErrorManyChat && !e.definitivo;
     await registrarError("manychat", e, { paso: "forzar la respuesta del seguimiento", ficha: fichaId, incierto });

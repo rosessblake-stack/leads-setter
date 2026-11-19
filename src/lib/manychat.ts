@@ -140,6 +140,21 @@ export async function enviarPropuesta(subscriberId: string, tipo: TipoFlujo, tex
   await llamar("/fb/sending/sendFlow", "POST", { subscriber_id: Number(subscriberId) || subscriberId, flow_ns: flow });
 }
 
+// Mensaje directo por Instagram, sin pasar por ningún flujo (solo dentro de las 24 h desde la última interacción de la persona).
+// Se usa para las respuestas que mandamos desde el sistema fuera del hilo normal de las automatizaciones.
+export async function enviarMensaje(subscriberId: string, texto: string, boton?: { caption: string; url: string }): Promise<void> {
+  await llamar("/fb/sending/sendContent", "POST", {
+    subscriber_id: Number(subscriberId) || subscriberId,
+    data: {
+      version: "v2",
+      content: {
+        type: "instagram",
+        messages: [{ type: "text", text: texto, ...(boton ? { buttons: [{ type: "url", caption: boton.caption.slice(0, 20), url: boton.url }] } : {}) }],
+      },
+    },
+  });
+}
+
 export type Diagnostico = {
   conexion: { ok: boolean; detalle: string };
   flujos: { ok: boolean; detalle: string; encontrados: string[] };

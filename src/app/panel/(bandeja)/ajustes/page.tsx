@@ -176,6 +176,7 @@ export default async function Ajustes({ searchParams }: { searchParams: Promise<
                 <option value="llamada">Propuesta llamada</option>
                 <option value="asesoria">Propuesta asesoría</option>
                 <option value="seguimiento">Seguimiento guía (mensajes tras descargar la guía)</option>
+                <option value="mensaje">Mensaje directo con botón (sin flujo)</option>
               </select>
             </label>
             <button type="submit" className="secundario">Enviarme una prueba</button>
