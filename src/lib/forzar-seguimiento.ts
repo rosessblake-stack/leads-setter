@@ -26,6 +26,7 @@ export async function forzarRespuestaSeguimiento(fichaId: string, pegado: string
   const opinion = dePaso(notas, "Qué le pareció la guía");
   const aprendio = pegado?.trim() || dePaso(notas, "Qué aprendió");
   if (!opinion && !aprendio) {
+    await sql()`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'respuesta_seguimiento_forzada', ${sql().json({ enviado: false, motivo: "sin texto" })})`.catch(() => undefined);
     await avisarAdmin(`⚠️ No hay nada guardado de lo que <b>${escaparHtml(nombre)}</b> contó de la guía. Pega su texto en la ficha y vuelve a pulsar.\n${ficha}`).catch(() => false);
     return true;
   }
@@ -34,8 +35,12 @@ export async function forzarRespuestaSeguimiento(fichaId: string, pegado: string
   const enlace = pagoBase ? enlacePago(pagoBase, fichaId, String(f.email ?? "")) : "";
   const invitacion = "Si quieres trabajarlo conmigo en una asesoría de 1 hora, el primer paso para reservarla es el pago.";
   const cuerpo = `${respuesta}\n\n${invitacion} Pulsa el botón para hacerlo.`;
-  const aMano = (motivo: string) =>
-    avisarAdmin(`⚠️ ${motivo} Envíale tú este mensaje a <b>${escaparHtml(nombre)}</b>:\n\n${escaparHtml(respuesta)}\n\n${escaparHtml(invitacion)}${enlace ? ` Pago: ${escaparHtml(enlace)}` : ""}\n${ficha}`).catch(() => false);
+  const intento = (enviado: boolean) =>
+    sql()`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'respuesta_seguimiento_forzada', ${sql().json({ enviado })})`.catch(() => undefined);
+  const aMano = async (motivo: string) => {
+    await intento(false);
+    await avisarAdmin(`⚠️ ${motivo} Envíale tú este mensaje a <b>${escaparHtml(nombre)}</b>:\n\n${escaparHtml(respuesta)}\n\n${escaparHtml(invitacion)}${enlace ? ` Pago: ${escaparHtml(enlace)}` : ""}\n${ficha}`).catch(() => false);
+  };
   const mc = f.manychat_id as string | null;
   if (!mc || !manychatConfigurado() || !enlace) {
     await aMano(!mc ? "No viene de ManyChat." : !enlace ? "Falta el enlace de pago de la asesoría." : "ManyChat no está configurado.");
@@ -55,7 +60,38 @@ export async function forzarRespuestaSeguimiento(fichaId: string, pegado: string
     await aMano(incierto ? "No sé si el mensaje salió; mira su chat antes de repetirlo." : "No se pudo enviar por ManyChat.");
     return true;
   }
-  await sql()`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'respuesta_seguimiento_forzada', '{}'::jsonb)`;
+  await intento(true);
   await avisarAdmin(`✅ Respuesta del seguimiento enviada a <b>${escaparHtml(nombre)}</b>:\n\n${escaparHtml(respuesta)}\n\n${escaparHtml(invitacion)}\n${ficha}`).catch(() => false);
   return true;
+}
+
+// Red de seguridad: a quien ya contó qué aprendió y 20 minutos después sigue sin recibir nada (ni respuesta personal ni pregunta de la
+// asesoría), se le manda la respuesta con la invitación. También atiende las peticiones que Blake deja «solicitadas» desde fuera del panel.
+// Máximo 3 por pasada y solo dentro de la ventana de 24 h de Instagram.
+export async function procesarRespuestasAtascadas(): Promise<number> {
+  const filas = (await sql()`
+    select fi.id as ficha_id from setter.eventos e
+    join setter.personas p on p.id = e.persona_id
+    join lateral (select id, fase from setter.fichas where persona_id = p.id order by creado_at desc limit 1) fi on true
+    where p.manychat_id is not null and fi.fase not in ('vendido', 'no_vendido', 'descartado')
+      and (
+        (e.tipo = 'respuesta_seguimiento_solicitada'
+          and not exists (select 1 from setter.eventos x where x.persona_id = p.id and x.tipo = 'respuesta_seguimiento_forzada' and x.creado_at > e.creado_at))
+        or
+        (e.tipo = 'seguimiento_respuesta' and e.datos ->> 'paso' = 'aprendio'
+          and e.creado_at < now() - interval '20 minutes' and e.creado_at > now() - interval '22 hours'
+          and not exists (select 1 from setter.eventos x where x.persona_id = p.id and (
+                x.tipo in ('respuesta_personal', 'respuesta_seguimiento_forzada', 'respuesta_seguimiento_solicitada')
+                or (x.tipo = 'seguimiento_respuesta' and x.datos ->> 'paso' in ('asesoria', 'motivo')))))
+      )
+    group by fi.id order by min(e.creado_at) limit 3`) as unknown as { ficha_id: string }[];
+  let n = 0;
+  for (const r of filas) {
+    try {
+      if (await forzarRespuestaSeguimiento(r.ficha_id, null)) n++;
+    } catch (e) {
+      await registrarError("manychat", e, { paso: "respuesta atascada del seguimiento", ficha: r.ficha_id });
+    }
+  }
+  return n;
 }

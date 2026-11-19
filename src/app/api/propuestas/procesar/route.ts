@@ -3,6 +3,7 @@ import { sql } from "@/lib/db";
 import { reanalizarPendientes } from "@/lib/proceso";
 import { procesarPropuestas } from "@/lib/propuestas";
 import { procesarSeguimientoGuia } from "@/lib/guia";
+import { procesarRespuestasAtascadas } from "@/lib/forzar-seguimiento";
 import { limpiarComentarios } from "@/lib/instagram";
 import { procesarLlamadas } from "@/lib/llamadas";
 import { recordarPreparaciones } from "@/lib/recordatorios";
@@ -41,9 +42,13 @@ export async function POST(req: Request) {
       await registrarError("manychat", e, { paso: "seguimiento de la guía" });
       return 0;
     });
+    const atascadas = await procesarRespuestasAtascadas().catch(async (e) => {
+      await registrarError("manychat", e, { paso: "respuestas atascadas" });
+      return 0;
+    });
     await limpiarComentarios().catch(() => undefined);
     const r = await procesarPropuestas();
-    return Response.json({ ok: true, ...r, reanalizadas, recordadas, llamadas, seguimientos });
+    return Response.json({ ok: true, ...r, reanalizadas, recordadas, llamadas, seguimientos, atascadas });
   } catch (e) {
     await registrarError("propuestas", e, { paso: "temporizador" });
     return Response.json({ ok: false }, { status: 500 });

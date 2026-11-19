@@ -87,7 +87,16 @@ export async function prepararRespuestaPersonal(mc: string, opinion: string, apr
       join setter.formularios fo on fo.id = fi.formulario_id
       where p.manychat_id = ${mc}`;
     if (!f) return null;
-    const texto = await redactarRespuesta({ nombre: String(f.nombre), opinion, aprendio, temas: temasDe(f.a01) });
+    // Si la petición solo trae «qué aprendió» (porque «qué te pareció» se guardó antes, en otra petición), se usa la opinión guardada.
+    let opinionFinal = opinion;
+    if (!opinionFinal) {
+      const [n] = await sql()`
+        select n.texto from setter.notas n
+        join setter.fichas fi on fi.id = n.ficha_id join setter.personas p on p.id = fi.persona_id
+        where p.manychat_id = ${mc} and n.texto like 'Seguimiento de la guía · Qué le pareció la guía:%' order by n.creado_at desc limit 1`;
+      if (n) opinionFinal = String(n.texto).slice(String(n.texto).indexOf(":") + 1).trim();
+    }
+    const texto = await redactarRespuesta({ nombre: String(f.nombre), opinion: opinionFinal, aprendio, temas: temasDe(f.a01) });
     const msClaude = Date.now() - inicio;
     // ManyChat solo espera ~10 s a esta petición: guardar el campo no puede alargarla más de 3 s.
     const guardado = guardarCampo(mc, CAMPO_RESPUESTA(), texto).then(
