@@ -70,14 +70,18 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
   const patron = f.q ? patronBusqueda(f.q) : null;
 
   // Sin contactar: fase «Nuevo», propuesta sin enviar y más de 24 h desde el formulario (se cierra la ventana de Instagram).
-  const SIN_CONTACTAR = sql()`(fi.fase = 'nuevo' and fi.propuesta_estado in ('pendiente', 'no_enviada', 'incierto') and f.creado_at < now() - interval '24 hours')`;
+  // Quien viene de una campaña con seguimiento propio no recibe «propuesta»: su recorrido es la guía y el seguimiento. Cuenta como contactada
+  // en cuanto se le lanza el seguimiento, y no se le espera en «por enviar».
+  const SEGUIDA = sql()`exists (select 1 from setter.eventos z where z.persona_id = fi.persona_id and z.tipo = 'seguimiento_guia_lanzado')`;
+  const SIN_PROPUESTA_POR_CAMPANA = sql()`exists (select 1 from setter.eventos z where z.persona_id = fi.persona_id and z.tipo = 'propuesta_omitida' and z.datos ->> 'motivo' = 'campaña con su propio seguimiento')`;
+  const SIN_CONTACTAR = sql()`(fi.fase = 'nuevo' and fi.propuesta_estado in ('pendiente', 'no_enviada', 'incierto') and f.creado_at < now() - interval '24 hours' and not ${SEGUIDA})`;
   // Cada vista es una pregunta concreta: ¿a quién falta escribir?, ¿quién no ha reservado?...
   const vistaSql = sql()`(
     ${f.vista}::text is null
     or (${f.vista}::text = 'casos_exito' and fi.caso_exito)
     or (fi.origen = 'sistema' and (
          (${f.vista}::text = 'sin_contactar' and ${SIN_CONTACTAR})
-      or (${f.vista}::text = 'por_enviar' and fi.propuesta_estado in ('pendiente', 'no_enviada', 'incierto') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
+      or (${f.vista}::text = 'por_enviar' and fi.propuesta_estado in ('pendiente', 'no_enviada', 'incierto') and fi.fase not in ('vendido', 'no_vendido', 'descartado') and not ${SIN_PROPUESTA_POR_CAMPANA})
       or (${f.vista}::text = 'sin_agendar' and fi.reserva_at is null and f.ruta is distinct from 'asesoria'
           and fi.propuesta_estado in ('enviada', 'manual') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))
       or (${f.vista}::text = 'agendadas' and fi.reserva_at is not null and fi.fase not in ('vendido', 'no_vendido', 'descartado'))

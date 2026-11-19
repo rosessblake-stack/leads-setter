@@ -13,8 +13,10 @@ export async function GET() {
       () => sql()`
         select
           count(*)::int as todos,
-          count(*) filter (where fi.origen = 'sistema' and fi.fase = 'nuevo' and fi.propuesta_estado in ('pendiente', 'no_enviada', 'incierto') and f.creado_at < now() - interval '24 hours')::int as sin_contactar,
-          count(*) filter (where fi.origen = 'sistema' and fi.propuesta_estado in ('pendiente', 'no_enviada', 'incierto') and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as por_enviar,
+          count(*) filter (where fi.origen = 'sistema' and fi.fase = 'nuevo' and fi.propuesta_estado in ('pendiente', 'no_enviada', 'incierto') and f.creado_at < now() - interval '24 hours'
+                             and not exists (select 1 from setter.eventos z where z.persona_id = fi.persona_id and z.tipo = 'seguimiento_guia_lanzado'))::int as sin_contactar,
+          count(*) filter (where fi.origen = 'sistema' and fi.propuesta_estado in ('pendiente', 'no_enviada', 'incierto') and fi.fase not in ('vendido', 'no_vendido', 'descartado')
+                             and not exists (select 1 from setter.eventos z where z.persona_id = fi.persona_id and z.tipo = 'propuesta_omitida' and z.datos ->> 'motivo' = 'campaña con su propio seguimiento'))::int as por_enviar,
           count(*) filter (where fi.origen = 'sistema' and fi.reserva_at is null and f.ruta is distinct from 'asesoria' and fi.propuesta_estado in ('enviada', 'manual')
                              and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as sin_agendar,
           count(*) filter (where fi.origen = 'sistema' and fi.reserva_at is not null and fi.fase not in ('vendido', 'no_vendido', 'descartado'))::int as agendadas,
