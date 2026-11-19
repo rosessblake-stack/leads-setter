@@ -157,6 +157,22 @@ export function Seguimiento({ d, aviso }: { d: DatosSeguimiento; aviso: { tipo: 
       </Sub>
 
       {d.ruta === "asesoria" && (
+        <Sub id="respuesta-seguimiento" titulo="Responder a lo que contó de la guía">
+          <p className="ayuda">
+            Para quien contó qué le pareció y qué aprendió y no recibió nada después. Redacta una respuesta personal con lo que dijo y se la manda por
+            Instagram con la invitación a la asesoría. Si lo que contó no está guardado, pégalo aquí.
+          </p>
+          <FormularioAjax action={accion} className="formulario-seg">
+            <input type="hidden" name="accion" value="respuesta_seguimiento" />
+            <label>Lo que contó (solo si no está en las notas)
+              <textarea name="texto" rows={3} maxLength={1500} placeholder="Pega aquí su mensaje" />
+            </label>
+            <button type="submit" className="principal">Enviar respuesta ahora</button>
+          </FormularioAjax>
+        </Sub>
+      )}
+
+      {d.ruta === "asesoria" && (
         <Sub id="pago-manual" titulo="Pago recibido por otra vía (Bizum, efectivo)">
           <p className="ayuda">
             Úsalo cuando ya te ha pagado fuera de Stripe. Registra la venta de la asesoría y le manda sola, por Instagram, el enlace para elegir día y hora (si no se puede, te

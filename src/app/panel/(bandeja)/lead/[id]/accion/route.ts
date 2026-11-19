@@ -13,6 +13,7 @@ import {
 import { aCentimos, leerExito, leerFaseManual, leerNota, leerPropuesta, leerReserva, leerResultado, leerTelefono } from "@/lib/seguimiento-util";
 import { registrarError } from "@/lib/errores";
 import { registrarPagoManual } from "@/lib/stripe";
+import { forzarRespuestaSeguimiento } from "@/lib/forzar-seguimiento";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -68,6 +69,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         const r = leerResultado(get);
         if (!r.ok) return fallo(r.error);
         existe = await registrarResultado(id, r.valor);
+        break;
+      }
+      case "respuesta_seguimiento": {
+        const texto = String(get("texto") ?? "").replace(/[\u0000-\u001f\u007f]+/g, " ").trim().slice(0, 1500);
+        existe = await forzarRespuestaSeguimiento(id, texto || null);
         break;
       }
       case "pago_manual": {
