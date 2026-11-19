@@ -49,7 +49,7 @@ export async function redactarRespuesta(d: { nombre: string; opinion: string; ap
   const generica = respuestaGenerica(d.nombre, d.temas);
   if (!process.env.ANTHROPIC_API_KEY) return generica;
   try {
-    const client = new Anthropic({ timeout: 6000, maxRetries: 0 });
+    const client = new Anthropic({ timeout: 4500, maxRetries: 0 });
     const r = await client.messages.create({
       model: process.env.RESPUESTA_MODEL ?? "claude-sonnet-5-5",
       max_tokens: 400,
@@ -88,11 +88,19 @@ export async function prepararRespuestaPersonal(mc: string, opinion: string, apr
       where p.manychat_id = ${mc}`;
     if (!f) return null;
     const texto = await redactarRespuesta({ nombre: String(f.nombre), opinion, aprendio, temas: temasDe(f.a01) });
-    try {
-      await guardarCampo(mc, CAMPO_RESPUESTA(), texto);
-    } catch (e) {
-      await registrarError("manychat", e, { paso: "guardar la respuesta personal en el contacto" });
-    }
+    const msClaude = Date.now() - inicio;
+    // ManyChat solo espera ~10 s a esta petición: guardar el campo no puede alargarla más de 3 s.
+    const guardado = guardarCampo(mc, CAMPO_RESPUESTA(), texto).then(
+      () => "ok" as const,
+      async (e) => {
+        await registrarError("manychat", e, { paso: "guardar la respuesta personal en el contacto" });
+        return "error" as const;
+      },
+    );
+    const estado = await Promise.race([guardado, dormir(3000).then(() => "lento" as const)]);
+    if (estado === "lento") await registrarError("manychat", "Guardar la respuesta personal en ManyChat tardó más de 3 s", { mc: "oculto" }).catch(() => undefined);
+    // Queda anotado cuánto tardó, para poder revisarlo si algo se queda sin llegar.
+    await sql()`insert into setter.eventos (persona_id, tipo, datos) select p.id, 'respuesta_personal', ${sql().json({ ms_claude: msClaude, ms_total: Date.now() - inicio, campo: estado })} from setter.personas p where p.manychat_id = ${mc}`.catch(() => undefined);
     // Si Claude ha tardado menos que la pausa, se espera lo que falta.
     await dormir(Math.max(0, PAUSA_MINIMA_MS() - (Date.now() - inicio)));
     return texto;
