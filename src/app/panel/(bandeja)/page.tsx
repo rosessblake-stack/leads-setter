@@ -4,11 +4,14 @@ import { exigirSesion } from "@/lib/panel";
 import {
   FASES,
   NOMBRE_FASE,
+  NOMBRE_LEADS_RUTA,
   NOMBRE_ORIGEN_LEAD,
   NOMBRE_RUTA,
   ORIGENES_LEAD,
+  NOMBRE_VIA,
   NOMBRE_VISTA,
   POR_PAGINA,
+  VIAS,
   RUTAS,
   VISTAS,
   fechaCorta,
@@ -48,12 +51,12 @@ type Fila = {
 
 const OFERTA: Record<string, string> = { online: "Online", presencial: "Presencial", asesoria: "Asesoría" };
 
-type Cambios = Partial<Record<"fase" | "ruta" | "origen" | "video" | "vista" | "pagina", string | null>>;
+type Cambios = Partial<Record<"fase" | "ruta" | "origen" | "video" | "via" | "vista" | "pagina", string | null>>;
 
 function enlace(f: Filtros, cambios: Cambios) {
   const p = new URLSearchParams();
-  const v = (k: "fase" | "ruta" | "origen" | "video" | "vista") => (k in cambios ? cambios[k] : f[k]);
-  for (const k of ["vista", "fase", "ruta", "origen", "video"] as const) {
+  const v = (k: "fase" | "ruta" | "origen" | "video" | "via" | "vista") => (k in cambios ? cambios[k] : f[k]);
+  for (const k of ["vista", "fase", "ruta", "origen", "video", "via"] as const) {
     const val = v(k);
     if (val) p.set(k, val);
   }
@@ -96,11 +99,17 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
     and (${f.fase}::text is null or fi.fase = ${f.fase})
     and (${patron}::text is null or p.nombre ilike ${patron} or p.email ilike ${patron} or p.ig_username ilike ${patron})`;
   const videoSql = sql()`(${f.video}::text is null or v.codigo = ${f.video})`;
+  // Por dónde llegó: historia (formato «historia»), reel o vídeo (cualquier otro vídeo) o ninguno de los dos.
+  const viaSql = sql()`(${f.via}::text is null
+    or (${f.via}::text = 'historia' and v.formato = 'historia')
+    or (${f.via}::text = 'reel' and v.id is not null and v.formato is distinct from 'historia')
+    or (${f.via}::text = 'otros' and v.id is null))`;
   const filtrosSql = sql()`
     ${baseSql}
     and (${f.ruta}::text is null or f.ruta = ${f.ruta})
     and (${f.origen}::text is null or ${ORIGEN_LEAD} = ${f.origen})
-    and ${videoSql}`;
+    and ${videoSql}
+    and ${viaSql}`;
 
   // Una consulta detrás de otra (no a la vez) y con límite de tiempo por si la conexión se cuelga.
   const { filas, porVista, porRuta, porOrigen, videos } = await intentar(async () => {
@@ -124,12 +133,12 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
       select f.ruta, count(*)::int as n from setter.fichas fi
       join setter.formularios f on f.id = fi.formulario_id join setter.personas p on p.id = fi.persona_id
       left join setter.videos v on v.id = f.video_id
-      where ${baseSql} and (${f.origen}::text is null or ${ORIGEN_LEAD} = ${f.origen}) and ${videoSql} group by f.ruta`;
+      where ${baseSql} and (${f.origen}::text is null or ${ORIGEN_LEAD} = ${f.origen}) and ${videoSql} and ${viaSql} group by f.ruta`;
     const origenes = await sql()`
       select ${ORIGEN_LEAD} as origen, count(*)::int as n from setter.fichas fi
       join setter.formularios f on f.id = fi.formulario_id join setter.personas p on p.id = fi.persona_id
       left join setter.videos v on v.id = f.video_id
-      where ${baseSql} and (${f.ruta}::text is null or f.ruta = ${f.ruta}) and ${videoSql} group by 1`;
+      where ${baseSql} and (${f.ruta}::text is null or f.ruta = ${f.ruta}) and ${videoSql} and ${viaSql} group by 1`;
     // Vídeos con leads, para elegir uno y ver solo los que vinieron de él.
     const videos = await sql()`
       select v.codigo, coalesce(nullif(left(v.descripcion, 45), ''), v.codigo) as etiqueta, count(*)::int as n
@@ -150,14 +159,44 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
   return (
     <main className="pantalla panel">
       <header className="panel-cabecera">
-        <h1>{f.vista ? NOMBRE_VISTA[f.vista] : "Todos los leads"}</h1>
+        <h1>
+          {f.vista ? NOMBRE_VISTA[f.vista] : f.ruta ? NOMBRE_LEADS_RUTA[f.ruta] : "Todos los leads"}
+          {f.via ? ` · ${NOMBRE_VIA[f.via]}` : ""}
+        </h1>
       </header>
+
+      {sp.enviado === "1" && (
+        <p className="aviso" role="status">
+          Hecho. Lo que ha pasado (enviado, o por qué no se ha podido) te llega a Telegram.
+        </p>
+      )}
 
       {(sp.borrado === "1" || sp.borrado === "2") && (
         <p className="aviso" role="status">
           Persona borrada de la base de datos{sp.borrado === "1" ? " y del calendario" : " (no se pudo quitar su evento del calendario: bórralo a mano)"}. Falta borrar a mano su contacto en ManyChat y los mensajes de Telegram.
         </p>
       )}
+
+      <form method="get" action="/panel" className="busqueda buscador-nombre" role="search">
+        {f.vista && <input type="hidden" name="vista" value={f.vista} />}
+        {f.fase && <input type="hidden" name="fase" value={f.fase} />}
+        {f.ruta && <input type="hidden" name="ruta" value={f.ruta} />}
+        {f.origen && <input type="hidden" name="origen" value={f.origen} />}
+        {f.video && <input type="hidden" name="video" value={f.video} />}
+        {f.via && <input type="hidden" name="via" value={f.via} />}
+        <label>
+          <span className="solo-lectores">Buscar por nombre</span>
+          <input type="search" name="q" defaultValue={f.q ?? ""} placeholder="Buscar por nombre, email o Instagram" maxLength={60} />
+        </label>
+        <button type="submit" className="secundario">
+          Buscar
+        </button>
+        {f.q && (
+          <Link href={enlace(f, {})} className="ayuda">
+            Quitar «{f.q}»
+          </Link>
+        )}
+      </form>
 
       <nav className="filtros" aria-label="Filtrar por ruta">
         <span className="ayuda">Ruta</span>
@@ -182,6 +221,18 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
         ))}
       </nav>
 
+      <nav className="filtros" aria-label="Filtrar por historia o reel">
+        <span className="ayuda">Llegó por</span>
+        <Link href={enlace(f, { via: null })} className={`ficha-chip${f.via ? "" : " activa"}`}>
+          Todo
+        </Link>
+        {VIAS.map((x) => (
+          <Link key={x} href={enlace(f, { via: x })} className={`ficha-chip${f.via === x ? " activa" : ""}`}>
+            {NOMBRE_VIA[x]}
+          </Link>
+        ))}
+      </nav>
+
       {videos.length > 0 && (
         <form method="get" action="/panel" className="busqueda" aria-label="Filtrar por vídeo o historia">
           {f.vista && <input type="hidden" name="vista" value={f.vista} />}
@@ -189,6 +240,7 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
           {f.ruta && <input type="hidden" name="ruta" value={f.ruta} />}
           {f.origen && <input type="hidden" name="origen" value={f.origen} />}
           {f.q && <input type="hidden" name="q" value={f.q} />}
+          {f.via && <input type="hidden" name="via" value={f.via} />}
           <label>
             <span className="solo-lectores">Vídeo o historia</span>
             <select name="video" defaultValue={f.video ?? ""}>
@@ -204,10 +256,10 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
         </form>
       )}
 
-      <details className="desplegable filtros-lista" open={Boolean(f.fase || f.q)}>
+      <details className="desplegable filtros-lista" open={Boolean(f.fase)}>
         <summary>
-          <h2>Filtrar por fase y buscar</h2>
-          {(f.fase || f.q) && <span className="chip">Filtros activos</span>}
+          <h2>Filtrar por fase</h2>
+          {f.fase && <span className="chip">Filtro activo</span>}
         </summary>
         <div className="desplegable-cuerpo">
           <nav className="filtros secundarios" aria-label="Filtrar por fase">
@@ -221,20 +273,6 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
             ))}
           </nav>
 
-          <form method="get" action="/panel" className="busqueda">
-            {f.vista && <input type="hidden" name="vista" value={f.vista} />}
-            {f.fase && <input type="hidden" name="fase" value={f.fase} />}
-            {f.ruta && <input type="hidden" name="ruta" value={f.ruta} />}
-            {f.origen && <input type="hidden" name="origen" value={f.origen} />}
-            {f.video && <input type="hidden" name="video" value={f.video} />}
-            <label>
-              <span className="solo-lectores">Buscar</span>
-              <input type="search" name="q" defaultValue={f.q ?? ""} placeholder="Nombre, email o Instagram" maxLength={60} />
-            </label>
-            <button type="submit" className="secundario">
-              Buscar
-            </button>
-          </form>
         </div>
       </details>
 
@@ -273,6 +311,13 @@ export default async function Lista({ searchParams }: { searchParams: Promise<Pa
                     .join(" · ")}
                 </span>
               </Link>
+              {(l.sin_contactar || f.vista === "sin_contactar" || f.vista === "por_enviar") && !["vendido", "no_vendido", "descartado"].includes(l.fase) && (
+                <form method="post" action={`/panel/lead/${l.ficha_id}/accion`} className="lead-enviar">
+                  <input type="hidden" name="accion" value="enviar_ahora" />
+                  <input type="hidden" name="volver_a" value={enlace(f, {})} />
+                  <button type="submit" className="secundario">Enviar ahora</button>
+                </form>
+              )}
             </li>
           ))}
         </ul>

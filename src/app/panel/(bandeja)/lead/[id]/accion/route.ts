@@ -14,6 +14,7 @@ import { aCentimos, leerExito, leerFaseManual, leerNota, leerPropuesta, leerRese
 import { registrarError } from "@/lib/errores";
 import { registrarPagoManual } from "@/lib/stripe";
 import { forzarRespuestaSeguimiento } from "@/lib/forzar-seguimiento";
+import { enviarAhora } from "@/lib/enviar-ahora";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -71,6 +72,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         existe = await registrarResultado(id, r.valor);
         break;
       }
+      case "enviar_ahora": {
+        existe = await enviarAhora(id);
+        break;
+      }
       case "respuesta_seguimiento": {
         const texto = String(get("texto") ?? "").replace(/[\u0000-\u001f\u007f]+/g, " ").trim().slice(0, 1500);
         existe = await forzarRespuestaSeguimiento(id, texto || null);
@@ -99,6 +104,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         return fallo("Acción no válida.");
     }
     if (!existe) return new Response("No encontrado", { status: 404 });
+    if (!fluido && accion === "enviar_ahora") {
+      // Desde la lista se vuelve a la lista (con el mismo filtro); desde la ficha, a la ficha.
+      const vuelta = String(get("volver_a") ?? "");
+      if (/^\/panel(\?[A-Za-z0-9_=&%.-]*)?$/.test(vuelta)) return ir(`${vuelta}${vuelta.includes("?") ? "&" : "?"}enviado=1`);
+    }
     return fluido ? Response.json({ ok: true }) : volver("guardado=" + accion);
   } catch (e) {
     await registrarError("panel", e, { paso: "seguimiento", accion, ficha: id });

@@ -4,11 +4,24 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-type Cuentas = Partial<Record<"todos" | "sin_contactar" | "por_enviar" | "sin_agendar" | "agendadas" | "vendidos" | "no_vendidos" | "casos_exito" | "errores", number>>;
+type ClaveCuenta = "todos" | "sin_contactar" | "por_enviar" | "sin_agendar" | "agendadas" | "vendidos" | "no_vendidos" | "casos_exito" | "errores";
+type Cuentas = Partial<Record<ClaveCuenta, number>> & { rutas?: Record<string, number> };
 
-type Item = { clave: string; texto: string; href: string; cuenta?: keyof Cuentas; urgente?: boolean };
+const TIPOS = [
+  { ruta: "asesoria", texto: "Leads de asesoría" },
+  { ruta: "presencial", texto: "Leads de formación" },
+  { ruta: "online", texto: "Leads de curso online" },
+  { ruta: "no_claro", texto: "Leads sin definir" },
+] as const;
+const VIAS = [
+  { via: null, texto: "Todos" },
+  { via: "historia", texto: "Historias" },
+  { via: "reel", texto: "Reels y vídeos" },
+  { via: "otros", texto: "Sin vídeo ni historia" },
+] as const;
+
+type Item = { clave: string; texto: string; href: string; cuenta?: ClaveCuenta; urgente?: boolean };
 const GRUPOS: { titulo: string | null; items: Item[] }[] = [
-  { titulo: null, items: [{ clave: "todos", texto: "Todos los leads", href: "/panel", cuenta: "todos" }] },
   {
     titulo: "Por hacer",
     items: [
@@ -43,8 +56,8 @@ const GRUPOS: { titulo: string | null; items: Item[] }[] = [
   },
 ];
 
-function activaClave(pathname: string, vista: string | null): string | null {
-  if (pathname === "/panel") return vista ?? "todos";
+function activaClave(pathname: string, vista: string | null, ruta: string | null, via: string | null): string | null {
+  if (pathname === "/panel") return vista ?? (ruta ? `ruta:${ruta}:${via ?? ""}` : "todos");
   if (pathname.startsWith("/panel/estadisticas")) return "estadisticas";
   if (pathname.startsWith("/panel/errores")) return "errores";
   if (pathname.startsWith("/panel/videos")) return "videos";
@@ -57,9 +70,11 @@ export function Barra() {
   const pathname = usePathname();
   const params = useSearchParams();
   const vista = params.get("vista");
+  const ruta = params.get("ruta");
+  const via = params.get("via");
   const [cuentas, setCuentas] = useState<Cuentas>({});
   const [abierta, setAbierta] = useState(false);
-  const activa = activaClave(pathname, vista);
+  const activa = activaClave(pathname, vista, ruta, via);
 
   // Los números se piden aparte, así la barra no desaparece mientras carga cada pantalla.
   useEffect(() => {
@@ -92,6 +107,42 @@ export function Barra() {
       {abierta && <div className="barra-velo" onClick={() => setAbierta(false)} aria-hidden="true" />}
       <nav id="barra-lateral" className={`barra${abierta ? " abierta" : ""}`} aria-label="Panel">
         <p className="barra-marca">Leads</p>
+        <div className="barra-grupo">
+          <Link href="/panel" className={`barra-enlace${activa === "todos" ? " activa" : ""}`} aria-current={activa === "todos" ? "page" : undefined}>
+            <span>Todos los leads</span>
+            {cuentas.todos !== undefined && <span className="barra-cuenta">{cuentas.todos}</span>}
+          </Link>
+        </div>
+        <div className="barra-grupo">
+          <p className="barra-titulo">Por tipo</p>
+          {TIPOS.map((t) => {
+            const total = cuentas.rutas?.[t.ruta];
+            const abierto = ruta === t.ruta && pathname === "/panel" && !vista;
+            return (
+              <details className="barra-tipo" key={t.ruta} open={abierto}>
+                <summary className={`barra-enlace${activa?.startsWith(`ruta:${t.ruta}:`) ? " activa" : ""}`}>
+                  <span>{t.texto}</span>
+                  <span className="barra-cuenta">{total ?? 0}</span>
+                </summary>
+                {VIAS.map((v) => {
+                  const clave = `ruta:${t.ruta}:${v.via ?? ""}`;
+                  const n = v.via ? (cuentas.rutas?.[`${t.ruta}:${v.via}`] ?? (cuentas.rutas ? 0 : undefined)) : total ?? (cuentas.rutas ? 0 : undefined);
+                  return (
+                    <Link
+                      key={clave}
+                      href={`/panel?ruta=${t.ruta}${v.via ? `&via=${v.via}` : ""}`}
+                      className={`barra-enlace barra-sub${activa === clave ? " activa" : ""}`}
+                      aria-current={activa === clave ? "page" : undefined}
+                    >
+                      <span>{v.texto}</span>
+                      {n !== undefined && <span className="barra-cuenta">{n}</span>}
+                    </Link>
+                  );
+                })}
+              </details>
+            );
+          })}
+        </div>
         {GRUPOS.map((g, i) => (
           <div className="barra-grupo" key={i}>
             {g.titulo && <p className="barra-titulo">{g.titulo}</p>}

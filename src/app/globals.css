@@ -160,7 +160,7 @@ form section:focus { outline: none; }
 .ficha-chip span { color: var(--accent-ink); }
 .ficha-chip.activa { color: var(--ink); border-color: var(--accent); background: rgba(214, 72, 59, 0.1); }
 .busqueda { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 8px; }
-@media (min-width: 640px) { .busqueda { grid-template-columns: 200px 1fr auto; } }
+@media (min-width: 640px) { .busqueda { grid-template-columns: 200px 1fr auto; } .buscador-nombre { grid-template-columns: 1fr auto auto; } }
 .solo-lectores { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .leads { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .lead { display: grid; gap: 10px; text-decoration: none; color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--bg-2); }
@@ -395,3 +395,14 @@ ul.lista-diag li { overflow-wrap: anywhere; }
 .boton-enlace { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 440px; padding: 16px 20px; border-radius: 14px; background: var(--accent); color: #fff; font-weight: 700; font-size: 1.12rem; line-height: 1.25; text-align: center; text-decoration: none; box-shadow: 0 6px 18px rgba(214, 72, 59, 0.28); }
 .boton-enlace:hover, .boton-enlace:focus-visible { background: var(--accent-ink); }
 .visor-nota { color: var(--ink-dim); }
+
+/* Menú de la izquierda: tipos de lead desplegables y buscador por nombre */
+.barra-tipo > summary { list-style: none; cursor: pointer; }
+.barra-tipo > summary::-webkit-details-marker { display: none; }
+.barra-tipo > summary::after { content: "▾"; margin-left: 6px; color: var(--ink-dim); font-size: 0.8em; }
+.barra-tipo:not([open]) > summary::after { content: "▸"; }
+.barra-sub { padding-left: 22px; font-size: 0.95em; }
+.buscador-nombre { margin: 0 0 12px; }
+.buscador-nombre input[type="search"] { width: 100%; }
+.lead-enviar { margin: 6px 0 0; }
+.lead-enviar button { width: 100%; }

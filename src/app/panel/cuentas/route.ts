@@ -26,7 +26,20 @@ export async function GET() {
           (select count(*)::int from setter.errores where revisado_at is null) as errores
         from setter.fichas fi join setter.formularios f on f.id = fi.formulario_id`,
     );
-    return Response.json({ ok: true, ...c }, { headers: { "Cache-Control": "no-store" } });
+    // Cuántos leads hay de cada tipo (ruta) y por dónde llegaron (historia, reel u otros), para el menú de la izquierda.
+    const tipos = await intentar(
+      () => sql()`
+        select f.ruta, case when v.id is null then 'otros' when v.formato = 'historia' then 'historia' else 'reel' end as via, count(*)::int as n
+        from setter.fichas fi join setter.formularios f on f.id = fi.formulario_id left join setter.videos v on v.id = f.video_id
+        group by 1, 2`,
+    );
+    const rutas: Record<string, number> = {};
+    for (const t of tipos) {
+      const r = String(t.ruta ?? "antiguo");
+      rutas[r] = (rutas[r] ?? 0) + (t.n as number);
+      rutas[`${r}:${t.via}`] = t.n as number;
+    }
+    return Response.json({ ok: true, ...c, rutas }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return Response.json({ ok: false }, { status: 500 });
   }

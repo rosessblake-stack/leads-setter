@@ -201,7 +201,8 @@ async function aplazar(f: Fila) {
   await sql()`update setter.fichas set propuesta_estado = 'pendiente', propuesta_at = null, propuesta_programada_at = now() where id = ${f.id}`;
 }
 
-async function procesarUna(f: Fila, ahora: Date): Promise<"enviada" | "preparada" | "espera"> {
+// `forzar`: lo pide Blake con el botón «Enviar ahora»: no espera al horario ni a la calibración, pero respeta la ventana de 24 h de Instagram.
+async function procesarUna(f: Fila, ahora: Date, forzar = false): Promise<"enviada" | "preparada" | "espera"> {
   const ajustes = await leerModo();
   const asesoria = f.ruta === "asesoria";
   const pagoBase = process.env.STRIPE_LINK_ASESORIA ?? "";
@@ -225,7 +226,7 @@ async function procesarUna(f: Fila, ahora: Date): Promise<"enviada" | "preparada
     return "preparada";
   }
 
-  if (ajustes.modo === "calibracion") {
+  if (ajustes.modo === "calibracion" && !forzar) {
     const restantes = Math.max(0, ajustes.restantes - 1);
     await preparada(f, p, "", `calibración: te quedan ${restantes} antes de pasar a automático`);
     if (restantes === 0) {
@@ -266,7 +267,7 @@ async function procesarUna(f: Fila, ahora: Date): Promise<"enviada" | "preparada
     return "preparada";
   }
   // De 6:00 a 22:59 en su zona horaria; de noche solo se espera si todavía da tiempo a enviarla antes de que se cierre la ventana.
-  if (!puedeEnviarAhora(ahora, f.zona, horas)) {
+  if (!forzar && !puedeEnviarAhora(ahora, f.zona, horas)) {
     await aplazar(f);
     return "espera";
   }
@@ -369,4 +370,30 @@ export async function procesarPropuestas(ahora = new Date()): Promise<{ enviadas
   }
   await latido(resultado);
   return resultado;
+}
+
+// Envía ya la propuesta de una ficha (botón «Enviar ahora»), sin esperar a la hora programada, al horario ni a la calibración.
+// Devuelve false si la ficha no existe; si ya está enviada o en marcha, no hace nada y lo cuenta por Telegram.
+export async function enviarPropuestaAhora(fichaId: string): Promise<boolean> {
+  const [existe] = await sql()`select propuesta_estado from setter.fichas where id = ${fichaId}`;
+  if (!existe) return false;
+  const [reclamada] = await sql()`
+    update setter.fichas set propuesta_estado = 'enviando', propuesta_at = now()
+    where id = ${fichaId} and propuesta_estado in ('pendiente', 'no_enviada') returning id`;
+  if (!reclamada) {
+    await avisarAdmin(`ℹ️ No se envía la propuesta: su estado es «${escaparHtml(String(existe.propuesta_estado))}», no está pendiente.\n${urlPanel()}/panel/lead/${fichaId}`).catch(() => false);
+    return true;
+  }
+  const [f] = (await sql()`
+    select fi.id, fi.persona_id, p.nombre, p.email, p.ig_username as instagram, p.zona_horaria as zona, p.manychat_id, fo.ruta,
+           fo.respuestas -> 'A01' -> 'valor' as a01, fo.creado_at
+    from setter.fichas fi join setter.formularios fo on fo.id = fi.formulario_id join setter.personas p on p.id = fi.persona_id
+    where fi.id = ${fichaId}`) as unknown as Fila[];
+  try {
+    await procesarUna(f, new Date(), true);
+  } catch (e) {
+    await registrarError("propuestas", e, { paso: "enviar ahora", ficha: fichaId });
+    await sql()`update setter.fichas set propuesta_estado = 'incierto', propuesta_error = 'Error inesperado al enviar: revísala a mano' where id = ${fichaId} and propuesta_estado = 'enviando'`.catch(() => undefined);
+  }
+  return true;
 }

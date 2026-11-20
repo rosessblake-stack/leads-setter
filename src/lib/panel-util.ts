@@ -62,7 +62,19 @@ export const NOMBRE_ORIGEN_LEAD: Record<OrigenLead, string> = {
   cliente_anterior: "Cliente anterior",
 };
 
-export type Filtros = { fase: Fase | null; ruta: Ruta | null; origen: OrigenLead | null; video: string | null; vista: Vista | null; q: string | null; pagina: number };
+// Por dónde llegó el lead: una historia, un reel o vídeo, o ninguno de los dos (chat directo, web).
+export const VIAS = ["historia", "reel", "otros"] as const;
+export type Via = (typeof VIAS)[number];
+export const NOMBRE_VIA: Record<Via, string> = { historia: "Historias", reel: "Reels y vídeos", otros: "Sin vídeo ni historia" };
+// Cómo se llama cada tipo de lead en el menú.
+export const NOMBRE_LEADS_RUTA: Record<Ruta, string> = {
+  asesoria: "Leads de asesoría",
+  presencial: "Leads de formación",
+  online: "Leads de curso online",
+  no_claro: "Leads sin definir",
+};
+
+export type Filtros = { fase: Fase | null; ruta: Ruta | null; origen: OrigenLead | null; video: string | null; via: Via | null; vista: Vista | null; q: string | null; pagina: number };
 
 // Solo se aceptan valores conocidos: lo demás se ignora.
 export function leerFiltros(sp: Params): Filtros {
@@ -70,6 +82,7 @@ export function leerFiltros(sp: Params): Filtros {
   const ruta = uno(sp.ruta);
   const origen = uno(sp.origen);
   const video = uno(sp.video);
+  const via = uno(sp.via);
   const vista = uno(sp.vista);
   const q = (uno(sp.q) ?? "").trim().slice(0, 60);
   const pagina = Number.parseInt(uno(sp.pagina) ?? "1", 10);
@@ -78,6 +91,7 @@ export function leerFiltros(sp: Params): Filtros {
     ruta: (RUTAS as string[]).includes(ruta ?? "") ? (ruta as Ruta) : null,
     origen: (ORIGENES_LEAD as readonly string[]).includes(origen ?? "") ? (origen as OrigenLead) : null,
     video: /^[A-Za-z0-9_-]{1,40}$/.test(video ?? "") ? (video as string) : null,
+    via: (VIAS as readonly string[]).includes(via ?? "") ? (via as Via) : null,
     vista: (VISTAS as readonly string[]).includes(vista ?? "") ? (vista as Vista) : null,
     q: q === "" ? null : q,
     pagina: Number.isFinite(pagina) && pagina >= 1 && pagina <= 1000 ? pagina : 1,

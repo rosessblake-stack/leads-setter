@@ -156,6 +156,18 @@ export function Seguimiento({ d, aviso }: { d: DatosSeguimiento; aviso: { tipo: 
         <p className="ayuda">Hora de España. Para quitar la reserva, borra la fecha y guarda.</p>
       </Sub>
 
+      <Sub id="enviar-ahora" titulo="Enviar ahora">
+        <p className="ayuda">
+          Si algo se ha atascado, pulsa y se manda ya, sin esperar al horario: la propuesta, o el seguimiento de la guía si viene de la historia (o la respuesta
+          personal, si ya contó qué le pareció). Respeta la ventana de 24 h de Instagram: si está cerrada, no se envía y el texto te llega a Telegram. Lo que
+          pase, te lo cuento ahí.
+        </p>
+        <FormularioAjax action={accion} className="formulario-seg">
+          <input type="hidden" name="accion" value="enviar_ahora" />
+          <button type="submit" className="principal">Enviar ahora</button>
+        </FormularioAjax>
+      </Sub>
+
       {d.ruta === "asesoria" && (
         <Sub id="respuesta-seguimiento" titulo="Responder a lo que contó de la guía">
           <p className="ayuda">
