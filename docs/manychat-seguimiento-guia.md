@@ -61,7 +61,7 @@ Las peticiones antiguas (`opinion` + `aprendio`) siguen funcionando mientras no 
 
 ## Visor de la guía y botón «Cuéntame qué te ha parecido»
 
-La pantalla final del formulario ofrece **«Leer la guía ahora»** (visor web con las 23 diapositivas, `/guia/leer`) y, debajo, la descarga del PDF. El visor mide qué diapositivas ve cada persona y cuánto tiempo (se ve en su ficha y en el panel «Embudo»). Al final tiene el botón **«Cuéntame qué te ha parecido»**, que abre tu chat de Instagram (`https://ig.me/m/blakebraider`, o el enlace que pongas en la variable `GUIA_URL_CHAT` de Vercel).
+La pantalla final del formulario ofrece **«Leer la guía ahora»** (visor web con las 23 diapositivas, `/guia/leer`) y, debajo, la descarga del PDF. El visor mide qué diapositivas ve cada persona y cuánto tiempo (se ve en su ficha y en el panel «Embudo»). Al final tiene el botón **«Cuéntame qué te ha parecido»**, que abre tu chat de Instagram (`https://ig.me/m/blakebraider?ref=opinion_guia`, o el enlace que pongas en la variable `GUIA_URL_CHAT` de Vercel).
 
 Para que quien lo pulse reciba al instante la pregunta, en ManyChat:
 
