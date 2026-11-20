@@ -99,7 +99,8 @@ export async function procesarSeguimientoGuia(ahora = new Date()): Promise<numbe
   const candidatos = (await sql()`
     select p.id as persona_id, fi.id as ficha_id, p.nombre, p.email, p.ig_username as instagram, p.zona_horaria as zona, p.manychat_id, ef.en as descargo_at
     from setter.eventos e
-    join setter.embudo_formulario ef on ef.sesion = e.datos ->> 'sesion' and ef.paso = 'pdf_ok'
+    -- Cuenta desde que descargó la guía o abrió el visor (lo primero que ocurra).
+    join lateral (select min(en) as en from setter.embudo_formulario where sesion = e.datos ->> 'sesion' and paso in ('pdf_ok', 'leer_ini')) ef on ef.en is not null
     join setter.personas p on p.id = e.persona_id
     join lateral (select id from setter.fichas where persona_id = p.id order by creado_at desc limit 1) fi on true
     where e.tipo = 'formulario_enviado' and e.datos ->> 'sesion' is not null
@@ -107,6 +108,8 @@ export async function procesarSeguimientoGuia(ahora = new Date()): Promise<numbe
       and ef.en > ${new Date(ahora.getTime() - 23 * 3600_000)}
       and p.manychat_id is not null
       and not exists (select 1 from setter.eventos x where x.persona_id = p.id and x.tipo in ('seguimiento_guia_lanzado', 'seguimiento_guia_omitido'))
+      -- Quien ya ha empezado a responder (por ejemplo, tras pulsar «Cuéntame qué te ha parecido») no necesita que se le lance el seguimiento.
+      and not exists (select 1 from setter.eventos x where x.persona_id = p.id and x.tipo = 'seguimiento_respuesta')
     order by ef.en limit 5`) as unknown as Candidato[];
 
   if (candidatos.length === 0) return 0;

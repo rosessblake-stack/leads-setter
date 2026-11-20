@@ -51,7 +51,7 @@ function rastrear(campana: string, paso: string, n: number) {
 }
 
 // Botón de descarga del regalo: mientras baja pide no salir de la página y, al terminar, muestra un check.
-function DescargaRegalo({ regalo, alEvento }: { regalo: NonNullable<Campana["regalo"]>; alEvento: (paso: string) => void }) {
+function DescargaRegalo({ regalo, leer, alEvento }: { regalo: NonNullable<Campana["regalo"]>; leer: string; alEvento: (paso: string) => void }) {
   const [estado, setEstado] = useState<"reposo" | "bajando" | "listo" | "fallo">("reposo");
   async function descargar() {
     if (estado === "bajando") return;
@@ -77,7 +77,10 @@ function DescargaRegalo({ regalo, alEvento }: { regalo: NonNullable<Campana["reg
   return (
     <div className="descarga">
       <p className="descarga-titulo">{regalo.titulo}</p>
-      <button type="button" className="principal" onClick={() => void descargar()} disabled={estado === "bajando"}>
+      <a className="principal" href={leer} style={{ textDecoration: "none", textAlign: "center" }}>
+        Leer la guía ahora
+      </a>
+      <button type="button" className="secundario" onClick={() => void descargar()} disabled={estado === "bajando"}>
         {estado === "bajando" ? "Descargando…" : estado === "listo" ? "Descargar otra vez" : regalo.boton}
       </button>
       <p className="descarga-estado" role="status" aria-live="polite">
@@ -309,7 +312,7 @@ export function Formulario({ definicion, video, manychat, cliente, campana, text
       <div className="pantalla">
         <section className="gracias centro" role="status">
           {campana?.regalo?.url && !prep && !anterior && (
-            <DescargaRegalo regalo={campana.regalo} alEvento={(paso) => rastrear(video, paso, secuencia.length + 1)} />
+            <DescargaRegalo regalo={campana.regalo} leer={`/guia/leer?s=${encodeURIComponent(sesionId())}&v=${encodeURIComponent(video)}`} alEvento={(paso) => rastrear(video, paso, secuencia.length + 1)} />
           )}
           <h2>{prep ? "Gracias. Ya tengo tus respuestas: me ayudarán a preparar tu asesoría. Si quieres cambiar algo, vuelve a abrir este enlace." : anterior ? "Gracias por contarme tu caso. Me ayuda mucho a conocer mejor a quienes ya habéis trabajado conmigo." : textoFinal(definicion, respuestas)}</h2>
         </section>

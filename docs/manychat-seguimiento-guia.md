@@ -58,3 +58,15 @@ Para quitar fricción, las dos preguntas (opinión y aprendizaje) pueden ser **u
 4. Mensaje con `{{guia_respuesta}}` → pregunta de la asesoría (Sí / No), igual que ahora.
 
 Las peticiones antiguas (`opinion` + `aprendio`) siguen funcionando mientras no cambies el flujo.
+
+## Visor de la guía y botón «Cuéntame qué te ha parecido»
+
+La pantalla final del formulario ofrece **«Leer la guía ahora»** (visor web con las 23 diapositivas, `/guia/leer`) y, debajo, la descarga del PDF. El visor mide qué diapositivas ve cada persona y cuánto tiempo (se ve en su ficha y en el panel «Embudo»). Al final tiene el botón **«Cuéntame qué te ha parecido»**, que abre tu chat de Instagram (`https://ig.me/m/blakebraider`, o el enlace que pongas en la variable `GUIA_URL_CHAT` de Vercel).
+
+Para que quien lo pulse reciba al instante la pregunta, en ManyChat:
+
+1. Crea un disparador para ese enlace. Lo mejor es una herramienta de crecimiento **«Instagram Ref URL»** (te da un enlace del tipo `https://ig.me/m/blakebraider?ref=…`). Si no la tienes, sirve una palabra clave que la persona escriba.
+2. El flujo que arranca empieza directamente en «¿Qué te ha parecido la guía y qué has aprendido con ella?» y sigue igual que la rama del Sí del «Seguimiento guía» (petición `valoracion=`, mensaje `{{guia_respuesta}}`, pregunta de la asesoría).
+3. Pásame el enlace `ref` y lo pongo en el botón del visor.
+
+Quien ya ha empezado a responder así no recibe después el lanzamiento automático del seguimiento (a las 18 h). El seguimiento de las 18 h cuenta desde que la persona descarga el PDF **o abre el visor**, lo primero que ocurra.

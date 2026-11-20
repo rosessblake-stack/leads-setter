@@ -373,3 +373,20 @@ ul.lista-diag li { overflow-wrap: anywhere; }
 .con-prefijo .prefijo { display: flex; align-items: center; padding: 0 0 0 14px; color: var(--ink-dim); white-space: nowrap; }
 .con-prefijo input { border: 0; background: transparent; flex: 1; min-width: 0; padding-left: 2px; }
 .con-prefijo input:focus { outline: none; }
+
+/* Visor de la guía (diapositivas una debajo de otra) */
+.visor { max-width: 1100px; margin: 0 auto; padding: 18px 12px 48px; }
+.visor-cab { padding: 6px 4px 14px; }
+.visor-cab h1 { margin: 0 0 6px; font-family: var(--serif, "Newsreader", serif); font-size: 1.35rem; }
+.visor-gira { margin: 0; color: var(--ink-dim); font-size: 0.92rem; }
+.visor-lista { display: grid; gap: 10px; }
+.visor-slide { margin: 0; position: relative; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--bg-2); }
+.visor-slide img { display: block; width: 100%; height: auto; }
+.visor-slide figcaption { position: absolute; right: 8px; bottom: 6px; padding: 2px 8px; border-radius: 99px; background: rgba(0, 0, 0, 0.55); color: #ddd; font-size: 0.75rem; }
+.visor-cierre { display: grid; gap: 12px; justify-items: center; text-align: center; margin: 28px 0 0; padding: 26px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg-2); }
+.visor-cierre h2 { margin: 0; font-family: var(--serif, "Newsreader", serif); font-size: 1.4rem; }
+.visor-cierre p { margin: 0; color: var(--ink-dim); max-width: 34ch; }
+.visor-cierre .principal { display: inline-block; text-decoration: none; text-align: center; }
+.visor-pdf { color: var(--ink-dim); font-size: 0.95rem; }
+@media (orientation: portrait) { .visor-gira { display: block; } }
+@media (orientation: landscape) { .visor-gira { display: none; } }

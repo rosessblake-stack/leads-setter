@@ -18,7 +18,7 @@ export const privacidad: { titulo: string; actualizado: string; secciones: Secci
       parrafos: [
         "Los que escribes en el formulario de solicitud: nombre, email, tu Instagram o enlace a tu trabajo, tu ciudad y país, y tus respuestas sobre tu experiencia, tu negocio (clientes, ingresos aproximados, precios, forma de trabajar), tus dudas y lo que quieres conseguir.",
         "Si estás en la ruta de formación presencial, se te pregunta por molestias físicas al trabajar (espalda, manos, cuello). Esa respuesta puede considerarse un dato de salud: es opcional y solo la tratamos si la das, con tu consentimiento explícito.",
-        "Datos técnicos mínimos: tu zona horaria, la fecha y hora en que empiezas y envías el formulario, el vídeo o enlace desde el que llegaste y el identificador de tu conversación de Instagram en ManyChat.",
+        "Datos técnicos mínimos: tu zona horaria, la fecha y hora en que empiezas y envías el formulario, el vídeo o enlace desde el que llegaste, el identificador de tu conversación de Instagram en ManyChat y, si lees la guía en nuestro visor web, qué diapositivas ves y cuánto tiempo estás en cada una.",
       ],
     },
     {

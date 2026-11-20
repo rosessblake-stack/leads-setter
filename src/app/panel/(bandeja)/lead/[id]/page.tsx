@@ -20,6 +20,7 @@ import {
   type Fase,
 } from "@/lib/panel-util";
 import { definicion } from "@/formulario/datos";
+import { resumirLectura, textoTiempo } from "@/lib/lectura";
 import { etiquetaOrigen } from "@/formulario/campanas";
 import { Seguimiento, type DatosSeguimiento } from "./seguimiento";
 import { EnlacePreparacion, HerramientasFicha } from "../../ajax";
@@ -70,10 +71,15 @@ export default async function Ficha({
         (select to_jsonb(pp) from (select completada_at, respuestas from setter.preparaciones where ficha_id = ${id}) pp) as preparacion`;
     const eventos = (extra.eventos as { tipo: string; creado_at: string }[]).map((e) => ({ ...e, creado_at: new Date(e.creado_at) }));
     const notas = (extra.notas as { texto: string; creado_at: string }[]).map((n) => ({ texto: n.texto, creado_at: new Date(n.creado_at) }));
-    return { r, eventos, resultado: extra.resultado, notas, preparacion: extra.preparacion as { completada_at: string | null; respuestas: Record<string, Almacenada> } | null };
+    // Lectura de la guía en el visor (si la ha abierto): salen de la misma sesión del formulario.
+    const lecturaFilas = (await sql()`
+      select paso, indice from setter.embudo_formulario
+      where paso like 'leer%' and sesion = (select e.datos ->> 'sesion' from setter.eventos e
+        where e.persona_id = ${r.persona_id} and e.tipo = 'formulario_enviado' and e.datos ->> 'sesion' is not null order by e.creado_at desc limit 1)`.catch(() => [])) as unknown as { paso: string; indice: number }[];
+    return { r, eventos, resultado: extra.resultado, notas, lectura: resumirLectura(lecturaFilas), preparacion: extra.preparacion as { completada_at: string | null; respuestas: Record<string, Almacenada> } | null };
   });
   if (!datos) notFound();
-  const { r, eventos, resultado, notas, preparacion } = datos;
+  const { r, eventos, resultado, notas, preparacion, lectura } = datos;
   const q = await searchParams;
   const aviso = q.error
     ? { tipo: "error" as const, texto: q.error.slice(0, 200) }
@@ -146,6 +152,15 @@ export default async function Ficha({
           <span className="chip">{fechaCorta(r.creado_at)}</span>
         </p>
       </header>
+
+      {lectura && (
+        <p className="resumen" aria-label="Lectura de la guía">
+          <strong>Lectura de la guía:</strong> vio {lectura.vistas} de {lectura.total} diapositivas · {textoTiempo(lectura.segundos)} en total · llegó hasta la {lectura.llego}
+          {lectura.masTiempo ? ` · se detuvo más en la ${lectura.masTiempo.n} (${textoTiempo(lectura.masTiempo.segundos)})` : ""}
+          {lectura.final ? " · llegó al final" : ""}
+          {lectura.clic ? " · pulsó «Cuéntame qué te ha parecido»" : ""}
+        </p>
+      )}
 
       <Seguimiento d={seguimiento} aviso={aviso} />
 
