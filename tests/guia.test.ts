@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { respuestaGenerica, textoAceptable } from "@/lib/respuesta-personal";
+import { contextoFicha, respuestaGenerica, textoAceptable } from "@/lib/respuesta-personal";
 import { esAfirmativo, esNegativo, leerCuerpoManychat, leerPeticionManychat, respuestasDe, secretoValido } from "@/lib/guia";
 
 describe("seguimiento de la guía", () => {
@@ -103,5 +103,33 @@ describe("cuerpo JSON con el texto de la persona sin escapar", () => {
     const texto = 'Primera línea\nSegunda línea con “comillas” y "dobles" y 100% & más';
     const cuerpo = `{"mc": "123456", "paso": "valoracion", "texto": "${texto}"}`;
     expect(leerCuerpoManychat(cuerpo)).toEqual({ mc: "123456", paso: "valoracion", texto });
+  });
+});
+
+describe("contexto de la ficha para la respuesta personal", () => {
+  it("incluye lo que quiere trabajar y lo que la frena, y deja fuera el dinero y los números", () => {
+    const c = contextoFicha({
+      nivel: "avanzado",
+      dolores: ["precio", "confianza"],
+      resumen: "Cobra barato y teme parecer cara.</br>",
+      respuestas: {
+        A01: { pregunta: "¿En qué sientes que necesitas ayuda?", valor: ["Precios", "Clientela"] },
+        A34: { pregunta: "¿Qué te frena hoy?", valor: "El miedo a explorar" },
+        C12: { pregunta: "¿Cuánto ganas al mes?", valor: "1.000–2.000 €" },
+        C10: { pregunta: "¿Cuántos clientes atiendes al mes?", valor: "16–30" },
+        C15: { pregunta: "Urgencia", valor: 10 },
+      },
+    });
+    expect(c).toContain("nivel: avanzado");
+    expect(c).toContain("precio, confianza");
+    expect(c).toContain("Cobra barato y teme parecer cara.");
+    expect(c).not.toContain("</br>");
+    expect(c).toContain("[A01]");
+    expect(c).toContain("El miedo a explorar");
+    expect(c).not.toMatch(/ganas|1\.000|clientes atiendes|Urgencia/);
+  });
+  it("acepta mensajes más largos (hasta 780 caracteres), sin dinero ni asesoría", () => {
+    expect(textoAceptable("Gracias por contármelo. ".repeat(28).trim())).toBe(true);
+    expect(textoAceptable("x".repeat(800))).toBe(false);
   });
 });

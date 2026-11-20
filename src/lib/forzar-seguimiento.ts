@@ -3,7 +3,7 @@ import { sql } from "@/lib/db";
 import { registrarError } from "@/lib/errores";
 import { ErrorManyChat, enviarMensaje, infoContacto, manychatConfigurado } from "@/lib/manychat";
 import { enlacePago, temasDe, VENTANA_SEGURA_H } from "@/lib/propuestas";
-import { redactarRespuesta } from "@/lib/respuesta-personal";
+import { contextoFicha, redactarRespuesta } from "@/lib/respuesta-personal";
 import { avisarAdmin, escaparHtml } from "@/lib/telegram";
 
 const dePaso = (notas: { texto: string }[], etiqueta: string) => {
@@ -16,7 +16,7 @@ const dePaso = (notas: { texto: string }[], etiqueta: string) => {
 // contó, si no quedó guardado (por ejemplo, si la petición de ManyChat falló).
 export async function forzarRespuestaSeguimiento(fichaId: string, pegado: string | null): Promise<boolean> {
   const [f] = await sql()`
-    select p.id as persona_id, p.nombre, p.email, p.manychat_id, fo.respuestas -> 'A01' -> 'valor' as a01
+    select p.id as persona_id, p.nombre, p.email, p.manychat_id, fo.respuestas -> 'A01' -> 'valor' as a01, fo.respuestas, fi.nivel, fi.dolores, fi.resumen
     from setter.fichas fi join setter.personas p on p.id = fi.persona_id join setter.formularios fo on fo.id = fi.formulario_id
     where fi.id = ${fichaId}`;
   if (!f) return false;
@@ -30,7 +30,7 @@ export async function forzarRespuestaSeguimiento(fichaId: string, pegado: string
     await avisarAdmin(`⚠️ No hay nada guardado de lo que <b>${escaparHtml(nombre)}</b> contó de la guía. Pega su texto en la ficha y vuelve a pulsar.\n${ficha}`).catch(() => false);
     return true;
   }
-  const respuesta = await redactarRespuesta({ nombre: String(f.nombre), opinion, aprendio, temas: temasDe(f.a01) });
+  const respuesta = await redactarRespuesta({ nombre: String(f.nombre), opinion, aprendio, temas: temasDe(f.a01), contexto: contextoFicha(f) });
   const pagoBase = process.env.STRIPE_LINK_ASESORIA ?? "";
   const enlace = pagoBase ? enlacePago(pagoBase, fichaId, String(f.email ?? "")) : "";
   const invitacion = "Si quieres trabajarlo conmigo en una asesoría de 1 hora, el primer paso para reservarla es el pago.";
