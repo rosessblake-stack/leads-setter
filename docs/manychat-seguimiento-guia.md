@@ -47,3 +47,14 @@ N1 Mensaje con botones: «Hola {nombre}, soy Blake 🙌 ¿Pudiste abrir y leer l
 1. En la rama **No** de la pregunta de la asesoría, después de la petición `asesoria=No`, añade un mensaje que pregunte, por ejemplo: «Gracias por decírmelo. ¿Me cuentas por qué? Quizá todavía no es el momento o no lo necesitas ahora mismo» y espera su respuesta de texto (guárdala en un campo, por ejemplo `guia_motivo`).
 2. Después añade una petición externa: `…/api/manychat/respuesta?mc={{user_id}}&motivo={{cuf_…}}` (con el campo insertado como variable) y la misma cabecera `x-manychat-secret`.
 3. El motivo queda como nota de la ficha («Por qué no quiere la asesoría: …»), se añade a la nota de «No vendido» y te llega un aviso a Telegram.
+
+## Una sola pregunta: «¿qué te ha parecido y qué has aprendido?»
+
+Para quitar fricción, las dos preguntas (opinión y aprendizaje) pueden ser **una sola**. Nuevo orden del flujo «Seguimiento guía»:
+
+1. «¿Pudiste abrir y leer la guía?» → Sí / No (igual que ahora).
+2. **Sí →** un único mensaje, por ejemplo: «¿Qué te ha parecido la guía y qué has aprendido con ella?», con «Esperando texto». Guarda la respuesta en un campo de usuario (por ejemplo `guia_valoracion`).
+3. Petición externa: `https://leads-setter.vercel.app/api/manychat/respuesta?mc={{user_id}}&valoracion={{guia_valoracion}}` (misma cabecera `x-manychat-secret`). Guarda la respuesta como una sola nota y prepara la respuesta personal en `guia_respuesta`.
+4. Mensaje con `{{guia_respuesta}}` → pregunta de la asesoría (Sí / No), igual que ahora.
+
+Las peticiones antiguas (`opinion` + `aprendio`) siguen funcionando mientras no cambies el flujo.

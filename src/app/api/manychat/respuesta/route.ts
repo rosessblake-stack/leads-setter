@@ -37,9 +37,11 @@ async function tratar(req: Request) {
     let guardada = true;
     for (const r of lista) guardada = (await guardarRespuestaSeguimiento(mc, r.paso as PasoSeguimiento, r.texto)) && guardada;
     // Con «qué aprendió» se prepara la respuesta personal que el flujo muestra antes de preguntar por la asesoría.
+    // (Una sola pregunta «qué te pareció y qué aprendiste» llega como `valoracion`; las dos separadas, como `opinion` y `aprendio`.)
     const aprendio = lista.find((x) => x.paso === "aprendio")?.texto;
+    const valoracion = lista.find((x) => x.paso === "valoracion")?.texto;
     const opinion = lista.find((x) => x.paso === "opinion")?.texto ?? "";
-    const respuesta = guardada && aprendio ? await prepararRespuestaPersonal(mc, opinion, aprendio) : null;
+    const respuesta = !guardada ? null : valoracion ? await prepararRespuestaPersonal(mc, valoracion, "") : aprendio ? await prepararRespuestaPersonal(mc, opinion, aprendio) : null;
     if (!guardada) return rechazar("contacto_desconocido", 404);
     return Response.json({ ok: true, ...(respuesta ? { respuesta } : {}) });
   } catch (e) {

@@ -91,3 +91,9 @@ describe("respuesta personal del seguimiento", () => {
     expect(textoAceptable("Hola")).toBe(false);
   });
 });
+
+describe("una sola respuesta de valoración", () => {
+  it("se lee como un paso más", () => {
+    expect(respuestasDe({ mc: "1", valoracion: "Me encantó y aprendí mucho" })).toEqual([{ paso: "valoracion", texto: "Me encantó y aprendí mucho" }]);
+  });
+});

@@ -16,7 +16,7 @@ export const PAUSA_MINIMA_MS = () => {
 };
 const dormir = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const SISTEMA = `Eres Blake Braider, trenzador profesional y educador. Una persona acaba de leer tu guía sobre cómo cobrar lo que vale su trabajo y te ha contado, por Instagram, qué le ha parecido y qué ha aprendido. Escribes TÚ, en primera persona, un mensaje corto de respuesta.
+const SISTEMA = `Eres Blake Braider, trenzador profesional y educador. Una persona acaba de leer tu guía sobre cómo cobrar lo que vale su trabajo y te ha contado, por Instagram, qué le ha parecido y qué ha aprendido (a veces en un solo texto). Escribes TÚ, en primera persona, un mensaje corto de respuesta.
 
 Reglas:
 - Español de España, tuteo, tono cercano y sincero. Entre 2 y 4 frases y un máximo de 450 caracteres. Como mucho un emoji.
@@ -58,8 +58,7 @@ export async function redactarRespuesta(d: { nombre: string; opinion: string; ap
         {
           role: "user",
           content: `<persona>${limpiar(nombreSeguro(d.nombre) || "la persona")}</persona>
-<que_le_ha_parecido>${limpiar(d.opinion)}</que_le_ha_parecido>
-<que_ha_aprendido>${limpiar(d.aprendio)}</que_ha_aprendido>
+${d.aprendio ? `<que_le_ha_parecido>${limpiar(d.opinion)}</que_le_ha_parecido>\n<que_ha_aprendido>${limpiar(d.aprendio)}</que_ha_aprendido>` : `<lo_que_ha_contado>${limpiar(d.opinion)}</lo_que_ha_contado>`}
 <temas_que_marco>${d.temas.length > 0 ? limpiar(unir(d.temas)) : "(ninguno)"}</temas_que_marco>`,
         },
       ],
@@ -89,7 +88,7 @@ export async function prepararRespuestaPersonal(mc: string, opinion: string, apr
     if (!f) return null;
     // Si la petición solo trae «qué aprendió» (porque «qué te pareció» se guardó antes, en otra petición), se usa la opinión guardada.
     let opinionFinal = opinion;
-    if (!opinionFinal) {
+    if (!opinionFinal && aprendio) {
       const [n] = await sql()`
         select n.texto from setter.notas n
         join setter.fichas fi on fi.id = n.ficha_id join setter.personas p on p.id = fi.persona_id

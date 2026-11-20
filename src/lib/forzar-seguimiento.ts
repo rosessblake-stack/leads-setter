@@ -23,7 +23,7 @@ export async function forzarRespuestaSeguimiento(fichaId: string, pegado: string
   const nombre = String(f.nombre).slice(0, 60);
   const ficha = `${urlPanel()}/panel/lead/${fichaId}`;
   const notas = (await sql()`select texto from setter.notas where ficha_id = ${fichaId} order by creado_at desc`) as unknown as { texto: string }[];
-  const opinion = dePaso(notas, "Qué le pareció la guía");
+  const opinion = dePaso(notas, "Qué le pareció la guía") || dePaso(notas, "Qué le pareció la guía y qué aprendió");
   const aprendio = pegado?.trim() || dePaso(notas, "Qué aprendió");
   if (!opinion && !aprendio) {
     await sql()`insert into setter.eventos (persona_id, tipo, datos) values (${f.persona_id}, 'respuesta_seguimiento_forzada', ${sql().json({ enviado: false, motivo: "sin texto" })})`.catch(() => undefined);
@@ -79,7 +79,7 @@ export async function procesarRespuestasAtascadas(): Promise<number> {
         (e.tipo = 'respuesta_seguimiento_solicitada'
           and not exists (select 1 from setter.eventos x where x.persona_id = p.id and x.tipo = 'respuesta_seguimiento_forzada' and x.creado_at > e.creado_at))
         or
-        (e.tipo = 'seguimiento_respuesta' and e.datos ->> 'paso' = 'aprendio'
+        (e.tipo = 'seguimiento_respuesta' and e.datos ->> 'paso' in ('aprendio', 'valoracion')
           and e.creado_at < now() - interval '20 minutes' and e.creado_at > now() - interval '22 hours'
           and not exists (select 1 from setter.eventos x where x.persona_id = p.id and (
                 x.tipo in ('respuesta_personal', 'respuesta_seguimiento_forzada', 'respuesta_seguimiento_solicitada')
