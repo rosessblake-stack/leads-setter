@@ -61,7 +61,7 @@ Las peticiones antiguas (`opinion` + `aprendio`) siguen funcionando mientras no 
 
 ## Visor de la guía y botón «Cuéntame qué te ha parecido»
 
-La pantalla final del formulario ofrece **«Leer la guía ahora»** (visor web con las 23 diapositivas, `/guia/leer`) y, debajo, la descarga del PDF. El visor mide qué diapositivas ve cada persona y cuánto tiempo (se ve en su ficha y en el panel «Embudo»). Al final tiene el botón **«Cuéntame qué te ha parecido»**, que abre tu chat de Instagram (`https://ig.me/m/blakebraider?ref=opinion_guia`, o el enlace que pongas en la variable `GUIA_URL_CHAT` de Vercel).
+La pantalla final del formulario ofrece **«Leer la guía ahora»** (visor web con las 23 diapositivas, `/guia/leer`) y, debajo, la descarga del PDF. El visor mide qué diapositivas ve cada persona y cuánto tiempo (se ve en su ficha y en el panel «Embudo»). Al final tiene el botón **«Cuéntame qué te ha parecido»**, que abre tu chat de Instagram (`https://ig.me/m/blakebraider?ref=opinion_guias`, o el enlace que pongas en la variable `GUIA_URL_CHAT` de Vercel).
 
 Para que quien lo pulse reciba al instante la pregunta, en ManyChat:
 
@@ -79,7 +79,7 @@ Hay dos formas de arrancar la pregunta «¿Qué te ha parecido la guía y qué h
 Es un enlace especial a tu chat que arranca una automatización concreta cuando alguien lo abre. Solo lo usa quien pulsa el botón del visor, así que no se cuela nadie.
 
 1. En ManyChat, crea una **automatización nueva** y, como disparador, elige **«Instagram Ref URL»** (puede aparecer en «Herramientas de crecimiento» o entre los disparadores de Instagram, según tu versión).
-2. Ponle un nombre al parámetro, por ejemplo `opinion_guia`. ManyChat te da un enlace del tipo `https://ig.me/m/blakebraider?ref=opinion_guia`.
+2. Ponle un nombre al parámetro, por ejemplo `opinion_guias`. ManyChat te da un enlace del tipo `https://ig.me/m/blakebraider?ref=opinion_guias`.
 3. Copia ese enlace y pásamelo: lo pongo en el botón del visor (o tú, con la variable `GUIA_URL_CHAT` en Vercel).
 4. Qué ve la persona al abrirlo lo decide ManyChat, no yo. Pruébalo tú desde el visor.
 

@@ -27,7 +27,7 @@ export const CAMPANAS: Record<string, Campana> = {
     },
     regalo: { titulo: "Aquí tienes tu guía", boton: "Descargar la guía", url: "/guia-cobrar-y-datos.pdf" },
     sinPropuestaAutomatica: true,
-    chat: { url: "https://ig.me/m/blakebraider?ref=opinion_guia", boton: "Haz clic aquí y cuéntame qué te ha parecido", palabra: "OPINIÓN" },
+    chat: { url: "https://ig.me/m/blakebraider?ref=opinion_guias", boton: "Haz clic aquí y cuéntame qué te ha parecido", palabra: "OPINIÓN" },
   },
 };
 
