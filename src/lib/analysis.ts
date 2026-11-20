@@ -103,7 +103,7 @@ export function construirEntrada(s: Solicitud, reel: string | null = null): stri
     .filter(([id]) => !SIN_ENVIAR.has(id))
     .map(([id, r]) => {
       const extra = r.extra !== undefined ? ` (${r.extra})` : "";
-      return `[${id}] ${limpiar(r.pregunta)}: ${limpiar(valorATexto(r.valor))}${limpiar(extra)}`;
+      return `[${id}] ${limpiar(r.pregunta ?? id)}: ${limpiar(valorATexto(r.valor))}${limpiar(extra)}`;
     });
   const bloqueReel = reel ? `<reel_de_origen>\n${limpiar(reel)}\n</reel_de_origen>\n` : "";
   return `${bloqueReel}<respuestas_formulario>
