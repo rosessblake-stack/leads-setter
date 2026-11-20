@@ -70,3 +70,22 @@ Para que quien lo pulse reciba al instante la pregunta, en ManyChat:
 3. Pásame el enlace `ref` y lo pongo en el botón del visor.
 
 Quien ya ha empezado a responder así no recibe después el lanzamiento automático del seguimiento (a las 18 h). El seguimiento de las 18 h cuenta desde que la persona descarga el PDF **o abre el visor**, lo primero que ocurra.
+
+## Que quien pulse «Cuéntame qué te ha parecido» reciba la pregunta (sin que se cuele cualquiera)
+
+Hay dos formas de arrancar la pregunta «¿Qué te ha parecido la guía y qué has aprendido con ella?». Conviene montar las dos.
+
+### A. Instagram Ref URL (la principal)
+Es un enlace especial a tu chat que arranca una automatización concreta cuando alguien lo abre. Solo lo usa quien pulsa el botón del visor, así que no se cuela nadie.
+
+1. En ManyChat, crea una **automatización nueva** y, como disparador, elige **«Instagram Ref URL»** (puede aparecer en «Herramientas de crecimiento» o entre los disparadores de Instagram, según tu versión).
+2. Ponle un nombre al parámetro, por ejemplo `opinion_guia`. ManyChat te da un enlace del tipo `https://ig.me/m/blakebraider?ref=opinion_guia`.
+3. Copia ese enlace y pásamelo: lo pongo en el botón del visor (o tú, con la variable `GUIA_URL_CHAT` en Vercel).
+4. Qué ve la persona al abrirlo lo decide ManyChat, no yo. Pruébalo tú desde el visor.
+
+### B. Palabra clave «OPINIÓN» (el respaldo), con comprobación
+1. Disparador: **mensaje que es exactamente «OPINIÓN»** (no «contiene»), para que un «hola, quiero darte mi opinión sobre…» no lo active.
+2. Primer paso: una **petición externa** `https://leads-setter.vercel.app/api/manychat/elegible?mc={{user_id}}` (misma cabecera `x-manychat-secret`). El sistema comprueba que la persona rellenó el formulario de COBRAR hace menos de 2 días, que descargó el PDF o abrió el visor y que aún no ha contado su opinión. Deja **«si»** o **«no»** en el campo `guia_elegible` (créalo en ManyChat, de texto).
+3. Siguiente paso: una **condición**. Si `guia_elegible` es «si», sigue con la pregunta de la guía. Si no, **no hagas nada** (el flujo termina y no se envía ningún mensaje): es una conversación normal que llevas tú.
+
+Tanto A como B terminan en el mismo sitio: «¿Qué te ha parecido la guía y qué has aprendido con ella?» → petición `valoracion=` → mensaje `{{guia_respuesta}}` → pregunta de la asesoría.

@@ -218,3 +218,24 @@ export async function guardarRespuestaSeguimiento(mc: string, paso: PasoSeguimie
   }
   return true;
 }
+
+// ¿Es esta persona alguien a quien tiene sentido hacerle la pregunta «¿qué te ha parecido la guía?» ahora? Solo si rellenó el formulario de la
+// campaña hace menos de 2 días, ya descargó el PDF o abrió el visor y todavía no ha contado su opinión. Si no, quien escribe «OPINIÓN» (u otra
+// cosa parecida) no entra en el seguimiento: es una conversación normal que lleva Blake.
+export const HORAS_OPINION = 48;
+
+export async function elegibleParaOpinion(mc: string): Promise<{ elegible: boolean; motivo: string }> {
+  const [r] = await sql()`
+    select p.id as persona_id,
+      (select max(e.creado_at) from setter.eventos e where e.persona_id = p.id and e.tipo = 'formulario_enviado' and e.datos ->> 'codigo_video' is not null) as formulario_at,
+      (select max(ef.en) from setter.embudo_formulario ef where ef.paso in ('pdf_ok', 'leer_ini')
+         and ef.sesion in (select e.datos ->> 'sesion' from setter.eventos e where e.persona_id = p.id and e.tipo = 'formulario_enviado')) as lectura_at,
+      exists (select 1 from setter.eventos e where e.persona_id = p.id and e.tipo = 'seguimiento_respuesta' and e.datos ->> 'paso' in ('valoracion', 'opinion', 'aprendio')) as ya_opino
+    from setter.personas p where p.manychat_id = ${mc}`;
+  if (!r) return { elegible: false, motivo: "no_es_un_lead" };
+  const limite = Date.now() - HORAS_OPINION * 3600_000;
+  if (!r.formulario_at || new Date(r.formulario_at as string).getTime() < limite) return { elegible: false, motivo: "formulario_antiguo" };
+  if (!r.lectura_at) return { elegible: false, motivo: "no_ha_visto_la_guia" };
+  if (r.ya_opino) return { elegible: false, motivo: "ya_dio_su_opinion" };
+  return { elegible: true, motivo: "ok" };
+}
