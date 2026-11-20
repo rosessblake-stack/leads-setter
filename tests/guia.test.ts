@@ -97,3 +97,11 @@ describe("una sola respuesta de valoración", () => {
     expect(respuestasDe({ mc: "1", valoracion: "Me encantó y aprendí mucho" })).toEqual([{ paso: "valoracion", texto: "Me encantó y aprendí mucho" }]);
   });
 });
+
+describe("cuerpo JSON con el texto de la persona sin escapar", () => {
+  it("lee el texto aunque tenga saltos de línea y comillas", () => {
+    const texto = 'Primera línea\nSegunda línea con “comillas” y "dobles" y 100% & más';
+    const cuerpo = `{"mc": "123456", "paso": "valoracion", "texto": "${texto}"}`;
+    expect(leerCuerpoManychat(cuerpo)).toEqual({ mc: "123456", paso: "valoracion", texto });
+  });
+});
