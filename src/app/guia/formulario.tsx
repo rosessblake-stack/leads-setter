@@ -77,7 +77,7 @@ function DescargaRegalo({ regalo, leer, alEvento }: { regalo: NonNullable<Campan
   return (
     <div className="descarga">
       <p className="descarga-titulo">{regalo.titulo}</p>
-      <a className="principal" href={leer} style={{ textDecoration: "none", textAlign: "center" }}>
+      <a className="boton-enlace" href={leer}>
         Leer la guía ahora
       </a>
       <button type="button" className="secundario" onClick={() => void descargar()} disabled={estado === "bajando"}>

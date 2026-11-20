@@ -12,7 +12,7 @@ export type Campana = {
   // La campaña tiene su propio recorrido (guía → seguimiento → asesoría): no sale la propuesta automática de 1 a 3 h.
   sinPropuestaAutomatica?: boolean;
   // Botón final del visor de la guía: lleva al chat de Blake, donde el seguimiento pregunta qué le ha parecido.
-  chat?: { url: string; boton: string };
+  chat?: { url: string; boton: string; palabra: string };
 };
 
 export const CAMPANAS: Record<string, Campana> = {
@@ -27,7 +27,7 @@ export const CAMPANAS: Record<string, Campana> = {
     },
     regalo: { titulo: "Aquí tienes tu guía", boton: "Descargar la guía", url: "/guia-cobrar-y-datos.pdf" },
     sinPropuestaAutomatica: true,
-    chat: { url: "https://ig.me/m/blakebraider", boton: "Cuéntame qué te ha parecido" },
+    chat: { url: "https://ig.me/m/blakebraider", boton: "Haz clic aquí y cuéntame qué te ha parecido", palabra: "OPINIÓN" },
   },
 };
 

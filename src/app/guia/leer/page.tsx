@@ -33,7 +33,8 @@ export default async function Leer({ searchParams }: { searchParams: Promise<{ s
       campana={campana}
       total={TOTAL_DIAPOSITIVAS}
       chatUrl={process.env.GUIA_URL_CHAT || chat?.url || "https://ig.me/m/blakebraider"}
-      chatBoton={chat?.boton ?? "Cuéntame qué te ha parecido"}
+      chatBoton={chat?.boton ?? "Haz clic aquí y cuéntame qué te ha parecido"}
+      palabra={chat?.palabra ?? "OPINIÓN"}
       pdfUrl={campanaDe(campana)?.regalo?.url ?? "/guia-cobrar-y-datos.pdf"}
     />
   );

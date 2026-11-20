@@ -2,11 +2,11 @@
 
 import { useEffect, useRef } from "react";
 
-type Props = { sesion: string | null; campana: string; total: number; chatUrl: string; chatBoton: string; pdfUrl: string };
+type Props = { sesion: string | null; campana: string; total: number; chatUrl: string; chatBoton: string; palabra: string; pdfUrl: string };
 
 // Visor de la guía: las diapositivas una debajo de otra. Mide cuál está en el centro de la pantalla y cuántos segundos, solo mientras la
 // página está a la vista, y lo manda cada pocos segundos (y al salir). No guarda nada personal: solo la sesión del formulario.
-export function Visor({ sesion, campana, total, chatUrl, chatBoton, pdfUrl }: Props) {
+export function Visor({ sesion, campana, total, chatUrl, chatBoton, palabra, pdfUrl }: Props) {
   const tiempos = useRef<number[]>(Array(total + 1).fill(0));
   const actual = useRef<number | null>(null);
   const final = useRef(false);
@@ -107,11 +107,16 @@ export function Visor({ sesion, campana, total, chatUrl, chatBoton, pdfUrl }: Pr
         ))}
       </div>
       <section id="cierre-guia" className="visor-cierre">
-        <h2>¿Te ha servido?</h2>
-        <p>Cuéntame qué te ha parecido la guía y qué has aprendido con ella. Te contesto por mensaje.</p>
-        <a className="principal" href={chatUrl} onClick={alPulsarChat}>
-          {chatBoton}
+        <h2>¿Te ha servido la guía?</h2>
+        <p>
+          Cuéntame qué te ha parecido y qué has aprendido. <strong>Pulsa el botón</strong> y se abrirá mi chat de Instagram: ahí te hago la pregunta.
+        </p>
+        <a className="boton-enlace" href={chatUrl} onClick={alPulsarChat}>
+          <span aria-hidden="true">💬</span> {chatBoton} <span aria-hidden="true">→</span>
         </a>
+        <p className="visor-nota">
+          Si al abrir el chat no ves mi pregunta, escribe «{palabra}».
+        </p>
         <a className="visor-pdf" href={pdfUrl} download>
           Descargar la guía en PDF
         </a>

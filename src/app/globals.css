@@ -386,7 +386,12 @@ ul.lista-diag li { overflow-wrap: anywhere; }
 .visor-cierre { display: grid; gap: 12px; justify-items: center; text-align: center; margin: 28px 0 0; padding: 26px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg-2); }
 .visor-cierre h2 { margin: 0; font-family: var(--serif, "Newsreader", serif); font-size: 1.4rem; }
 .visor-cierre p { margin: 0; color: var(--ink-dim); max-width: 34ch; }
-.visor-cierre .principal { display: inline-block; text-decoration: none; text-align: center; }
+.visor-nota { font-size: 0.9rem; }
 .visor-pdf { color: var(--ink-dim); font-size: 0.95rem; }
 @media (orientation: portrait) { .visor-gira { display: block; } }
 @media (orientation: landscape) { .visor-gira { display: none; } }
+
+/* Enlace con forma de botón (los enlaces no heredan el estilo de los botones) */
+.boton-enlace { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 440px; padding: 16px 20px; border-radius: 14px; background: var(--accent); color: #fff; font-weight: 700; font-size: 1.12rem; line-height: 1.25; text-align: center; text-decoration: none; box-shadow: 0 6px 18px rgba(214, 72, 59, 0.28); }
+.boton-enlace:hover, .boton-enlace:focus-visible { background: var(--accent-ink); }
+.visor-nota { color: var(--ink-dim); }
